@@ -75,6 +75,16 @@ lib/
   color.ts             主色 → CSS 通道、對比度計算
 scripts/
   scrape.mjs           抓取骨架 + 資料校驗
+deploy/
+  sync.sh              一鍵發布：自檢 → 存檔 → 構建 → 上傳 → 冒煙
+  remote-init.sh       首次初始化：80 → 簽證書 → 443 → 傳產物
+  remote-attach-mount.sh  給 nginx 容器加 bind mount（帶 dry-run 與回滾）
+  remote-upload.sh     上傳產物（先傳 /tmp 校驗，再原子切換）
+  nginx-jpstage.conf   站點配置（含 443，線上運行的就是這份）
+  remote-swap.sh       【伺服器端】校驗與原子切換
+  remote-rollback.sh   【伺服器端】回滾上一版
+  remote-cert.sh       【伺服器端】簽發 / 復用 Let's Encrypt 證書
+  nginx-jpstage-preinit.conf  【伺服器端】簽證書前的「只有 80」臨時配置
 probe/
   theme-contrast.mjs   三主題 × 雙語 對比度實測（真實瀏覽器）
   functional.mjs       響應式 / 雙語 / 主題時序驗收
@@ -142,6 +152,16 @@ node probe/functional.mjs           # 雙語 / 主題時序 / 390px 響應式 / 
 node probe/interactive.mjs          # 搜尋 / 篩選 / 排序 / 頂欄高亮
 ```
 
+三支探針都接受一個 base URL 參數，所以也能直接跑**線上**站點：
+
+```bash
+node probe/theme-contrast.mjs https://jpstage.yuurei.de
+```
+
+這比只跑本地產物更有意義：本地預覽伺服器不會經過 Cloudflare、
+不經過 nginx 的 gzip 與 try_files，而那幾層都可能改變實際渲染結果
+（例如 CF 的 Auto Minify 或 Rocket Loader 會改寫 HTML）。
+
 `theme-contrast.mjs` 的做法值得說明：文字都浮在半透明玻璃上，
 而**最終對比度取決於 backdrop-filter 採樣到了什麼** ——
 這無法從 CSS 靜態推導（hkmovie 就吃過這個虧：按實心卡片算出的 5.18:1，
@@ -182,33 +202,104 @@ sakura  最小余量 0.27（dim 4.77:1）
 
 ## 部署
 
-`out/` 是純靜態檔案。nginx 配置要點：
+**線上位址**：https://jpstage.yuurei.de
 
-```nginx
-root /var/www/jpstage/out;
-index index.html;
-
-# trailingSlash: true → 詳情頁是 /show/xxx/index.html
-location / { try_files $uri $uri/index.html $uri/ =404; }
-
-# Next.js 導出的 404 需要顯式接上，否則用戶看到的是 nginx 默認頁
-error_page 404 /404.html;
-
-# 帶 hash 的靜態資源可以長期緩存
-location /_next/static/ { expires 1y; add_header Cache-Control "public, immutable"; }
-
-# HTML 不緩存（內容隨每次重建更新）
-location ~* \.html$ { add_header Cache-Control "no-cache"; }
-```
-
-環境變數（構建時）：
+### 日常發布：一條命令
 
 ```bash
-NEXT_PUBLIC_SITE_URL=https://your-domain npm run build
+bash deploy/sync.sh              # 自檢 → 存檔 → 構建 → 上傳 → 冒煙
+bash deploy/sync.sh -m "修好篩選"
+bash deploy/sync.sh --dry-run    # 只構建與檢查，不碰線上
+bash deploy/sync.sh --rollback   # 回到線上上一版
 ```
 
-它用於 `metadataBase`、`sitemap.xml`、`robots.txt` 的絕對網址。
-不設置會回退到 `https://jpstage.example`（不會構建失敗，但 SEO 端點會指向錯的域名）。
+### 架構：本機構建 + 只傳產物
+
+```
+本機  npm run build  →  out/ (12MB, 75 頁)  ──ssh──▶  伺服器 /home/web/jpstage
+                                                        （nginx 容器 /var/www/jpstage）
+```
+
+**為什麼不像 hkmovie 那樣在服務器構建**（兩站的差別值得說清楚）：
+
+| | hkmovie | jpstage |
+|---|---|---|
+| 構建位置 | 服務器（2C2G） | **本機** |
+| 服務器需要 Node | 是（含 devDependencies） | **否** |
+| 部署時內存壓力 | 構建峰值 1GB+（靠 3GB swap 兜） | 只解壓 12MB |
+
+同一臺服務器上，hkmovie 構建 266 頁是成功的 —— 但它**有 OOM 歷史**
+（`dmesg` 裡有 `Memory cgroup out of memory: Killed process`），
+且長期可用內存只有 600MB 上下。讓它在跑著別人站點（komari、imgmove）的
+同時做 Next 構建，風險不是「慢」，而是可能觸發 OOM 把無關進程一起殺掉。
+
+jpstage 是純靜態導出、產物只有 12MB，本機構建再傳上去讓這個風險歸零。
+這不是「hkmovie 那樣做錯了」—— 它的構建機就是那臺服務器，沒得選。
+
+### 首次部署（已完成，留作記錄）
+
+```bash
+bash deploy/remote-attach-mount.sh   # 1. 給 nginx 容器加 bind mount
+bash deploy/remote-init.sh           # 2. 80 → 簽證書 → 443 → 傳產物
+```
+
+順序不能顛倒：CF 的 SSL/TLS 是 **Full(strict)**，源站 443 沒有有效證書時
+一律返回 525。所以必須先用「只有 80」的配置把 ACME 驗證跑通、簽下證書，
+再啟用含 443 的完整配置。`remote-init.sh` 就是按這個順序做的。
+
+### 幾個必須知道的約束
+
+**1. 站點根是獨立目錄，不能放進 `/home/web/html`**
+
+hkmovie 與 imgmove 共用 `/home/web/html`（後者只服務其中的 `/posters/`）。
+但 hkmovie 的重建腳本同步產物時執行的是：
+
+```bash
+find "$SITE_DIR" -mindepth 1 -delete     # SITE_DIR=/home/web/html
+```
+
+也就是**清空整個目錄**。把本站放進去，hkmovie 每次重建都會把它一起刪掉 ——
+而且是靜默的：站點先是 404，直到有人發現才明白原因。
+
+**2. 服務器上的容器是 `docker run` 手工創建的，不是 compose 管的**
+
+`docker inspect nginx` 裡沒有任何 `com.docker.compose.*` 標籤，
+`docker compose ls` 也是空的。所以 `docker compose up -d nginx` 會失敗：
+
+```
+Conflict. The container name "/nginx" is already in use
+```
+
+而且 `/home/web/docker-compose.yml` 與運行中的容器**已經漂移**：
+文件裡寫著 `tmpfs: /var/cache/nginx size=2048m`，
+而容器的 `HostConfig.Tmpfs` 是 `null`（那個 tmpfs 從未生效）。
+照文件重建會憑空引入一個變化 —— 所以 `remote-attach-mount.sh` 改為
+**從運行中的容器提取參數**（`docker inspect`）再重放，只增不改。
+
+**3. `conf.d` 下的文件是 CRLF 行尾**
+
+這會讓 `grep -v '^_$'` 這類錨定行尾的匹配失效（`_` 實際是 `_\r`）。
+部署腳本裡凡是要解析這些文件的地方都帶了 `tr -d '\r'`。
+
+**4. 證書續期依賴兩個約定**
+
+`/root/auto_cert_renewal.sh`（每日 cron）靠**遍歷 `certs/*_cert.pem` 反推域名**，
+再按同名 `.conf` 檢查 `letsencrypt` 關鍵字。所以：
+- 證書文件名必須是 `<域名>_cert.pem` / `<域名>_key.pem`
+- `deploy/nginx-jpstage.conf` 裡的 ACME `location` **不可刪**
+
+兩者任一被破壞，續期都會**靜默**失敗 —— 直到證書過期、CF 開始 525 才有人發現。
+
+### 其他細節
+
+- `NEXT_PUBLIC_SITE_URL` 必須在**構建時**給定：`sitemap.xml` / `robots.txt`
+  裡的絕對網址是構建期寫死的字面量，忘了設會烘進錯誤域名 ——
+  頁面上完全看不出來。`sync.sh` 會顯式傳入並在構建後立刻校驗。
+- 部署腳本全部是 **LF 行尾**（`.gitattributes` 釘死）。
+  本機 git 配了 `core.autocrlf=true`，不釘的話下次檢出會變 CRLF，
+  送到 Linux 後 `#!/usr/bin/env bash\r` 直接失效。
+- 回滾有兩層：`remote-upload.sh --rollback` 換回服務器上留存的上一版；
+  `git revert` + `sync.sh` 是代碼層的回滾。前者更快（秒級）。
 
 ---
 
