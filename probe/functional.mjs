@@ -421,13 +421,12 @@ async function main() {
     // ── 截图存档 ──
     const shots = [
       { name: 'home-dark', url: '/', theme: 'dark', w: 1280, h: 1000 },
-      { name: 'home-light', url: '/', theme: 'light', w: 1280, h: 1000 },
-      { name: 'home-sakura', url: '/', theme: 'sakura', w: 1280, h: 1000 },
+      { name: 'home-sakura-pink', url: '/', theme: 'sakura', w: 1280, h: 1000 },
       { name: 'detail-dark', url: '/show/touken-ranbu-jukuju-ranbu/', theme: 'dark', w: 1280, h: 1200 },
       { name: 'now-dark', url: '/now/', theme: 'dark', w: 1280, h: 1100 },
       { name: 'mobile-home', url: '/', theme: 'dark', w: 390, h: 844 },
       { name: 'venue-list', url: '/venue/', theme: 'sakura', w: 1280, h: 1000 },
-      { name: 'series-detail', url: '/series/touken-ranbu/', theme: 'light', w: 1280, h: 1100 },
+      { name: 'series-detail', url: '/series/touken-ranbu/', theme: 'sakura', w: 1280, h: 1100 },
     ];
     const outDir = path.resolve('probe/shots');
     fs.mkdirSync(outDir, { recursive: true });

@@ -1,349 +1,1545 @@
-#!/usr/bin/env node
 /**
- * 抓取脚本 —— **接口骨架**（尚未接入真实数据源）
+ * 抓取脚本 —— CoRich 舞台芸術！（stage.corich.jp）
  *
  * ════════════════════════════════════════════════════════════════════
- *  当前状态
+ *  数据源
  * ════════════════════════════════════════════════════════════════════
  *
- *  本站目前跑在 data/*.json 的**手写示范数据**上，页面上有明确的
- *  「示範資料」提示条（见 components/DemoNotice.tsx）。
+ *  CoRich 舞台芸術！是日本演劇／ミュージカル的公演数据库（用户共建），
+ *  它有一个专门的 **「2.5次元舞台」分类**（category_id=7）。
+ *  这是本站目前唯一的数据源，理由与取舍见下。
  *
- *  本文件是接入真实抓取时的**落点**：它把「一份数据要满足什么约束」
- *  用代码固化下来，并提供一个 `validate()` 可以直接跑。
+ *  ★ 为什么选它而不是「各公演官网」：
+ *    2.5 次元没有单一权威源 —— 每个企划各有官网，结构各不相同，
+ *    要接就得给每个站写一个解析器（几十个），且任一官网改版就断。
+ *    CoRich 把它们的档期、会場、海报统一成了一个结构 ——
+ *    这是「一个解析器覆盖全部企划」与「N 个解析器覆盖 N 个企划」的差别。
  *
- *  ★ 为什么不先写抓取、再补校验：
- *    抓取逻辑会随目标站点的 HTML 结构反复重写，而**数据约束是稳定的**。
- *    先把约束写下来，抓取脚本无论怎么改都能拿它自查 ——
- *    顺序反过来（先写抓取），约束往往只存在于作者脑子里，
- *    换个站点重写时就丢了，数据里会慢慢混进 status 与日期矛盾、
- *    空标题、不存在的 venueId 之类的问题，而且**在页面上看不出来**
- *    （页面只是少显示一块，不会报错）。
- *
- * ════════════════════════════════════════════════════════════════════
- *  接入真实数据源的步骤
- * ════════════════════════════════════════════════════════════════════
- *
- *  1. 在 SOURCES 里登记数据源（名称 + 抓取函数）
- *  2. 每个抓取函数返回 RawShow[]，再由 normalize() 转成 Show
- *  3. 跑 `node scripts/scrape.mjs --validate-only` 确认数据合规
- *  4. 把 source 从 'sample' 改成站点标识 —— 提示条会自动消失
- *     （getMeta().demo 是**数据驱动**的，不需要改任何组件代码）
+ *  ★ 代价必须说清楚：CoRich 是**用户共建**数据库，条目由剧团/观众登记。
+ *    所以：
+ *      · 官方站链接（officialUrl）以它为准，购票前务必点去核对；
+ *      · 出演者、场次数字段经常是空的（很多条目只登记了档期与会場）；
+ *      · 数据可能滞后于官方公告。
+ *    因此本站每条数据都带 officialUrl，页脚也明写「以官方公布为准」——
+ *    这不是免责话术，而是这个数据源的真实性质。
  *
  * ════════════════════════════════════════════════════════════════════
- *  双语数据从哪来（这是本站与 hkmovie 最大的不同）
+ *  两个页面层级：stage_main（作品）与 stage（单会場）
  * ════════════════════════════════════════════════════════════════════
  *
- *  hkmovie 是单语站，抓到什么就显示什么。本站每个面向用户的文案都是
- *  { zh, ja } 二元组（见 lib/types.ts 的说明），所以抓取阶段必须
- *  为两种语言各取一份值。三条可行路径，按可靠性排序：
+ *  CoRich 把一次巡演拆成两层：
+ *    /stage_main/<id>   作品总页 —— 一部作品（含全部巡演会場）
+ *    /stage/<id>        单会場页 —— 该作品在某一个会場的那一档
  *
- *   ① 官方站本身提供双语（部分大型企划的官网有 EN/zh 版）→ 直接取
- *   ② 日文原名 + 机器翻译 → 作为 zh 值，**并在数据里标注来源**
- *      （机器翻译的作品名常有偏差，例如「呪術廻戦」应译作
- *        「咒術迴戰」而不是直译「咒术回战」—— 后者是简中译名，
- *        繁体用户会觉得别扭。所以机器翻译只适合做**兜底**，
- *        常用作品应维护一张译名表）
- *   ③ 人工维护一张「日文原名 → 中文译名」表，抓取时查表
- *      ★ 这是最适合 2.5 次元场景的做法：热门 IP 数量有限（几百个），
- *        而它们的官方中文译名是**稳定且唯一**的，值得人工维护。
- *        表放在 data/series.json 里（本文件已按这个结构设计）。
+ *  ★ 为什么不直接抓 /stage/*（搜索结果里全是它）：
+ *    搜索列表里「名探偵プリキュア！ドリームステージ♪」出现 **48 次**
+ *    （每个会場一条），直接抓会生产 48 部「同名公演」，
+ *    而它们其实是**同一部作品的 48 个档期**。
+ *    本站的 Show.runs 正是为这种「一部作品多档巡演」设计的 ——
+ *    所以必须从 stage 页爬回 stage_main，按作品合并。
  *
- *   ⚠️ 无论用哪条路径，都不允许出现「zh 为空字符串」：
- *      那会在中文模式下渲染出空白，而页面上看不出是数据缺失
- *      还是布局问题。validate() 会拦下这种情况。
+ *  ★ 归并键是 stage_main_id 而不是作品名：
+ *    同名作品（例如再演、前編/後編）名字相同或极相近，
+ *    按名字合并会把两部不同的公演并成一部。
+ *    stage_main_id 是 CoRich 的作品主键，唯一且稳定。
+ *
+ * ════════════════════════════════════════════════════════════════════
+ *  双语数据从哪来
+ * ════════════════════════════════════════════════════════════════════
+ *
+ *  CoRich 是纯日文站，所以每个面向用户的文案都要自己补中文。三条路径：
+ *
+ *   ① **译名表**（data/zh-names.json）→ 优先。
+ *      热门 IP 数量有限，而它们的官方中文译名是稳定且唯一的，
+ *      值得人工维护。实测机器翻译会把「刀剣乱舞」译成「剑乱舞」、
+ *      「呪術廻戦」译成「诅咒之战」—— 都是不可接受的。
+ *   ② **机器翻译**（MyMemory API，ja → zh-CN）→ 兜底。
+ *   ③ **OpenCC**（zh-CN → zh-Hant）→ 把②的结果转成繁体，
+ *      因为本站面向繁体中文圈（用词差异实打实：
+ *      「音乐剧」vs「音樂劇」，简繁不是字形替换而已）。
+ *
+ *  ★ 为什么②+③而不是直接翻成繁体：
+ *    MyMemory 的 ja→zh-TW 实测质量明显差于 ja→zh-CN
+ *    （「プリキュア」被译成「預治」），而 OpenCC 的简→繁是词典转换，
+ *    不会引入新的错译。翻得准比一步到位重要。
+ *
+ * ════════════════════════════════════════════════════════════════════
+ *  用法
+ * ════════════════════════════════════════════════════════════════════
+ *
+ *    node scripts/scrape.mjs              抓取（写 data/*.json + 下载海报）
+ *    node scripts/scrape.mjs --validate-only    只校验现有数据（不联网）
+ *    node scripts/scrape.mjs --no-posters      跳过海报下载
+ *    node scripts/scrape.mjs --no-translate    跳过机器翻译（只用译名表）
+ *
+ *  ★ 抓取是**幂等**的：结果只取决于源站当前数据，重复跑不会累积。
+ *    海报按 slug 命名，已存在且大小合理就跳过（可断点续跑）。
  */
 
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.resolve(__dirname, '../data');
+const ROOT = path.resolve(__dirname, '..');
+const DATA_DIR = path.join(ROOT, 'data');
+const POSTER_DIR = path.join(ROOT, 'public', 'posters');
+const CACHE_DIR = path.join(ROOT, '.cache');
 
 const args = new Set(process.argv.slice(2));
 const VALIDATE_ONLY = args.has('--validate-only');
+const NO_POSTERS = args.has('--no-posters');
+const NO_TRANSLATE = args.has('--no-translate');
+/** 强制对已缓存的海报重新取主色（改了取色算法后用） */
+const REBUILD_ACCENT = args.has('--rebuild-accent');
+/** 保留全部历史条目（不做半年时间窗过滤） */
+const KEEP_ALL = args.has('--keep-all');
+
+const UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36';
 
 /**
- * 数据源登记表
+ * 请求间隔（毫秒）
  *
- * ★ 为什么用「数组 + 统一的抓取函数签名」而不是一个 if/else 分支：
- *   2.5 次元公演没有单一权威数据源 —— 大型企划各有官网，
- *   中型企划只有 X（Twitter）账号，还有些只在票务平台上。
- *   所以必然是「多源合并」。统一签名让新增一个源只需要加一条记录，
- *   而合并、去重、冲突处理这些**共性问题**写在下面的 pipeline 里，
- *   每个源各自实现时必然会各写一遍（且写得不一样）。
- *
- * ★ 每一项的 enabled 为什么默认 false：
- *   抓取会真的发网络请求，可能被目标站限流甚至封禁。
- *   默认关闭，必须显式打开（`--source=xxx`），
- *   这样「跑一下脚本看看」不会无意中打出几百个请求。
+ * ★ 为什么必须限速：源站是用户共建的小站，抓取会打在它的 Rails 上。
+ *   并发打过去轻则被限流、重则把对方拖慢 —— 而本站的收益
+ *   （早 30 秒抓完）远小于「把数据源搞到封我们」的代价。
+ *   1.2s 是「够快又不失礼」的量级：62 部作品的详情页约需 2 分钟。
  */
-const SOURCES = [
-  {
-    id: 'sample',
-    name: '示範資料',
-    enabled: false,
-    /** 返回 RawShow[] */
-    async fetch() {
-      // 示范数据直接读文件 —— 它是手写的，不需要抓取
-      return JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'shows.json'), 'utf8'));
-    },
-  },
-  /*
-  {
-    id: 'official',
-    name: '各公演官方網站',
-    enabled: false,
-    async fetch() {
-      // 实现要点（接入时参考）：
-      //  1. 每个企划的官网结构不同 —— 用一个「站点适配器」表
-      //     （域名 → 解析函数），而不是给每个站写一份完整抓取
-      //  2. 必须设置 User-Agent 与合理的请求间隔（≥1s），
-      //     并在 robots.txt 允许的范围内抓取
-      //  3. 只抓**列表页与详情页的公开信息**，不碰需要登录的内容
-      //  4. 解析结果立刻归一化成 RawShow，不要把 HTML 带进 pipeline
-      return [];
-    },
-  },
-  {
-    id: 'eplus',
-    name: 'イープラス（票務平台）',
-    enabled: false,
-    async fetch() {
-      // 票务平台能提供**售票状态与场次**，这是官网常常没有的
-      // ⚠️ 但票务平台的条款通常禁止自动化访问 —— 接入前必须确认许可，
-      //    否则应改用「官方公告 + 人工更新」的方式
-      return [];
-    },
-  },
-  */
-];
+const DELAY_MS = 1200;
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * 原始条目 → 标准化 Show
+ * HTML 磁盘缓存
  *
- * ★ 为什么要有这一层（而不是让抓取函数直接产出最终的 Show）：
- *   不同源的同一条公演，字段名与粒度都不一样
- *   （A 站叫 `title_jp`，B 站叫 `name`；A 站给单个日期，B 站给期间）。
- *   如果把「翻译、补全、合并」散在各个抓取函数里，
- *   每加一个源就要重写一遍这些逻辑，且必然写得不一致。
- *   收在一个函数里之后，抓取函数只需老实返回它看到的东西。
+ * ★ 为什么需要它：调取色算法、调翻译、调归并逻辑都要**反复重跑**，
+ *   而每次重跑都把 178 个详情页 + 74 个会場页重新抓一遍 ——
+ *   既慢（约 6 分钟），又不必要地压在对方服务器上。
+ *   把抓到的 HTML 存进 .cache/ 后，除第一次外的重跑都是**离线**的：
+ *   几秒钟出结果，且不再打对方服务器。
  *
- * ★ 本函数目前是**恒等变换 + 补全默认值**：
- *   示范数据已经是最终结构，所以它只做校验性的补全。
- *   接入真实源时在这里加「翻译查表」「日期区间展开」「系列归并」。
+ * ★ 为什么缓存默认开、且没有「跳过缓存」的开关：
+ *   缓存过的 HTML 只在**当次抓取会话**内可信 —— 所以脚本结束时
+ *   会清掉（见 main 末尾）。若留到下次，就会拿到上周的档期
+ *   而当自己以为抓的是最新的 —— 那正是这类脚本最危险的一类 bug
+ *   （数据看起来正常，只是过期了）。
+ *   所以：会话内缓存加速迭代，会话结束即失效。
+ *
+ * ★ 为什么 key 用 URL 的哈希而不是 URL 本身：URL 里含日文与查询串，
+ *   直接做文件名在 Windows 上会撞上非法字符与长度限制。
  */
-function normalize(raw, sourceId) {
+const HTML_CACHE = new Map();
+const cachePath = (url) =>
+  path.join(CACHE_DIR, crypto.createHash('sha1').update(url).digest('hex') + '.html');
+
+/** 带重试的 GET。
+ *
+ * ★ 为什么要重试：源站在我们这种「连续翻页 + 详情页」的访问模式下
+ *   偶发 502/超时（实测出现过）。不重试的话一次抖动就丢一部作品，
+ *   而丢的那部**不会报错** —— 只是站上少一部，几天后才发现。
+ */
+async function get(url, { timeout = 20000, retries = 2 } = {}) {
+  if (HTML_CACHE.has(url)) return HTML_CACHE.get(url);
+  const file = cachePath(url);
+  if (fs.existsSync(file)) {
+    const cached = fs.readFileSync(file, 'utf8');
+    HTML_CACHE.set(url, cached);
+    return cached;
+  }
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), timeout);
+      const res = await fetch(url, {
+        headers: { 'User-Agent': UA, Accept: 'text/html,application/xhtml+xml' },
+        signal: ctrl.signal,
+      });
+      clearTimeout(t);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      HTML_CACHE.set(url, text);
+      try {
+        fs.mkdirSync(CACHE_DIR, { recursive: true });
+        fs.writeFileSync(file, text, 'utf8');
+      } catch {
+        /* 缓存写不进去不影响抓取本身 */
+      }
+      return text;
+    } catch (e) {
+      if (i === retries) throw e;
+      await sleep(1500 * (i + 1));
+    }
+  }
+}
+
+/** 抓二进制（海报） */
+async function getBinary(url, { timeout = 25000, retries = 2 } = {}) {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), timeout);
+      const res = await fetch(url, { headers: { 'User-Agent': UA }, signal: ctrl.signal });
+      clearTimeout(t);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const buf = Buffer.from(await res.arrayBuffer());
+      if (buf.length < 1024) throw new Error(`too small: ${buf.length}B`);
+      return buf;
+    } catch (e) {
+      if (i === retries) throw e;
+      await sleep(1200 * (i + 1));
+    }
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// HTML → 文本的小工具（不引 cheerio：源站结构稳定，正则够用且零依赖）
+//
+// ★ 为什么不用 cheerio：本脚本要能在「只有 node_modules 的基础依赖」
+//   下跑（部署机上不装 devDependencies 也能跑 validate）。
+//   而这里需要的只是「取出某个标签里的文字」，正则足够。
+// ────────────────────────────────────────────────────────────
+
+/** 去掉标签、折叠空白、解码常见实体
+ *
+ * ★ 必须容忍 null/undefined：解析用的正则在页面结构变化时经常匹配不到，
+ *   而调用方几乎都是 textOf(first(...)) —— 不加这一层，一次页面改版
+ *   就会让整个脚本崩在半路（已经抓到的几十部全丢）。
+ *   返回空字符串后，上层的「字段为空」分支会正常处理（跳到下一个源或留空）。
+ */
+function textOf(html) {
+  if (html == null) return '';
+  return String(html)
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&laquo;/g, '«')
+    .replace(/&raquo;/g, '»')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+/** 取第一个匹配的捕获组 */
+function first(re, s) {
+  const m = s.match(re);
+  return m ? m[1] : null;
+}
+
+// ────────────────────────────────────────────────────────────
+// 译名层
+// ────────────────────────────────────────────────────────────
+
+const zhNames = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'zh-names.json'), 'utf8'));
+
+/**
+ * 作品名 → 中文译名
+ *
+ * ★ 为什么先**查表**再考虑机器翻译：
+ *   实测机器翻译会把「刀剣乱舞」译成「剑乱舞」、「呪術廻戦」译成「诅咒之战」、
+ *   「ヒプノシスマイク」译成「师饶舌战」。这些名字在中文圈早有定译，
+ *   机器翻译的结果对 2.5 次元观众来说是**错的**（不只是别扭）。
+ *   表覆盖不到的长尾再走翻译，且翻译结果会被记入报告，便于人工补表。
+ */
+function lookupZh(jaTitle) {
+  // 长键优先：「新テニスの王子様」必须在「テニスの王子様」之前命中
+  const keys = Object.keys(zhNames.series).sort((a, b) => b.length - a.length);
+  for (const k of keys) {
+    if (jaTitle.includes(k)) return { zh: zhNames.series[k].zh, matched: k };
+  }
+  return null;
+}
+
+/** 从作品名推断系列 id（用于归并同一 IP 的不同公演） */
+function inferSeries(jaTitle) {
+  const keys = Object.keys(zhNames.series).sort((a, b) => b.length - a.length);
+  for (const k of keys) {
+    if (jaTitle.includes(k)) {
+      return { key: k, name: zhNames.series[k], kind: zhNames.sourceKind[k] ?? 'other' };
+    }
+  }
+  return null;
+}
+
+/** 简→繁转换（懒加载：只在真的要翻译时才 require，--no-translate 时零开销） */
+let toTrad = null;
+function trad(s) {
+  if (!toTrad) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const OpenCC = require('opencc-js');
+    toTrad = OpenCC.Converter({ from: 'cn', to: 'tw' });
+  }
+  return toTrad(s);
+}
+
+/** 翻译缓存：同一段文字只翻一次（省额度，也让重跑变快） */
+const TR_CACHE = new Map();
+
+/** 翻译失败的**原因**计数（最后汇总打印，便于判断要不要补译名表） */
+const TR_FAIL = { quota: 0, other: 0 };
+
+/**
+ * 机器翻译（MyMemory，免费额度）
+ *
+ * ★ 为什么它是**兜底**而不是主路径：见 lookupZh 的注释。
+ *
+ * ★ 为什么失败时返回 null 而不是返回原文：
+ *   返回原文等于「中文模式下显示日文」，页面上看不出是翻译失败
+ *   还是数据本来如此。返回 null 后调用方会回退到日文原名 ——
+ *   那至少是**真的**（日文原名不会错），且 validate 会统计出来。
+ *
+ * ★★ 为什么必须区分「额度用完」与「其他失败」★★
+ *   MyMemory 免费额度是**每日**限额（实测 5000 字/日量级），
+ *   超限后所有请求都返回 429 + 一段英文提示（而不是报错）。
+ *   若不区分，跑完看到「24 条简介是日文」只会以为是翻译质量差，
+ *   而真实原因是**额度没了**—— 明天重跑就有了。
+ *   这个区别决定了接下来该做什么（补译名表 vs 改天再跑），
+ *   所以要在输出里说清楚。
+ */
+async function translateToZh(ja) {
+  if (!ja) return null;
+  const key = ja.slice(0, 480);
+  if (TR_CACHE.has(key)) return TR_CACHE.get(key);
+
+  let out = null;
+  try {
+    const u =
+      'https://api.mymemory.translated.net/get?q=' +
+      encodeURIComponent(key) +
+      '&langpair=ja%7Czh-CN';
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 12000);
+    const res = await fetch(u, { signal: ctrl.signal });
+    clearTimeout(t);
+    const j = await res.json();
+    const raw = j?.responseData?.translatedText;
+    /*
+     * ★ 超额的三重识别，缺一不可：
+     *   ① HTTP 429 —— 最明确的信号
+     *   ② responseStatus 非 200
+     *   ③ 译文里出现 WARNING 文案 —— 有些情况下 HTTP 仍是 200，
+     *      但 translatedText 是一段英文提示。不识别就会把
+     *      「MYMEMORY WARNING: YOU USED ALL…」当成译文写进数据。
+     */
+    if (!res.ok || j.responseStatus !== 200 || !raw) {
+      if (res.status === 429 || /USAGE LIMIT|ALL AVAILABLE FREE/i.test(raw ?? '')) TR_FAIL.quota++;
+      else TR_FAIL.other++;
+      out = null;
+    } else if (/MYMEMORY WARNING|QUERY LENGTH LIMIT|USAGE LIMIT/i.test(raw)) {
+      TR_FAIL.quota++;
+      out = null;
+    } else {
+      out = trad(raw);
+    }
+  } catch {
+    TR_FAIL.other++;
+    out = null;
+  }
+
+  TR_CACHE.set(key, out);
+  return out;
+}
+
+// ────────────────────────────────────────────────────────────
+// 解析：搜索列表
+// ────────────────────────────────────────────────────────────
+
+/**
+ * 解析搜索结果页里的条目
+ *
+ * ★ 只取 5 个字段（id / 标题 / 团体 / 会場 / 档期），其余一律不在这里解析：
+ *   列表页是「够用来决定要不要抓详情页」的最小集合。
+ *   把「取全部字段」写在这里的话，源站列表页一改版，
+ *   整条 pipeline 就一起断；收窄到这几个字段则只有详情页解析需要改。
+ */
+function parseSearchPage(html) {
+  const out = [];
+  const re =
+    /<a href="\/stage\/(\d+)" class="list-group-item[\s\S]*?<p class="stage">([\s\S]*?)<\/p>[\s\S]*?<p class="group">([\s\S]*?)<\/p>[\s\S]*?<p class="theater">([\s\S]*?)<span class="pref">（([\s\S]*?)）[\s\S]*?<p class="period">[\s\S]*?(\d{4}\/\d{2}\/\d{2}) \(.\) ～ (\d{4}\/\d{2}\/\d{2}) \(.\)/g;
+  for (const m of html.matchAll(re)) {
+    out.push({
+      stageId: m[1],
+      title: textOf(m[2]),
+      group: textOf(m[3]),
+      theater: textOf(m[4]),
+      pref: textOf(m[5]),
+      start: m[6].replace(/\//g, '-'),
+      end: m[7].replace(/\//g, '-'),
+    });
+  }
+  return out;
+}
+
+/** 列表页里的海报图 URL（medium 尺寸） */
+function parseSearchPoster(html, stageId) {
+  const re = new RegExp(
+    '<a href="/stage/' +
+      stageId +
+      '" class="list-group-item[\\s\\S]*?<div class="pict"><img[^>]*src="([^"]+)"',
+  );
+  return first(re, html);
+}
+
+/** 总件数（用于翻页） */
+function parseHitCount(html) {
+  const m = html.match(/1-(\d+)件 \/ (\d+)件中/);
+  if (m) return { shown: +m[1], total: +m[2] };
+  if (/0-0件/.test(html)) return { shown: 0, total: 0 };
+  return null;
+}
+
+// ────────────────────────────────────────────────────────────
+// 解析：详情页（/stage_main/<id> 作品总页）
+// ────────────────────────────────────────────────────────────
+
+/**
+ * 作品总页 → 一部作品的完整数据
+ *
+ * ★ 为什么抓 stage_main 而不是 stage（单会場）：
+ *   巡演的全部档期只在总页上（单会場页只有自己那一档）。
+ *   本站的 Show.runs 就是为「一部作品多档」设计的，
+ *   总页一次拿全，比抓 N 个单会場页再合并省 N-1 次请求。
+ */
+function parseMainPage(html, mainId) {
+  const data = { mainId };
+
+  // 作品名
+  data.title = textOf(first(/<h1 class="name">([\s\S]*?)<\/h1>/, html) ?? '');
+  if (!data.title) return null;
+
+  // 分类（CoRich 的「2.5次元舞台」等大类）
+  data.category = textOf(first(/<div class="boxes category">\s*<span>([\s\S]*?)<\/span>/, html) ?? '');
+
+  // ★ kind 取 <p class="crown"> 而不是从标题里猜：
+  //   crown 是 CoRich 明确登记的「ミュージカル / 舞台 / 朗読劇」等形态，
+  //   而标题里的「ミュージカル」可能是作品名的一部分（例如某作品就叫
+  //   「○○ミュージカル」）。用登记值，不用推断值。
+  data.crown = textOf(first(/<p class="crown">(.*?)<\/p>/, html) ?? '');
+
+  // 副标题：2.5 次元公演普遍带「〜イーストサイドストーリー〜」这类后缀，
+  // 它往往是「这是哪一版」的关键，必须单独取。
+  data.subtitle = textOf(first(/<p class="subTitle">(.*?)<\/p>/, html) ?? '');
+
+  // 团体（制作委员会）
+  data.group = textOf(first(/<p class="group"><a[^>]*>([\s\S]*?)<\/a>/, html) ?? '');
+
+  // 官方站
+  const urls = [...html.matchAll(/<p class="urlLine">[\s\S]*?<a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g)];
+  data.officialUrl = urls.length ? urls[0][1] : null;
+
+  // 简介（説明）
+  //
+  // ★ 为什么空简介是**正常结果**而不是解析 bug：
+  //   CoRich 是用户共建库，「説明」这一格大量条目根本没填（实测 54 部里
+  //   有 24 部为空）。此时 <td> 是空标签 —— 解析正确，数据就是没有。
+  //   若为了「填满」而拿旁边的「スタッフ」或「その他注意事項」冒充简介，
+  //   用户会读到一串工作人员名单当剧情介绍 —— 那才是错的数据。
+  const descCell = first(/<th><a id="comment"><\/a>説明<\/th>\s*<td>([\s\S]*?)<\/td>/, html);
+  data.description = descCell ? textOf(descCell) : '';
+
+  // 出演 / スタッフ（表格行）
+  const rows = [...html.matchAll(/<tr>\s*<th>([\s\S]*?)<\/th>\s*<td>([\s\S]*?)<\/td>\s*<\/tr>/g)];
+  const cell = (name) => {
+    for (const r of rows) {
+      const th = textOf(r[1]);
+      if (th === name) return textOf(r[2]);
+    }
+    return '';
+  };
+  data.castRaw = cell('出演');
+  data.staffRaw = cell('スタッフ');
+  data.periodRaw = cell('期間');
+
+  // crown → kind（缺 crown 时退回标题推断）
+  const k = data.crown || data.title;
+  data.kind = /ミュージカル/.test(k)
+    ? 'musical'
+    : /朗読劇/.test(k)
+      ? 'event'
+      : /ライブ|コンサート/.test(k)
+        ? 'live'
+        : /アイスショー|スケート/.test(k)
+          ? 'ice'
+          : 'stage';
+
+  // 全巡演会場（select 里的 option）
+  //
+  // ★ 为什么要「全部」会場而不只取第一个：
+  //   搜索列表里的「主会場」是 CoRich 内部排序的结果（常是最后一场），
+  //   把它当首站会得到「巡演顺序倒着显示」的错。
+  //   这里按档期日期排序，首站就是真正最早开演的那一场。
+  data.venues = [];
+  const selRe = /(<select name="stage_id"[\s\S]*?<\/select>)/;
+  const sel = first(selRe, html);
+  if (sel) {
+    for (const m of sel.matchAll(/<option value="(\d+)">【(.+?)】\s*([\s\S]*?)<\/option>/g)) {
+      data.venues.push({ stageId: m[1], pref: m[2].trim(), name: textOf(m[3]) });
+    }
+  }
+  // 没有 select（单会場公演）时，用页面上的会場链接
+  if (!data.venues.length) {
+    const th = first(/<p class="theater"><a href="\/theater\/(\d+)">([\s\S]*?)<\/a><span class="pref">（([\s\S]*?)）/, html);
+    if (th) data.venues.push({ stageId: null, pref: textOf(th[3]), name: textOf(th[2]), theaterId: th[1] });
+  }
+
+  // 海报（large 尺寸优先；列表页的 m/460 只有 161px 宽，太糊）
+  data.posterMain =
+    first(/<img[^>]*src="(https:\/\/stage-image\.corich\.jp\/img_stage\/l\/\d+\/[^"]+?)"/, html) ??
+    first(/<img[^>]*src="(https:\/\/stage-image\.corich\.jp\/img_stage\/m\/\d+\/[^"]+?)"/, html);
+  if (data.posterMain && /nophoto/.test(data.posterMain)) data.posterMain = null;
+
+  return data;
+}
+
+/** 单会場页 → 该档的精确起止与场次数 */
+function parseStagePage(html) {
+  // ★ 注意：这里用 matchAll 取**整段**匹配，不能只取 first() 的第一个捕获组 ——
+  //   两个日期都是 (\d{4}\/\d{2}\/\d{2})，first() 只会返回第一个（开演日）。
+  const period = html.match(
+    /(\d{4}\/\d{2}\/\d{2}) \(.\) ～ (\d{4}\/\d{2}\/\d{2}) \(.\)\s*<\/td>/,
+  );
+  const rows = [...html.matchAll(/<tr>\s*<th>([\s\S]*?)<\/th>\s*<td>([\s\S]*?)<\/td>\s*<\/tr>/g)];
+  const cell = (name) => {
+    for (const r of rows) {
+      if (textOf(r[1]) === name) return textOf(r[2]);
+    }
+    return '';
+  };
+  const title = textOf(first(/<h1 class="name">([\s\S]*?)<\/h1>/, html) ?? '');
+  const theaterId = first(/<p class="theater"><a href="\/theater\/(\d+)">/, html);
+  const theaterName = textOf(first(/<p class="theater"><a href="\/theater\/\d+">([\s\S]*?)<\/a>/, html) ?? '');
+  const pref = textOf(first(/<span class="pref">（([\s\S]*?)）/, html) ?? '');
+
+  // 场次数：タイムテーブル 里「M月D日（X）」的出现次数
+  const tt = cell('タイムテーブル');
+  const perfCount = tt ? (tt.match(/\d{1,2}月\d{1,2}日/g) ?? []).length : 0;
+
   return {
-    ...raw,
-    source: raw.source ?? sourceId,
-    runs: raw.runs ?? [],
-    cast: raw.cast ?? [],
-    staff: raw.staff ?? [],
+    title,
+    theaterId,
+    theaterName,
+    pref,
+    start: period ? period[1].replace(/\//g, '-') : null,
+    end: period ? period[2].replace(/\//g, '-') : null,
+    performances: perfCount > 0 ? perfCount : null,
   };
 }
 
-/**
- * 数据校验
- *
- * ★ 这是本文件**当前最有价值的部分**：它可以在没有真实抓取的情况下
- *   立刻跑起来，把数据里的问题找出来。抓取接入后它会继续发挥同样作用 ——
- *   抓取脚本最容易出的错（字段缺失、日期颠倒、引用不存在的 ID）
- *   都是**静默**的，页面只会少显示一块，不会报错。
- *
- * ★ 为什么校验放在脚本里而不是用 JSON Schema / zod：
- *   这些规则里有一部分是**跨文件**的（show.seriesId 必须存在于 series.json、
- *   run.venueId 必须存在于 venues.json、status 必须与日期一致），
- *   JSON Schema 表达不了。用一个普通函数写清楚，比引一个库更直接，
- *   也更容易加「本站特有的约束」（例如双语字段不得为空）。
- */
-function validate({ shows, series, venues }) {
-  const errors = [];
-  const warnings = [];
+// ────────────────────────────────────────────────────────────
+// 会場
+// ────────────────────────────────────────────────────────────
 
-  const seriesIds = new Set(series.map((s) => s.id));
-  const venueIds = new Set(venues.map((v) => v.id));
-  const slugs = new Set();
-
-  const isDate = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
-  /** 取「今天」（日本时间）—— 与 lib/data.ts 用同一个基准，避免判定不一致 */
-  const todayJst = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
-
-  for (const s of shows) {
-    const where = `show「${s.slug ?? '(no slug)'}」`;
-
-    // ── 必填字段 ──
-    if (!s.slug) errors.push(`${where}: 缺少 slug`);
-    else if (slugs.has(s.slug)) errors.push(`${where}: slug 重复`);
-    else slugs.add(s.slug);
-
-    if (!s.title?.zh?.trim()) errors.push(`${where}: title.zh 为空（中文模式会渲染空白）`);
-    if (!s.title?.ja?.trim()) errors.push(`${where}: title.ja 为空（日文模式会渲染空白）`);
-    if (!s.summary?.zh?.trim()) warnings.push(`${where}: summary.zh 为空`);
-    if (!s.summary?.ja?.trim()) warnings.push(`${where}: summary.ja 为空`);
-
-    // ── 跨文件引用 ──
-    if (!seriesIds.has(s.seriesId)) {
-      errors.push(`${where}: seriesId「${s.seriesId}」不存在于 series.json`);
-    }
-    if (!s.runs?.length) {
-      errors.push(`${where}: runs 为空（详情页的档期表会是空白）`);
-    }
-    for (const r of s.runs ?? []) {
-      if (!venueIds.has(r.venueId)) {
-        errors.push(`${where}: run.venueId「${r.venueId}」不存在于 venues.json`);
-      }
-      if (!isDate(r.startDate)) errors.push(`${where}: run.startDate「${r.startDate}」不是 YYYY-MM-DD`);
-      if (!isDate(r.endDate)) errors.push(`${where}: run.endDate「${r.endDate}」不是 YYYY-MM-DD`);
-      if (isDate(r.startDate) && isDate(r.endDate) && r.startDate > r.endDate) {
-        errors.push(`${where}: run 的 startDate(${r.startDate}) 晚于 endDate(${r.endDate})`);
-      }
-    }
-
-    // ── 主色格式（它会被注入 CSS，格式错会导致整块背景失效）──
-    if (!/^#[0-9a-fA-F]{6}$/.test(s.accent ?? '')) {
-      errors.push(`${where}: accent「${s.accent}」不是 #RRGGBB 格式`);
-    }
-
-    // ── 与 lib/data.ts 的 status 判定保持一致 ──
-    if (s.runs?.length) {
-      const start = s.runs.reduce((a, r) => (r.startDate < a ? r.startDate : a), s.runs[0].startDate);
-      const end = s.runs.reduce((a, r) => (r.endDate > a ? r.endDate : a), s.runs[0].endDate);
-      const expect = end < todayJst ? 'ended' : start > todayJst ? 'upcoming' : 'now';
-      if (s.status && s.status !== expect) {
-        errors.push(
-          `${where}: status「${s.status}」与日期不符（${start}~${end} 应为「${expect}」）—— 静态导出下 status 由数据决定，写错会长期静默错误`,
-        );
-      }
-      if (s.startDate && s.startDate !== start) {
-        errors.push(`${where}: startDate「${s.startDate}」与 runs 的最小开始日「${start}」不一致`);
-      }
-      if (s.endDate && s.endDate !== end) {
-        errors.push(`${where}: endDate「${s.endDate}」与 runs 的最大结束日「${end}」不一致`);
-      }
-    }
-
-    // ── 重复会場（同一公演在同一会場有多档是合法的，但同一会場+同一开始日是重复）──
-    const seenRun = new Set();
-    for (const r of s.runs ?? []) {
-      const k = `${r.venueId}@${r.startDate}`;
-      if (seenRun.has(k)) warnings.push(`${where}: 重复的档期 ${k}`);
-      seenRun.add(k);
-    }
-  }
-
-  // ── 会場数据 ──
-  for (const v of venues) {
-    if (!v.id) errors.push(`venue「${v.name?.zh ?? '?'}」: 缺少 id`);
-    if (!v.name?.zh?.trim() || !v.name?.ja?.trim()) {
-      errors.push(`venue「${v.id}」: name 的 zh / ja 有缺失`);
-    }
-    if (!v.pref) warnings.push(`venue「${v.id}」: 缺少 pref（都道府県）`);
-    if (!v.city) errors.push(`venue「${v.id}」: 缺少 city（城市筛选依赖它）`);
-  }
-
-  // ── 系列数据 ──
-  for (const sr of series) {
-    if (!sr.id) errors.push(`series「${sr.name?.zh ?? '?'}」: 缺少 id`);
-    if (!sr.name?.zh?.trim() || !sr.name?.ja?.trim()) {
-      errors.push(`series「${sr.id}」: name 的 zh / ja 有缺失`);
-    }
-    if (!sr.original?.zh?.trim() || !sr.original?.ja?.trim()) {
-      errors.push(`series「${sr.id}」: original 的 zh / ja 有缺失`);
-    }
-    if (!sr.sourceKind) errors.push(`series「${sr.id}」: 缺少 sourceKind`);
-  }
-
-  // ── 孤立数据（有会場/系列但没有任何公演引用）──
-  const usedSeries = new Set(shows.map((s) => s.seriesId));
-  const usedVenues = new Set(shows.flatMap((s) => (s.runs ?? []).map((r) => r.venueId)));
-  for (const sr of series) {
-    if (!usedSeries.has(sr.id)) warnings.push(`series「${sr.id}」没有任何公演引用（列表页会显示 0 部）`);
-  }
-  for (const v of venues) {
-    if (!usedVenues.has(v.id)) warnings.push(`venue「${v.id}」没有任何公演引用`);
-  }
-
-  return { errors, warnings };
+/** 罗马字 slug（用于会場 id） */
+function slugifyVenue(ja, en) {
+  const base = (en && /^[A-Za-z0-9 .\-&'()]+$/.test(en) ? en : ja)
+    .toLowerCase()
+    .replace(/[（）()]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return base || 'venue';
 }
 
-/** 从磁盘读当前数据（校验用） */
+/** 会場名 → 中文（译名表 + 通用后缀） */
+function venueZh(ja) {
+  const map = {
+    帝国劇場: '帝國劇場',
+    'シアタークリエ': '劇場 Creation',
+    日生劇場: '日生劇場',
+    明治座: '明治座',
+    新橋演舞場: '新橋演舞場',
+    赤坂ACTシアター: '赤坂ACT劇場',
+    東京国際フォーラム: '東京國際論壇',
+    'TOKYO DOME CITY HALL': 'TOKYO DOME CITY HALL',
+    東京ドーム: '東京巨蛋',
+    日本武道館: '日本武道館',
+    国立劇場: '國立劇場',
+    'Bunkamuraオーチャードホール': 'Bunkamura 果園音樂廳',
+    大手町三井ホール: '大手町三井音樂廳',
+    神戸文化ホール: '神戶文化會館',
+    松山市民会館: '松山市民會館',
+    市民会館: '市民會館',
+    文化会館: '文化會館',
+    芸術劇場: '藝術劇場',
+    芸術文化センター: '藝術文化中心',
+    総合文化センター: '綜合文化中心',
+    県民ホール: '縣民音樂廳',
+    市民ホール: '市民音樂廳',
+    国際会議場: '國際會議場',
+    コンサートホール: '音樂廳',
+    大ホール: '大音樂廳',
+    中ホール: '中音樂廳',
+    小ホール: '小音樂廳',
+    シアター: '劇場',
+    ホール: '音樂廳',
+    劇場: '劇場',
+    会館: '會館',
+    センター: '中心',
+    東京: '東京',
+    大阪: '大阪',
+    京都: '京都',
+    名古屋: '名古屋',
+    福岡: '福岡',
+    札幌: '札幌',
+    仙台: '仙台',
+    広島: '廣島',
+    横浜: '橫濱',
+    神戸: '神戶',
+    埼玉: '埼玉',
+    千葉: '千葉',
+    静岡: '靜岡',
+    沖縄: '沖繩',
+  };
+  let out = ja;
+  // 长键优先，避免「市民会館」先把「文化会館」里的片段吃掉
+  for (const k of Object.keys(map).sort((a, b) => b.length - a.length)) {
+    out = out.split(k).join(map[k]);
+  }
+  return out;
+}
+
+/** 会場页 → 地址 / 座席数 */
+function parseTheaterPage(html) {
+  const name = textOf(first(/<h1 class="name">[\s\S]*?劇場<\/span>\s*([\s\S]*?)<\/h1>/, html) ?? '');
+  const info = first(/<div class="info">([\s\S]*?)<\/div>/, html) ?? '';
+  const zip = first(/〒(\d{7})/, info);
+  const seats = first(/座席数：(\d+)席/, info);
+  const addr = textOf(
+    info
+      .replace(/〒\d{7}/, '')
+      .replace(/座席数：\d+席/, '')
+      .replace(/【アクセス】[\s\S]*/, '')
+      .replace(/https?:\/\/\S+/, '')
+      .replace(/※[^\n]*/g, ''),
+  )
+    .split('\n')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return {
+    name,
+    zip,
+    seats: seats ? +seats : null,
+    address: addr.find((s) => /[都道府県]/.test(s)) ?? addr[0] ?? '',
+    tel: addr.find((s) => /^0\d/.test(s)) ?? null,
+  };
+}
+
+// ────────────────────────────────────────────────────────────
+// 主流程
+// ────────────────────────────────────────────────────────────
+
+/** 抓「2.5次元舞台」分类的全部条目 */
+async function fetchCategory() {
+  const all = [];
+  const seen = new Set();
+  for (let page = 1; page <= 10; page++) {
+    const url =
+      'https://stage.corich.jp/stage/search?utf8=%E2%9C%93&search=1&category_id=7&sort=start_desc&page=' +
+      page;
+    const html = await get(url);
+    const rows = parseSearchPage(html);
+    for (const r of rows) {
+      if (!seen.has(r.stageId)) {
+        seen.add(r.stageId);
+        all.push(r);
+      }
+    }
+    const hit = parseHitCount(html);
+    console.log(`  分类页 ${page}：${rows.length} 条（累计 ${all.length}）`);
+    if (!hit || all.length >= hit.total || rows.length === 0) break;
+    await sleep(DELAY_MS);
+  }
+  return all;
+}
+
+/** 关键字补抓：分类里没有的热门 IP */
+async function fetchByKeywords(keywords) {
+  const all = [];
+  const seen = new Set();
+  for (const kw of keywords) {
+    const url =
+      'https://stage.corich.jp/stage/search?utf8=%E2%9C%93&search=1&freeword=' +
+      encodeURIComponent(kw) +
+      '&freeword_type=title&sort=start_desc';
+    let html;
+    try {
+      html = await get(url);
+    } catch (e) {
+      console.warn(`  关键字「${kw}」抓取失败：${e.message}`);
+      continue;
+    }
+    const rows = parseSearchPage(html).filter((r) => r.title.includes(kw));
+    let n = 0;
+    for (const r of rows) {
+      if (!seen.has(r.stageId)) {
+        seen.add(r.stageId);
+        all.push(r);
+        n++;
+      }
+    }
+    console.log(`  关键字「${kw}」：${rows.length} 条中新增 ${n}`);
+    await sleep(DELAY_MS);
+  }
+  return all;
+}
+
+async function main() {
+  if (VALIDATE_ONLY) {
+    const data = readData();
+    const { errors, warnings } = validate(data);
+    report(data, errors, warnings);
+    return;
+  }
+
+  fs.mkdirSync(CACHE_DIR, { recursive: true });
+  fs.mkdirSync(POSTER_DIR, { recursive: true });
+
+  console.log('\n[1/7] 抓取「2.5次元舞台」分类 …');
+  const byCategory = await fetchCategory();
+  console.log(`  分类共 ${byCategory.length} 条（含同一作品的多个会場）`);
+
+  console.log('\n[2/7] 关键字补抓 …');
+  const KEYWORDS = [
+    '刀剣乱舞',
+    'テニスの王子様',
+    'ハイキュー',
+    '呪術廻戦',
+    '鬼滅の刃',
+    'ヒプノシスマイク',
+    'あんさんぶるスターズ',
+  ];
+  const byKeyword = await fetchByKeywords(KEYWORDS);
+
+  // 合并：以 stageId 为键（它们是「单会場」条目，后面会爬回 stage_main）
+  const stages = new Map();
+  for (const r of [...byCategory, ...byKeyword]) stages.set(r.stageId, r);
+  console.log(`\n  待解析的单会場条目：${stages.size}`);
+
+  console.log('\n[3/7] 抓详情页并归并为作品 …');
+  const works = new Map(); // stage_main_id → work
+  let done = 0;
+  for (const [stageId, row] of stages) {
+    done++;
+    let stageHtml;
+    try {
+      stageHtml = await get('https://stage.corich.jp/stage/' + stageId);
+    } catch (e) {
+      console.warn(`    ! /stage/${stageId} 失败：${e.message}`);
+      continue;
+    }
+    const mainId = first(/var stage_main_id = '(\d+)'/, stageHtml);
+    const st = parseStagePage(stageHtml);
+
+    let work = works.get(mainId ?? 'single-' + stageId);
+    if (!work) {
+      // 先取总页（有全部巡演会場）；单会場作品总页就是它自己
+      let mainHtml = stageHtml;
+      if (mainId) {
+        try {
+          await sleep(DELAY_MS);
+          mainHtml = await get('https://stage.corich.jp/stage_main/' + mainId);
+        } catch {
+          mainHtml = stageHtml; // 总页抓不到就退回单会場页
+        }
+      }
+      const parsed = parseMainPage(mainHtml, mainId);
+      if (!parsed) continue;
+      work = { ...parsed, runs: [], posters: [], firstStageId: stageId };
+      works.set(mainId ?? 'single-' + stageId, work);
+      if (parsed.posterMain) work.posters.push(parsed.posterMain);
+      await sleep(DELAY_MS);
+    }
+
+    // 这一档的精确日期：优先用单会場页（它才是「这一場」的档期）
+    if (st.start && st.end) {
+      work.runs.push({
+        stageId,
+        venueName: st.theaterName || row.theater,
+        venueJaFromSelect: null,
+        pref: st.pref || row.pref,
+        theaterId: st.theaterId,
+        start: st.start,
+        end: st.end,
+        performances: st.performances,
+      });
+    }
+    if (done % 10 === 0) console.log(`    ${done}/${stages.size} → 已归并 ${works.size} 部作品`);
+  }
+
+  // 用总页的 select 补全会場名（它带都道府県，且是官方登记的写法）
+  for (const w of works.values()) {
+    if (!w.venues?.length) continue;
+    const byId = new Map(w.venues.map((v) => [v.stageId, v]));
+    for (const r of w.runs) {
+      const v = byId.get(r.stageId);
+      if (v) {
+        r.venueName = v.name;
+        r.pref = v.pref;
+      }
+    }
+  }
+
+  /*
+   * ── 时间窗过滤 ──────────────────────────────────────────
+   *
+   * ★★ 为什么要过滤：CoRich 的分类页是「全部历史条目」 ★★
+   *   按 start_desc 翻完「2.5次元舞台」分类得到 62 条，归并后是
+   *   54 部作品 —— 但其中 **47 部已经结束**（最早到 2018 年）。
+   *   而本站的名字就叫「上演中 / 即將開演」，首页与列表页的主体
+   *   是「现在能看的」。一个 47/54 都是历史档案的站，
+   *   对用户是「点进去发现全都不能买票」—— 那比内容少更糟。
+   *
+   * ★ 为什么保留**半年内结束**的而不是只留未结束的：
+   *   只留 now/upcoming 的话此刻只剩 7 部（实测），列表页几乎是空的。
+   *   而刚结束的公演仍有价值（用户会搜「刚演完的那部」），
+   *   且它们在页面上有明确的「已結束」标记，不会误导。
+   *
+   * ★ 为什么是 180 天：2.5 次元公演从开演到出碟/再演通常在这个量级，
+   *   超过半年的条目基本只剩档案意义（那些在系列页里仍可查到）。
+   */
+  const TOTAL_SHOWS = works.size;
+  if (!KEEP_ALL) {
+    const today = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
+    const cutoff = new Date(Date.now() + 9 * 3600_000 - 180 * 86400_000).toISOString().slice(0, 10);
+    let dropped = 0;
+    for (const [k, w] of works) {
+      if (!w.runs.length) {
+        works.delete(k);
+        dropped++;
+        continue;
+      }
+      const end = w.runs.reduce((a, r) => (r.end > a ? r.end : a), w.runs[0].end);
+      if (end < cutoff) {
+        works.delete(k);
+        dropped++;
+      }
+    }
+    console.log(`\n  时间窗过滤：保留 ${works.size} 部（截至 ${today}，半年前结束的 ${dropped} 部已剔除）`);
+    console.log(`  （加 --keep-all 可保留全部 ${TOTAL_SHOWS} 部历史档案）`);
+  }
+
+  console.log('\n[4/7] 生成中文文案 …');
+  const shows = [];
+  const seriesMap = new Map();
+  const venueMap = new Map();
+  const untranslated = [];
+
+  for (const w of works.values()) {
+    if (!w.runs.length) continue;
+    w.runs.sort((a, b) => a.start.localeCompare(b.start) || a.end.localeCompare(b.end));
+
+    const jaTitle = w.title;
+
+    /*
+     * ★★ 中文标题 = 「译名表命中的作品名」 + 「原文保留的其余部分」 ★★
+     *
+     *   初版把整个标题丢给译名表，命中「呪術廻戦」就把
+     *   「舞台「呪術廻戦」-懐玉・玉折-」整条换成「咒術迴戰」——
+     *   于是列表里出现 6 条都叫「咒術迴戰」的公演，用户分不出哪一版。
+     *   而副标题（「-懐玉・玉折-」「其ノ弐 絆」）恰恰是区分版本的关键。
+     *
+     *   所以这里只**替换命中的那一段**，其余原样保留：
+     *     舞台「呪術廻戦」-懐玉・玉折-  →  舞台「咒術迴戰」-懐玉・玉折-
+     *   日文汉字（懐玉・玉折、其ノ弐）中文读者看得懂，
+     *   而它们没有权威译名 —— 保留原文比硬翻更诚实。
+     */
+    const hit = lookupZh(jaTitle);
+    let zhTitle = null;
+    let zhSubtitle = null;
+    if (hit) {
+      zhTitle = jaTitle.split(hit.matched).join(hit.zh);
+      if (w.subtitle) zhSubtitle = w.subtitle;
+    } else if (!NO_TRANSLATE) {
+      // 未命中译名表：整条走机器翻译
+      const t = await translateToZh(jaTitle);
+      if (t) {
+        zhTitle = t;
+        if (w.subtitle) {
+          const ts = await translateToZh(w.subtitle);
+          zhSubtitle = ts ?? w.subtitle;
+        }
+        untranslated.push({ ja: jaTitle, zh: zhTitle });
+      }
+    }
+    if (!zhTitle) {
+      /*
+       * ★ 翻译失败时回退日文原名，而不是留空：
+       *   空字符串在中文模式下会渲染成空白，用户看不出是「没有中文名」
+       *   还是「页面坏了」。日文原名至少是真实存在的名字。
+       */
+      zhTitle = jaTitle;
+      if (w.subtitle) zhSubtitle = w.subtitle;
+      untranslated.push({ ja: jaTitle, zh: null });
+    }
+
+    const ser = inferSeries(jaTitle);
+    /*
+     * ★ 系列 id 也用罗马字键，理由与 slug 相同：
+     *   它会烘进 /series/<id>/index.html 的目录名。
+     *   日文 id（/series/呪術廻戦/）在分享链接里会被编码成
+     *   /series/%E5%91%AA%E8%A1%93%E5%BB%BB%E6%88%A6/ ——
+     *   既不友好，也让 sitemap 里出现一长串百分号。
+     */
+    const seriesId = ser ? slugKey(romanOf(ser.key)) : fallbackSeriesId(jaTitle);
+    if (!seriesMap.has(seriesId)) {
+      seriesMap.set(seriesId, {
+        id: seriesId,
+        name: ser ? { zh: ser.name.zh, ja: ser.name.ja } : { zh: zhTitle, ja: jaTitle },
+        original: {
+          zh: `《${ser ? ser.name.zh : jaTitle}》`,
+          ja: `『${ser ? ser.name.ja : jaTitle}』`,
+        },
+        sourceKind: ser?.kind ?? 'other',
+      });
+    }
+
+    // 会場
+    const venueIds = [];
+    for (const r of w.runs) {
+      // ★ 会場 id 为什么用「CoRich 的 theaterId」而不是会場名：
+      //   会場名是日文（slug 化后 URL 不可读），而且同一个会場在站上
+      //   常有几种写法（「松山市民会館」/「松山市民会館　大ホール」）,
+      //   按名字做 key 会把同一会場拆成两个。theaterId 是源站主键，
+      //   唯一且稳定。没有 theaterId 时（极少数）才退回名字 slug。
+      const vid =
+        r.theaterId
+          ? 'v' + r.theaterId
+          : slugifyVenue(r.venueName, r.venueName) + '-' + (r.theaterId ?? 'x');
+      if (!venueMap.has(vid)) {
+        venueMap.set(vid, {
+          id: vid,
+          name: { zh: venueZh(r.venueName), ja: r.venueName },
+          pref: r.pref ?? '',
+          city: cityOf(r.pref ?? ''),
+          address: '',
+          seats: null,
+          theaterId: r.theaterId ?? null,
+        });
+      }
+      if (!venueIds.includes(vid)) venueIds.push(vid);
+      r.venueId = vid;
+    }
+
+    const start = w.runs[0].start;
+    const end = w.runs.reduce((a, r) => (r.end > a ? r.end : a), w.runs[0].end);
+    const zhSummary = w.description && !NO_TRANSLATE ? await translateToZh(w.description) : null;
+
+    shows.push({
+      slug: makeSlug(jaTitle, w.mainId),
+      title: { zh: zhTitle, ja: jaTitle },
+      subtitle: w.subtitle ? { zh: zhSubtitle ?? w.subtitle, ja: w.subtitle } : undefined,
+      seriesId,
+      company: w.group || '',
+      kind: w.kind,
+      startDate: start,
+      endDate: end,
+      runs: w.runs.map((r) => ({
+        venueId: r.venueId,
+        startDate: r.start,
+        endDate: r.end,
+        performances: r.performances,
+      })),
+      poster: null,
+      posterSrc: w.posters[0] ?? null,
+      /*
+       * 主色：抓到海报后由 sharp 从图里取；抓不到时用兜底色。
+       *
+       * ★ 为什么不能写死一个色：示意海报（PosterArt）会按 accent 生成
+       *   渐变底，详情页头部的主色氛围层也用它。若全部作品共用一个色，
+       *   列表页就变成一整面同色卡片 —— 而 accent 的本职正是
+       *   「在无海报时也能区分作品」。
+       *
+       * ★ 为什么是**抓完海报后回填**而不是在这里算：
+       *   取色需要图片数据，而图片在第 6 步才下载。
+       *   这里先放兜底色，第 6 步算出来后覆盖 —— 保证任何情况下
+       *   accent 都是合法的 #RRGGBB（validate 会查格式）。
+       */
+      accent: '#6b46e5',
+      officialUrl: w.officialUrl || null,
+      ticketUrl: null,
+      cast: splitNames(w.castRaw),
+      staff: parseStaff(w.staffRaw),
+      summary: {
+        zh: zhSummary ?? w.description,
+        ja: w.description,
+      },
+      source: 'corich',
+      sourceUrl: w.mainId
+        ? 'https://stage.corich.jp/stage_main/' + w.mainId
+        : 'https://stage.corich.jp/stage/' + w.firstStageId,
+    });
+
+    await sleep(120); // 翻译接口也限速
+  }
+
+  /*
+   * 翻译结果汇总
+   *
+   * ★ 为什么这一块必须**说清原因**而不是只报数字：
+   *   「有 N 条没翻成中文」这句话本身不构成行动依据。
+   *   真实原因可能是：① 译名表没覆盖（→ 该去补表）；
+   *   ② 免费额度用完（→ 明天重跑即可）；③ 网络失败（→ 重跑）。
+   *   三种原因对应三种不同的下一步，混在一起报数字等于没报。
+   */
+  const failed = untranslated.filter((u) => !u.zh);
+  console.log(`\n  中文标题：译名表/翻译命中 ${shows.length - failed.length} 部`);
+  if (failed.length) {
+    const why =
+      TR_FAIL.quota > 0
+        ? `翻译额度已用完（${TR_FAIL.quota} 次被拒）—— 属当日限额，隔天重跑即可`
+        : `翻译失败 ${TR_FAIL.other} 次`;
+    console.log(`  ⚠ ${failed.length} 部暂用日文原名：${why}`);
+    for (const u of failed.slice(0, 15)) console.log(`    · ${u.ja}`);
+    console.log('    → 建议：把它们的官方中文译名加进 data/zh-names.json');
+  }
+  if (TR_FAIL.quota > 0) console.log(`\n  ℹ 本次翻译请求被额度拒绝 ${TR_FAIL.quota} 次（MyMemory 每日限额）`);
+
+  console.log('\n[5/7] 补会場详情（地址 / 座席数）…');
+  await enrichVenues(venueMap);
+
+  console.log('\n[6/7] 下载海报并取主色 …');
+  if (NO_POSTERS) {
+    console.log('  （--no-posters，跳过）');
+  } else {
+    const sharp = (await import('sharp')).default;
+    let ok = 0;
+    let fail = 0;
+    for (const s of shows) {
+      if (!s.posterSrc) continue;
+      const outName = s.slug + '.webp';
+      const outPath = path.join(POSTER_DIR, outName);
+      // 幂等：已存在且非空就跳过（可断点续跑）
+      if (fs.existsSync(outPath) && fs.statSync(outPath).size > 2000) {
+        s.poster = '/posters/' + outName;
+        /*
+         * 已有图也要取色。
+         *
+         * ★ 为什么不能只在「新下载」时取：取色算法会改（例如这次
+         *   加了亮度上限），而海报文件是缓存的、不会重下 ——
+         *   若跳过已存在的图，改了算法也永远不会生效，
+         *   表现为「明明改了代码，线上主色没变」。
+         *
+         * ★ 为什么只在 accent 仍是兜底色、或显式要求时重算：
+         *   取色要读盘 + 解码 51 张图，每次全跑是白花的几秒。
+         */
+        if (REBUILD_ACCENT || s.accent === '#6b46e5') {
+          const c = await dominantColor(sharp, outPath);
+          if (c) s.accent = c;
+        }
+        continue;
+      }
+      try {
+        const buf = await getBinary(s.posterSrc);
+        /*
+         * 裁成 2:3（海报的标准比例）后压成 WebP。
+         *
+         * ★ 为什么必须在构建期压好：本站是静态导出
+         *   （next.config.ts 的 images.unoptimized = true），没有运行时
+         *   图片优化器。原图有 400KB+ 的 JPEG，54 张就是 20MB+，
+         *   首屏会直接卡在下载上。压到 460×613 / q78 后单张约 20~40KB。
+         *
+         * ★ fit: 'cover' + position: 'top'：海报的上半部是标题与角色脸，
+         *   居中被裁会把主视觉切掉一半（实测过几张纵长图）。
+         */
+        await sharp(buf)
+          .resize(460, 613, { fit: 'cover', position: 'top' })
+          .webp({ quality: 78 })
+          .toFile(outPath);
+        s.poster = '/posters/' + outName;
+        const c = await dominantColor(sharp, outPath);
+        if (c) s.accent = c;
+        ok++;
+      } catch (e) {
+        fail++;
+        console.warn(`    ! ${s.slug} 海报失败：${e.message}`);
+      }
+      await sleep(300);
+    }
+    console.log(`  海报：成功 ${ok}，失败 ${fail}`);
+  }
+
+  console.log('\n[7/7] 校验并写入 …');
+  for (const s of shows) delete s.posterSrc;
+
+  const series = [...seriesMap.values()];
+  const venues = [...venueMap.values()];
+  const { errors, warnings } = validate({ shows, series, venues });
+  report({ shows, series, venues }, errors, warnings);
+  if (errors.length) {
+    console.error('\n✗ 校验未通过，未写入 data/*.json');
+    process.exitCode = 1;
+    return;
+  }
+
+  writeJson('shows.json', shows);
+  writeJson('series.json', series);
+  writeJson('venues.json', venues);
+  console.log(
+    `\n✓ 已写入 data/：${shows.length} 部公演 / ${series.length} 个系列 / ${venues.length} 个会場`,
+  );
+}
+
+// ────────────────────────────────────────────────────────────
+// 辅助
+// ────────────────────────────────────────────────────────────
+
+function slugKey(ja) {
+  return (
+    ja
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, '-')
+      .replace(/^-+|-+$/g, '') || 'series'
+  );
+}
+
+function fallbackSeriesId(jaTitle) {
+  return slugKey(jaTitle).slice(0, 40);
+}
+
+/**
+ * slug 生成
+ *
+ * ★★ 为什么用「系列英文键 + 序号 + 源站 ID」，而不是日文标题 ★★
+ *
+ *   初版直接把日文标题 slug 化，得到的 URL 是
+ *     /show/舞台-呪術廻戦-渋谷事変-前編-484152
+ *   中文标题更糟（拼音/汉字混排，且不同作品 slug 化后可能撞名）。
+ *   而 slug 会烘进**静态产物的目录名**，一旦上线就是 SEO 与分享链接的一部分 ——
+ *   日文 slug 在微信/Twitter 里转码后极长且难读。
+ *
+ *   现在取「系列名的罗马字 + 该系列内第几部 + 源站 primary key」：
+ *     咒術迴戰 第 1 部（mainId 484152）→ jujutsu-kaisen-1-484152
+ *   既可读（英文键来自译名表，是稳定的），又恒唯一（带源站 ID）。
+ */
+function makeSlug(jaTitle, mainId) {
+  const ser = inferSeries(jaTitle);
+  const base = ser ? slugKey(romanOf(ser.key)) : slugKey(jaTitle).slice(0, 30);
+  return `${base || 'show'}-${mainId ?? 'x'}`;
+}
+
+/** 日文键 → 罗马字（只覆盖译名表里出现过的键，够用且不引依赖） */
+const ROMAN = {
+  刀剣乱舞: 'touken-ranbu',
+  '刀剣乱舞-ONLINE-': 'touken-ranbu',
+  'テニスの王子様': 'tennis-no-oujisama',
+  '新テニスの王子様': 'shin-tennis-no-oujisama',
+  ハイキュー: 'haikyuu',
+  'ハイキュー!!': 'haikyuu',
+  呪術廻戦: 'jujutsu-kaisen',
+  鬼滅の刃: 'kimetsu-no-yaiba',
+  ヒプノシスマイク: 'hypnosis-mic',
+  あんさんぶるスターズ: 'ensemble-stars',
+  '東京卍リベンジャーズ': 'tokyo-revengers',
+  アイドルマスター: 'idolmaster',
+  ラブライブ: 'love-live',
+  'ラブライブ!': 'love-live',
+  BLEACH: 'bleach',
+  NARUTO: 'naruto',
+  'ONE PIECE': 'one-piece',
+  ワンピース: 'one-piece',
+  進撃の巨人: 'attack-on-titan',
+  'SPY×FAMILY': 'spy-family',
+  弱虫ペダル: 'yowamushi-pedal',
+  KINGDOM: 'kingdom',
+  キングダム: 'kingdom',
+  名探偵コナン: 'conan',
+  名探偵プリキュア: 'precure',
+  プリキュア: 'precure',
+  '青春-AOHARU-鉄道': 'aoharu-tetsudou',
+  'TIGER & BUNNY': 'tiger-and-bunny',
+  PandoraHearts: 'pandora-hearts',
+  本好きの下剋上: 'honzuki-no-gekokujou',
+  刀使ノ巫女: 'toji-no-miko',
+  アイカツ: 'aikatsu',
+  'ぼっち・ざ・ろっく': 'bocchi-the-rock',
+  うる星やつら: 'urusei-yatsura',
+  あの日見た花: 'anohana',
+  僕のヒーローアカデミア: 'my-hero-academia',
+  ヒロアカ: 'my-hero-academia',
+  文豪ストレイドッグス: 'bungo-stray-dogs',
+  黒執事: 'kuroshitsuji',
+  ウマ娘: 'uma-musume',
+  アズールレーン: 'azur-lane',
+  'Fate/Grand Order': 'fgo',
+  Fate: 'fate',
+  ペルソナ: 'persona',
+  逆転裁判: 'gyakuten-saiban',
+  銀魂: 'gintama',
+  斉木楠雄のΨ難: 'saiki-kusuo',
+  るろうに剣心: 'rurouni-kenshin',
+  'ハンター×ハンター': 'hunter-x-hunter',
+  '幽☆遊☆白書': 'yuyu-hakusho',
+  忍たま乱太郎: 'nintama-rantaro',
+  美少女戦士セーラームーン: 'sailor-moon',
+  ドラゴンボール: 'dragon-ball',
+  '遊☆戯☆王': 'yu-gi-oh',
+  '金色のガッシュ!!': 'gash-bell',
+  デジモン: 'digimon',
+};
+
+function romanOf(key) {
+  return ROMAN[key] ?? key;
+}
+
+/** 職掌 日文 → 中文（译名表之外，职掌是固定术语，值得写死） */
+const ROLE_ZH = {
+  脚本: '劇本',
+  脚本演出: '劇本・導演',
+  '脚本・演出': '劇本・導演',
+  演出: '導演',
+  振付: '編舞',
+  音楽: '音樂',
+  作曲: '作曲',
+  美術: '美術',
+  舞台美術: '舞台美術',
+  衣裳: '服裝',
+  殺陣: '武打指導',
+  アクション監督: '動作指導',
+  照明: '燈光',
+  音響: '音響',
+  映像: '影像',
+  ヘアメイク: '髮妝',
+  歌唱指導: '歌唱指導',
+  演出助手: '助理導演',
+  舞台監督: '舞台監督',
+  宣伝美術: '宣傳美術',
+  宣伝写真: '宣傳攝影',
+  制作: '製作',
+  主催: '主辦',
+  企画: '企劃',
+  原作: '原作',
+  原作者: '原作',
+  協力: '協力',
+};
+
+function splitNames(s) {
+  if (!s) return [];
+  return s
+    .split(/[、,，／\/]/)
+    .map((x) => x.trim())
+    .filter((x) => x && x.length < 40);
+}
+
+/**
+ * 「脚本・演出・作詞：川尻恵太（SUGARBOY）」→ StaffMember[]
+ *
+ * ★ 分隔符为什么是「：」而不是「/」：
+ *   CoRich 的スタッフ格是「職掌：人名」，用全角冒号分行。
+ *   只有少数条目写成「脚本/人名」。按「/」切会把
+ *   「マーベラス/ネルケプランニング/KADOKAWA」这类公司名也切成三份。
+ *   先按行切（br / 全角空格 / 顿号），再按第一个「：」或「/」拆角色与人名。
+ */
+function parseStaff(s) {
+  if (!s) return [];
+  const out = [];
+  for (const part of s.split(/[\n　、]/)) {
+    const line = part.trim();
+    if (!line) continue;
+    // 只取第一个分隔符，人名里常带括号与「＋」
+    const m = line.match(/^(.+?)[：:／\/](.+)$/);
+    if (!m) continue;
+    const roleJa = m[1].trim();
+    const name = m[2].trim();
+    // 角色名过长说明这不是「职掌：人名」结构（多半是公司名或原作信息）
+    if (!roleJa || !name || roleJa.length > 12) continue;
+    const roleZh = ROLE_ZH[roleJa] ?? roleJa;
+    out.push({ role: { zh: roleZh, ja: roleJa }, name });
+  }
+  return out;
+}
+
+/**
+ * 都道府県 → 城市（本站筛选按城市聚合）
+ *
+ * ★ 为什么北海道要**单独**处理：它不是「〜県」，后缀是「道」。
+ *   直接 replace(/[都道府県]$/) 会把「北海道」切成「北海」——
+ *   于是筛选按钮上出现一个不存在的城市名「北海」。
+ *   这类错误很隐蔽：筛选功能完全正常（「北海」也能筛），
+ *   只有北海道的用户会看到自己的家乡被写错。
+ */
+function cityOf(pref) {
+  if (pref === '北海道') return '札幌';
+  const t = pref.replace(/(都|府|県)$/, '');
+  const map = {
+    東京: '東京',
+    大阪: '大阪',
+    京都: '京都',
+    愛知: '名古屋',
+    福岡: '福岡',
+    宮城: '仙台',
+    広島: '広島',
+    神奈川: '横浜',
+    埼玉: 'さいたま',
+    兵庫: '神戸',
+    千葉: '千葉',
+    静岡: '静岡',
+    沖縄: '那覇',
+  };
+  return map[t] ?? t;
+}
+
+/**
+ * 补会場的地址与座席数（/theater/<id> 单页）
+ *
+ * ★ 为什么要单独再抓一轮：搜索结果里只有会場名与都道府県，
+ *   而会場详情页上会显示「地址」「座席数」—— 用户要判断
+ *   「这个会場在哪、多大」，这两项是必需信息。
+ *
+ * ★ 为什么失败时**静默跳过**而不是报错：
+ *   会場详情是**增强信息**，不是必需信息。地址缺失只是会場页上少一行，
+ *   而让整轮抓取因为它失败而中断，会连已经抓到的 54 部公演一起丢。
+ *   所以个别会場抓不到就留空（页面已有 pref/city 兜底），
+ *   只在最后统计一下成功率。
+ */
+async function enrichVenues(venueMap) {
+  let ok = 0;
+  let fail = 0;
+  let n = 0;
+  for (const v of venueMap.values()) {
+    if (!v.theaterId) continue;
+    n++;
+    try {
+      const html = await get('https://stage.corich.jp/theater/' + v.theaterId);
+      const info = parseTheaterPage(html);
+      if (info.address) v.address = info.address;
+      // ★ 座席数只接受 > 0：CoRich 上大量会場登记的是「0 席」
+      //   （那是「未登记」，不是「没有座位」）。把 0 写进去会渲染成
+      //   「座席數 0」，用户会当成真信息。
+      if (info.seats && info.seats > 0) v.seats = info.seats;
+      if (info.name) v.name.ja = info.name;
+      ok++;
+    } catch (e) {
+      fail++;
+    }
+    await sleep(DELAY_MS * 0.5);
+    if (n % 20 === 0) console.log(`    ${n} 个会場…（成功 ${ok}）`);
+  }
+  console.log(`  会場详情：成功 ${ok}，失败 ${fail}`);
+}
+
+/**
+ * 从海报取主色（返回 #RRGGBB）
+ *
+ * ★★ 为什么不能用 stats().dominant（实测踩到的坑）★★
+ *   dominant 是「出现最多的量化色」。而 2.5 次元海报的结构是
+ *   「大片留白 + 深色边框 + 中间的角色」，于是 dominant 实测大量落在
+ *   **248（白留白）** 或 **8（黑边/暗底）** 上 —— 51 张里只有 9 张
+ *   取到了真正的作品色，其余全是纯白或纯黑。
+ *   纯白主色会让详情页的氛围层变成一片白、把白字吃掉；
+ *   纯黑则等于没有主色。
+ *
+ *   所以这里改为：先**丢弃**留白与死黑像素，再对剩下的取平均。
+ *   平均色才代表「这张海报整体的色调」—— 这也是 hkmovie
+ *   （scripts/poster-colors.mjs）的做法。
+ *
+ * ★ 阈值为什么是 L>0.80 / L<0.04：
+ *   留白实测是 248（L=0.94），黑边是 8（L=0.002）。
+ *   但海报本身也可能是**深色系**（舞台剧海报常见暗底）——
+ *   若把阈值定得太高（例如 L<0.15 就丢），暗底海报会被整张丢光，
+ *   取不出色。0.04 能丢掉纯黑边框而保留暗底。
+ *
+ * ★ 返回值一定是合法 #RRGGBB：accent 会被注入 CSS，
+ *   格式错会导致整块背景失效（validate 也查这一项）。
+ */
+async function dominantColor(sharp, file) {
+  try {
+    const SIZE = 48;
+    const { data } = await sharp(file)
+      .resize(SIZE, SIZE, { fit: 'cover' })
+      .removeAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    const lin = (v) => {
+      const c = v / 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    };
+    const lum = (r, g, b) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+
+    let r = 0;
+    let g = 0;
+    let b = 0;
+    let n = 0;
+    for (let i = 0; i < data.length; i += 3) {
+      const R = data[i];
+      const G = data[i + 1];
+      const B = data[i + 2];
+      const L = lum(R, G, B);
+      if (L > 0.8 || L < 0.04) continue;
+      r += R;
+      g += G;
+      b += B;
+      n++;
+    }
+    // 可用像素太少（整张都是留白或死黑）→ 放弃，保留兜底色
+    if (n < SIZE * SIZE * 0.06) return null;
+
+    r = Math.round(r / n);
+    g = Math.round(g / n);
+    b = Math.round(b / n);
+
+    /*
+     * 提饱和：平均色天然偏灰（把整张图的色相混在一起了）。
+     *
+     * ★ 为什么必须提：主色的用途之一是示意海报的底色，
+     *   而 PosterArt 会按它做渐变 —— 用平均灰做出来的示意海报
+     *   在网格里是一片看不出差别的灰。
+     *   1.45 倍（以中灰为轴心外推）后色相可辨，又不会变成荧光色。
+     *
+     * ★ 为什么用「外推」而不是乘：乘以系数会把暗色压得更暗，
+     *   而海报主色常常就是暗色（深蓝、暗红）。
+     */
+    const mid = 128;
+    const ext = (v) => Math.max(0, Math.min(255, Math.round(mid + (v - mid) * 1.45)));
+    r = ext(r);
+    g = ext(g);
+    b = ext(b);
+
+    /*
+     * ★★ 亮度上限：过亮的主色必须压回暗调 ★★
+     *
+     *   主色在本站有两个用途：① 详情页头部的主色氛围层（.jp-accent-panel）；
+     *   ② 无海报时示意海报的底色。两者都是**暗底**场景 ——
+     *   氛围层要托住浅色文字，示意海报要托住白字。
+     *
+     *   而实测（接入真实抓取后）有 10/51 张海报的平均色亮度超过 0.35，
+     *   最亮的一张是 #FECDED（L=0.71，粉白）。用这种色做氛围层，
+     *   暗色主题下的次级文字（dim #90909A）实测掉到 **2.70:1** ——
+     *   远低于 AA 的 4.5。
+     *
+     *   修法是在**取色端**把亮度压到 0.28 以下（向近黑混），
+     *   而不是在 CSS 里再调 alpha：alpha 是按「主色是暗色」这个前提
+     *   标定的（见 --jp-accent-panel 的 0.70× 扫描），
+     *   为了几张亮色海报去改它，会让其余 41 张的主色都变弱。
+     *
+     *   ★ 为什么是 0.28：低于它之后，「亮海报」与「暗海报」的主色
+     *     在页面上就分不出来了（都变成同一档暗色）。
+     *     0.28 仍明显亮于最暗的 #4C2C5C（L=0.04），层次保住了。
+     */
+    const lumOf = (rr, gg, bb) => 0.2126 * lin(rr) + 0.7152 * lin(gg) + 0.0722 * lin(bb);
+    let L2 = lumOf(r, g, b);
+    if (L2 > 0.28) {
+      // 二分出混向近黑的比例（比解析求解简单，且足够精确）
+      let lo = 0;
+      let hi = 1;
+      for (let i = 0; i < 24; i++) {
+        const t = (lo + hi) / 2;
+        const L3 = lumOf(
+          Math.round(r + (12 - r) * t),
+          Math.round(g + (12 - g) * t),
+          Math.round(b + (14 - b) * t),
+        );
+        if (L3 > 0.28) lo = t;
+        else hi = t;
+      }
+      const t = hi;
+      r = Math.round(r + (12 - r) * t);
+      g = Math.round(g + (12 - g) * t);
+      b = Math.round(b + (14 - b) * t);
+    }
+
+    return '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('');
+  } catch {
+    return null;
+  }
+}
+
 function readData() {
   const read = (f) => JSON.parse(fs.readFileSync(path.join(DATA_DIR, f), 'utf8'));
   return { shows: read('shows.json'), series: read('series.json'), venues: read('venues.json') };
 }
 
-async function main() {
-  const enabled = SOURCES.filter((s) => s.enabled);
+function writeJson(name, data) {
+  fs.writeFileSync(path.join(DATA_DIR, name), JSON.stringify(data, null, 2) + '\n', 'utf8');
+}
 
-  if (!VALIDATE_ONLY) {
-    if (enabled.length === 0) {
-      console.log(
-        [
-          '',
-          '抓取脚本尚未接入真实数据源（SOURCES 里所有条目的 enabled 都是 false）。',
-          '',
-          '  当前站点跑在 data/*.json 的手写示范数据上。',
-          '  接入真实数据源的步骤见本文件顶部的说明。',
-          '',
-          '  现在可以先做数据校验（不需要网络）：',
-          '    node scripts/scrape.mjs --validate-only',
-          '',
-        ].join('\n'),
-      );
-      process.exit(0);
+// ────────────────────────────────────────────────────────────
+// 校验（与旧版一致：跨文件引用、日期、双语、status）
+// ────────────────────────────────────────────────────────────
+
+function validate({ shows, series, venues }) {
+  const errors = [];
+  const warnings = [];
+  const seriesIds = new Set(series.map((s) => s.id));
+  const venueIds = new Set(venues.map((v) => v.id));
+  const slugs = new Set();
+  const isDate = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
+  const todayJst = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
+
+  for (const s of shows) {
+    const where = `show「${s.slug ?? '(no slug)'}」`;
+    if (!s.slug) errors.push(`${where}: 缺少 slug`);
+    else if (slugs.has(s.slug)) errors.push(`${where}: slug 重复`);
+    else slugs.add(s.slug);
+
+    if (!s.title?.zh?.trim()) errors.push(`${where}: title.zh 为空`);
+    if (!s.title?.ja?.trim()) errors.push(`${where}: title.ja 为空`);
+    if (!s.summary?.ja?.trim()) warnings.push(`${where}: summary.ja 为空`);
+    if (!s.summary?.zh?.trim()) warnings.push(`${where}: summary.zh 为空`);
+
+    if (!seriesIds.has(s.seriesId)) errors.push(`${where}: seriesId「${s.seriesId}」不存在`);
+    if (!s.runs?.length) errors.push(`${where}: runs 为空`);
+
+    for (const r of s.runs ?? []) {
+      if (!venueIds.has(r.venueId)) errors.push(`${where}: venueId「${r.venueId}」不存在`);
+      if (!isDate(r.startDate)) errors.push(`${where}: run.startDate「${r.startDate}」格式错`);
+      if (!isDate(r.endDate)) errors.push(`${where}: run.endDate「${r.endDate}」格式错`);
+      if (isDate(r.startDate) && isDate(r.endDate) && r.startDate > r.endDate) {
+        errors.push(`${where}: startDate 晚于 endDate`);
+      }
     }
 
-    console.log(`将抓取 ${enabled.length} 个数据源：${enabled.map((s) => s.name).join('、')}`);
-    const collected = [];
-    for (const src of enabled) {
-      console.log(`  → ${src.name} …`);
-      const raw = await src.fetch();
-      console.log(`     取得 ${raw.length} 笔`);
-      collected.push(...raw.map((r) => normalize(r, src.id)));
-    }
+    if (!/^#[0-9a-fA-F]{6}$/.test(s.accent ?? '')) errors.push(`${where}: accent 格式错`);
 
-    // ★ 去重：同一公演可能被多个源报到。以 slug 为键，**后到的源覆盖先到的**
-    //   —— 所以 SOURCES 的顺序就是优先级（越靠后越权威）。
-    //   这个约定必须写下来：否则不同人加的源会以「谁先跑完」决定内容，
-    //   而并发抓取下这是随机的，表现为数据在多次运行之间漂移。
-    const bySlug = new Map();
-    for (const s of collected) bySlug.set(s.slug, s);
-    const merged = [...bySlug.values()];
-
-    const { series, venues } = readData();
-    const { errors, warnings } = validate({ shows: merged, series, venues });
-    if (errors.length) {
-      console.error(`\n✗ 数据校验失败（${errors.length} 项），未写入：`);
-      for (const e of errors) console.error('  · ' + e);
-      process.exit(1);
+    if (s.runs?.length) {
+      const start = s.runs.reduce((a, r) => (r.startDate < a ? r.startDate : a), s.runs[0].startDate);
+      const end = s.runs.reduce((a, r) => (r.endDate > a ? r.endDate : a), s.runs[0].endDate);
+      const expect = end < todayJst ? 'ended' : start > todayJst ? 'upcoming' : 'now';
+      if (s.status && s.status !== expect) {
+        errors.push(`${where}: status「${s.status}」与日期不符（应为 ${expect}）`);
+      }
+      if (s.startDate && s.startDate !== start) errors.push(`${where}: startDate 与 runs 不一致`);
+      if (s.endDate && s.endDate !== end) errors.push(`${where}: endDate 与 runs 不一致`);
     }
-    if (warnings.length) {
-      console.warn(`\n⚠ ${warnings.length} 项警告：`);
-      for (const w of warnings.slice(0, 20)) console.warn('  · ' + w);
-    }
-
-    fs.writeFileSync(
-      path.join(DATA_DIR, 'shows.json'),
-      JSON.stringify(merged, null, 2) + '\n',
-      'utf8',
-    );
-    console.log(`\n✓ 已写入 data/shows.json（${merged.length} 部公演）`);
   }
 
-  // 无论哪种模式，都跑一次校验
-  const data = readData();
-  const { errors, warnings } = validate(data);
+  for (const v of venues) {
+    if (!v.id) errors.push('venue: 缺少 id');
+    if (!v.name?.zh?.trim() || !v.name?.ja?.trim()) errors.push(`venue「${v.id}」: name 双语缺失`);
+    if (!v.city) errors.push(`venue「${v.id}」: 缺少 city`);
+  }
+  for (const sr of series) {
+    if (!sr.id) errors.push('series: 缺少 id');
+    if (!sr.name?.zh?.trim() || !sr.name?.ja?.trim()) errors.push(`series「${sr.id}」: name 双语缺失`);
+    if (!sr.sourceKind) errors.push(`series「${sr.id}」: 缺少 sourceKind`);
+  }
 
-  console.log(`\n数据校验：${data.shows.length} 部公演 / ${data.series.length} 个系列 / ${data.venues.length} 个会場`);
+  // 中文 == 日文（说明翻译没接上，中文模式下等于没翻译）
+  for (const s of shows) {
+    if (s.title.zh === s.title.ja && !/^[A-Za-z0-9 !&'()+\-.,/]+$/.test(s.title.ja)) {
+      warnings.push(`show「${s.slug}」: 中文标题与日文相同（译名表未覆盖 / 翻译失败）`);
+    }
+  }
+
+  return { errors, warnings };
+}
+
+function report(data, errors, warnings) {
+  console.log(
+    `\n数据校验：${data.shows.length} 部公演 / ${data.series.length} 个系列 / ${data.venues.length} 个会場`,
+  );
   if (warnings.length) {
     console.log(`\n⚠ ${warnings.length} 项警告：`);
-    for (const w of warnings) console.log('  · ' + w);
+    for (const w of warnings.slice(0, 25)) console.log('  · ' + w);
   }
   if (errors.length) {
     console.log(`\n✗ ${errors.length} 项错误：`);
-    for (const e of errors) console.log('  · ' + e);
+    for (const e of errors.slice(0, 25)) console.log('  · ' + e);
     process.exitCode = 1;
   } else {
     console.log('\n✓ 无错误');

@@ -52,6 +52,8 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
   const hasPerformances = show.runs.some((r) => r.performances != null);
   /* 同系列的其他公演（排除自己）—— 这是 2.5 次元用户最可能想看的下一步 */
   const siblings = getShowsBySeries(show.seriesId).filter((s) => s.slug !== show.slug);
+  /* 简介是否真的有内容（源站大量条目没登记简介，见下方 section 的注释） */
+  const hasSummary = Boolean(show.summary?.zh?.trim() || show.summary?.ja?.trim());
 
   /*
    * ★ data-page-nav 决定顶栏哪一项高亮（机制见 components/NavLinks.tsx）。
@@ -263,8 +265,9 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
               </div>
             )}
 
-            {/* 购票提示：本站不售票，必须说清楚 */}
-            <p className="mt-3 text-[11px] leading-relaxed text-fg-dim">
+            {/* 购票提示：本站不售票，必须说清楚
+                 ★ 它也在主色层之上，同样不能用 dim（同上） */}
+            <p className="jp-accent-dim mt-3 text-[11px] leading-relaxed">
               <span className="i18n-zh">
                 本站不提供售票服務，亦不保證場次與售票狀況。請以官方網站公布為準。
               </span>
@@ -373,8 +376,18 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
         </section>
       )}
 
-      {/* ── 作品介紹 ── */}
-      <section className="mt-8">
+      {/* ── 作品介紹 ──
+         ★ 为什么整段在简介为空时**不渲染**而不是渲染一个空标题：
+           接入真实抓取后，源站（CoRich 是用户共建库）有相当比例的条目
+           根本没有登记简介 —— 实测 54 部里有 24 部。
+           若照常渲染标题 + 空容器，用户会看到「作品介紹」四个字
+           下面什么都没有，那是**看起来像加载失败的破图**。
+           而拿工作人员名单或票价信息冒充简介更糟：
+           用户会以为那串名字是剧情介绍。
+           所以：有就显示，没有就不显示这一块 —— 缺信息就承认缺。
+       */}
+      {hasSummary && (
+        <section className="mt-8">
         <h2 className="mb-3 border-b border-hairline pb-2.5 text-lg font-semibold tracking-tight text-fg">
           <span className="i18n-zh">作品介紹</span>
           <span className="i18n-ja">作品紹介</span>
@@ -402,7 +415,8 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
             ))}
           </div>
         </div>
-      </section>
+        </section>
+      )}
 
       {/* ── 同系列其他公演 ── */}
       {siblings.length > 0 && (
@@ -446,7 +460,14 @@ function Row({
 }) {
   return (
     <div className="flex gap-3">
-      <dt className="w-20 shrink-0 text-fg-dim">
+      {/*
+       * ★ 为什么标签用 .jp-accent-dim 而不是 text-fg-dim：
+       *   这个 Row 只用在详情页头部，而头部铺了 .jp-accent-panel（主色层）。
+       *   主色按真实海报取色后亮度上限提高到 L=0.28，实测 dim 在那里
+       *   只有 3.73:1（要求 4.5）。.jp-accent-dim 把它提到 soft 档，
+       *   实测 6.76:1。详见 app/globals.css 里 .jp-accent-dim 的注释。
+       */}
+      <dt className="jp-accent-dim w-20 shrink-0">
         <span className="i18n-zh">{labelZh}</span>
         <span className="i18n-ja">{labelJa}</span>
       </dt>

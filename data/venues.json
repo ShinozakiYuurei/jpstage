@@ -1,138 +1,698 @@
 [
   {
-    "id": "imperial-theatre",
-    "name": { "zh": "帝國劇場", "ja": "帝国劇場" },
+    "id": "j-com-x",
+    "name": {
+      "zh": "J:COM音樂廳八王子",
+      "ja": "J:COMホール八王子"
+    },
     "pref": "東京都",
     "city": "東京",
-    "address": "東京都千代田区丸の内3-1-1",
-    "seats": 1800
+    "address": "",
+    "seats": null,
+    "theaterId": null
   },
   {
-    "id": "tokyo-dome-city-hall",
-    "name": { "zh": "TOKYO DOME CITY HALL", "ja": "TOKYO DOME CITY HALL" },
+    "id": "v3300",
+    "name": {
+      "zh": "東京建物 Brillia HALL",
+      "ja": "東京建物 Brillia HALL"
+    },
     "pref": "東京都",
     "city": "東京",
-    "address": "東京都文京区後楽1-3-61",
-    "seats": 2000
+    "address": "東京都豊島区東池袋1-19-1",
+    "seats": 1300,
+    "theaterId": "3300"
   },
   {
-    "id": "theatre-creation",
-    "name": { "zh": "劇場 Creation", "ja": "シアタークリエ" },
+    "id": "v171",
+    "name": {
+      "zh": "東京國際論壇 音樂廳C",
+      "ja": "東京国際フォーラム ホールC"
+    },
     "pref": "東京都",
     "city": "東京",
-    "address": "東京都千代田区有楽町1-1-2",
-    "seats": 600
+    "address": "東京都千代田区丸の内3-5-1",
+    "seats": 1502,
+    "theaterId": "171"
   },
   {
-    "id": "nissay-theatre",
-    "name": { "zh": "日生劇場", "ja": "日生劇場" },
-    "pref": "東京都",
-    "city": "東京",
-    "address": "東京都千代田区有楽町1-1-1",
-    "seats": 1330
+    "id": "venue-x",
+    "name": {
+      "zh": "メガネのイタガキ文化音樂廳伊勢崎",
+      "ja": "メガネのイタガキ文化ホール伊勢崎"
+    },
+    "pref": "群馬県",
+    "city": "群馬",
+    "address": "",
+    "seats": null,
+    "theaterId": null
   },
   {
-    "id": "tachikawa-stage-garden",
-    "name": { "zh": "TACHIKAWA STAGE GARDEN", "ja": "TACHIKAWA STAGE GARDEN" },
-    "pref": "東京都",
-    "city": "東京",
-    "address": "東京都立川市緑町3-3",
-    "seats": 1000
+    "id": "v804",
+    "name": {
+      "zh": "栃木県綜合文化中心",
+      "ja": "栃木県総合文化センター"
+    },
+    "pref": "栃木県",
+    "city": "栃木",
+    "address": "栃木県宇都宮市本町１-８",
+    "seats": null,
+    "theaterId": "804"
   },
   {
-    "id": "maihama-amphitheater",
-    "name": { "zh": "舞濱圓形劇場", "ja": "舞浜アンフィシアター" },
-    "pref": "千葉県",
-    "city": "東京",
-    "address": "千葉県浦安市舞浜2-50",
-    "seats": 2200
-  },
-  {
-    "id": "tokorozawa-sakura-town",
-    "name": { "zh": "所澤櫻花城 日本館 Hall A", "ja": "ところざわサクラタウン ジャパンパビリオン ホールA" },
+    "id": "v867",
+    "name": {
+      "zh": "サンシティ音樂廳",
+      "ja": "サンシティホール"
+    },
     "pref": "埼玉県",
-    "city": "埼玉",
-    "address": "埼玉県所沢市東所沢和田3-31-3",
-    "seats": 1200
+    "city": "さいたま",
+    "address": "埼玉県越谷市南越谷1-2876-1",
+    "seats": 1675,
+    "theaterId": "867"
   },
   {
-    "id": "omiya-sonic-city",
-    "name": { "zh": "大宮 SONIC CITY 大廳", "ja": "大宮ソニックシティ 大ホール" },
-    "pref": "埼玉県",
-    "city": "埼玉",
-    "address": "埼玉県さいたま市大宮区桜木町1-7-5",
-    "seats": 2500
+    "id": "v272",
+    "name": {
+      "zh": "相模原市民會館",
+      "ja": "相模原市民会館"
+    },
+    "pref": "神奈川県",
+    "city": "横浜",
+    "address": "神奈川県相模原市中央3丁目13－15",
+    "seats": 1270,
+    "theaterId": "272"
   },
   {
-    "id": "umeda-arts-theatre",
-    "name": { "zh": "梅田藝術劇場 主廳", "ja": "梅田芸術劇場 メインホール" },
-    "pref": "大阪府",
-    "city": "大阪",
-    "address": "大阪府大阪市北区茶屋町19-1",
-    "seats": 1900
-  },
-  {
-    "id": "festival-hall",
-    "name": { "zh": "Festival Hall", "ja": "フェスティバルホール" },
-    "pref": "大阪府",
-    "city": "大阪",
-    "address": "大阪府大阪市北区中之島2-3-18",
-    "seats": 2700
-  },
-  {
-    "id": "rohm-theatre-kyoto",
-    "name": { "zh": "ROHM 劇場京都 主廳", "ja": "ロームシアター京都 メインホール" },
+    "id": "v2755",
+    "name": {
+      "zh": "ローム劇場京都メイン音樂廳",
+      "ja": "ロームシアター京都メインホール"
+    },
     "pref": "京都府",
     "city": "京都",
     "address": "京都府京都市左京区岡崎最勝寺町13",
-    "seats": 2000
+    "seats": 2005,
+    "theaterId": "2755"
   },
   {
-    "id": "kanayama-forest-hall",
-    "name": { "zh": "日本特殊陶業市民會館 Forest Hall", "ja": "日本特殊陶業市民会館 フォレストホール" },
-    "pref": "愛知県",
-    "city": "名古屋",
-    "address": "愛知県名古屋市中区金山1-5-1",
-    "seats": 1700
+    "id": "v1106",
+    "name": {
+      "zh": "千葉県文化會館",
+      "ja": "千葉県文化会館"
+    },
+    "pref": "千葉県",
+    "city": "千葉",
+    "address": "千葉県千葉市中央区市場町11番2号",
+    "seats": null,
+    "theaterId": "1106"
   },
   {
-    "id": "fukuoka-sun-palace",
-    "name": { "zh": "福岡 Sun Palace", "ja": "福岡サンパレス" },
-    "pref": "福岡県",
-    "city": "福岡",
-    "address": "福岡県福岡市博多区築港本町2-1",
-    "seats": 2300
+    "id": "v2957",
+    "name": {
+      "zh": "ウェスタ川越",
+      "ja": "ウェスタ川越"
+    },
+    "pref": "埼玉県",
+    "city": "さいたま",
+    "address": "埼玉県川越市新宿町1-17-17",
+    "seats": 1700,
+    "theaterId": "2957"
   },
   {
-    "id": "sapporo-kanamoto-hall",
-    "name": { "zh": "札幌市民 Hall（Kanamoto Hall）", "ja": "札幌市民ホール（カナモトホール）" },
-    "pref": "北海道",
-    "city": "札幌",
-    "address": "北海道札幌市中央区北1条西1丁目",
-    "seats": 1500
+    "id": "v3323",
+    "name": {
+      "zh": "靜岡市清水文化會館マリナート",
+      "ja": "静岡市清水文化会館マリナート"
+    },
+    "pref": "静岡県",
+    "city": "静岡",
+    "address": "静岡県静岡市清水区島崎町214",
+    "seats": 1513,
+    "theaterId": "3323"
   },
   {
-    "id": "sendai-sunplaza",
-    "name": { "zh": "仙台 Sunplaza Hall", "ja": "仙台サンプラザホール" },
-    "pref": "宮城県",
-    "city": "仙台",
-    "address": "宮城県仙台市宮城野区榴岡4-11-1",
-    "seats": 1600
+    "id": "v2963",
+    "name": {
+      "zh": "レクザム音樂廳（香川県縣民音樂廳）　大音樂廳",
+      "ja": "レクザムホール（香川県県民ホール）　大ホール"
+    },
+    "pref": "香川県",
+    "city": "香川",
+    "address": "香川県高松市玉藻町",
+    "seats": 2001,
+    "theaterId": "2963"
   },
   {
-    "id": "hiroshima-hbg-hall",
-    "name": { "zh": "廣島文化學園 HBG Hall", "ja": "広島文化学園HBGホール" },
+    "id": "v208",
+    "name": {
+      "zh": "府中の森藝術劇場",
+      "ja": "府中の森芸術劇場"
+    },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "東京都府中市浅間町1-2",
+    "seats": 2027,
+    "theaterId": "208"
+  },
+  {
+    "id": "v2788",
+    "name": {
+      "zh": "長野市芸術館・メイン音樂廳",
+      "ja": "長野市芸術館・メインホール"
+    },
+    "pref": "長野県",
+    "city": "長野",
+    "address": "長野県長野市大字鶴賀緑町1613番地",
+    "seats": 1292,
+    "theaterId": "2788"
+  },
+  {
+    "id": "v722",
+    "name": {
+      "zh": "射水市新湊中央文化會館",
+      "ja": "射水市新湊中央文化会館"
+    },
+    "pref": "富山県",
+    "city": "富山",
+    "address": "富山県射水市三日曽根3-23",
+    "seats": null,
+    "theaterId": "722"
+  },
+  {
+    "id": "v1037",
+    "name": {
+      "zh": "iichiko綜合文化中心",
+      "ja": "iichiko総合文化センター"
+    },
+    "pref": "大分県",
+    "city": "大分",
+    "address": "大分県大分市高砂町2番33号",
+    "seats": null,
+    "theaterId": "1037"
+  },
+  {
+    "id": "v2796",
+    "name": {
+      "zh": "倉吉未来中心",
+      "ja": "倉吉未来中心"
+    },
+    "pref": "鳥取県",
+    "city": "鳥取",
+    "address": "鳥取県倉吉市駄経寺町212-5",
+    "seats": 310,
+    "theaterId": "2796"
+  },
+  {
+    "id": "v1003",
+    "name": {
+      "zh": "神戶文化會館",
+      "ja": "神戸文化ホール"
+    },
+    "pref": "兵庫県",
+    "city": "神戸",
+    "address": "兵庫県神戸市中央区楠町4丁目2-2　財団法人 神戸市民文化振興財団　神戸文化ホール",
+    "seats": null,
+    "theaterId": "1003"
+  },
+  {
+    "id": "v880",
+    "name": {
+      "zh": "松戸市文化會館　森の音樂廳21",
+      "ja": "松戸市文化会館　森のホール21"
+    },
+    "pref": "千葉県",
+    "city": "千葉",
+    "address": "千葉県松戸市千駄堀646-4",
+    "seats": null,
+    "theaterId": "880"
+  },
+  {
+    "id": "v299",
+    "name": {
+      "zh": "狭山市市民會館　大音樂廳",
+      "ja": "狭山市市民会館　大ホール"
+    },
+    "pref": "埼玉県",
+    "city": "さいたま",
+    "address": "埼玉県狭山市入間川2－33－1",
+    "seats": 1398,
+    "theaterId": "299"
+  },
+  {
+    "id": "v823",
+    "name": {
+      "zh": "塩尻レザン音樂廳",
+      "ja": "塩尻レザンホール"
+    },
+    "pref": "長野県",
+    "city": "長野",
+    "address": "長野県塩尻市大門7-4-8",
+    "seats": null,
+    "theaterId": "823"
+  },
+  {
+    "id": "v1460",
+    "name": {
+      "zh": "群馬県みかぼみらい館",
+      "ja": "群馬県みかぼみらい館"
+    },
+    "pref": "群馬県",
+    "city": "群馬",
+    "address": "群馬県藤岡市藤岡2728番地",
+    "seats": null,
+    "theaterId": "1460"
+  },
+  {
+    "id": "v884",
+    "name": {
+      "zh": "上越文化會館",
+      "ja": "上越文化会館"
+    },
+    "pref": "新潟県",
+    "city": "新潟",
+    "address": "新潟県上越市新光町1-9-10",
+    "seats": null,
+    "theaterId": "884"
+  },
+  {
+    "id": "v576",
+    "name": {
+      "zh": "廣島市文化交流會館（廣島文化学園HBG音樂廳）",
+      "ja": "広島市文化交流会館（広島文化学園HBGホール）"
+    },
     "pref": "広島県",
     "city": "広島",
     "address": "広島県広島市中区加古町3-3",
-    "seats": 2000
+    "seats": 2001,
+    "theaterId": "576"
   },
   {
-    "id": "shizuoka-civic-hall",
-    "name": { "zh": "靜岡市民文化會館 大廳", "ja": "静岡市民文化会館 大ホール" },
+    "id": "v1030",
+    "name": {
+      "zh": "沼津市民文化中心",
+      "ja": "沼津市民文化センター"
+    },
     "pref": "静岡県",
     "city": "静岡",
-    "address": "静岡県静岡市葵区駿府町2-90",
-    "seats": 2000
+    "address": "静岡県沼津市御幸町１５番１号",
+    "seats": null,
+    "theaterId": "1030"
+  },
+  {
+    "id": "v4325",
+    "name": {
+      "zh": "東大阪市文化創造館 Dream House 大音樂廳",
+      "ja": "東大阪市文化創造館 Dream House 大ホール"
+    },
+    "pref": "大阪府",
+    "city": "大阪",
+    "address": "大阪府東大阪市御厨南二丁目３番４号",
+    "seats": 1500,
+    "theaterId": "4325"
+  },
+  {
+    "id": "v1105",
+    "name": {
+      "zh": "倉敷市民會館",
+      "ja": "倉敷市民会館"
+    },
+    "pref": "岡山県",
+    "city": "岡山",
+    "address": "岡山県倉敷市本町17-1",
+    "seats": 1996,
+    "theaterId": "1105"
+  },
+  {
+    "id": "v879",
+    "name": {
+      "zh": "周南市文化會館",
+      "ja": "周南市文化会館"
+    },
+    "pref": "山口県",
+    "city": "山口",
+    "address": "山口県周南市公園区5854-41",
+    "seats": 1800,
+    "theaterId": "879"
+  },
+  {
+    "id": "v694",
+    "name": {
+      "zh": "名取市文化會館　大音樂廳",
+      "ja": "名取市文化会館　大ホール"
+    },
+    "pref": "宮城県",
+    "city": "仙台",
+    "address": "宮城県名取市増田字柳田520",
+    "seats": 1350,
+    "theaterId": "694"
+  },
+  {
+    "id": "v315",
+    "name": {
+      "zh": "大宮ソニックシティ",
+      "ja": "大宮ソニックシティ"
+    },
+    "pref": "埼玉県",
+    "city": "さいたま",
+    "address": "埼玉県さいたま市桜木町1－7－5",
+    "seats": null,
+    "theaterId": "315"
+  },
+  {
+    "id": "v6009",
+    "name": {
+      "zh": "あきた藝術劇場ミルハス・大音樂廳",
+      "ja": "あきた芸術劇場ミルハス・大ホール"
+    },
+    "pref": "秋田県",
+    "city": "秋田",
+    "address": "秋田県秋田市千秋明徳町2-52",
+    "seats": 2007,
+    "theaterId": "6009"
+  },
+  {
+    "id": "v1048",
+    "name": {
+      "zh": "新潟テルサ",
+      "ja": "新潟テルサ"
+    },
+    "pref": "新潟県",
+    "city": "新潟",
+    "address": "新潟県新潟市中央区鐘木(しゅもく)185-18",
+    "seats": 1510,
+    "theaterId": "1048"
+  },
+  {
+    "id": "v40",
+    "name": {
+      "zh": "大田区民音樂廳・アプリコ",
+      "ja": "大田区民ホール・アプリコ"
+    },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "東京都大田区蒲田5-37-3",
+    "seats": null,
+    "theaterId": "40"
+  },
+  {
+    "id": "v1151",
+    "name": {
+      "zh": "武蔵野市民文化會館（ＡＲＴＥ）",
+      "ja": "武蔵野市民文化会館（ＡＲＴＥ）"
+    },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "東京都武蔵野市中町3-9-11",
+    "seats": 1252,
+    "theaterId": "1151"
+  },
+  {
+    "id": "v3358",
+    "name": {
+      "zh": "神奈川県立青少年中心・紅葉坂音樂廳",
+      "ja": "神奈川県立青少年センター・紅葉坂ホール"
+    },
+    "pref": "神奈川県",
+    "city": "横浜",
+    "address": "神奈川県横浜市西区紅葉ケ丘9番地の1",
+    "seats": 812,
+    "theaterId": "3358"
+  },
+  {
+    "id": "v620",
+    "name": {
+      "zh": "松山市民會館",
+      "ja": "松山市民会館"
+    },
+    "pref": "愛媛県",
+    "city": "愛媛",
+    "address": "愛媛県松山市堀之内　松山市民会館事務所",
+    "seats": null,
+    "theaterId": "620"
+  },
+  {
+    "id": "shibuya-lovez-x",
+    "name": {
+      "zh": "Shibuya LOVEZ",
+      "ja": "Shibuya LOVEZ"
+    },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "",
+    "seats": null,
+    "theaterId": null
+  },
+  {
+    "id": "v8748",
+    "name": {
+      "zh": "Sky劇場MBS",
+      "ja": "SkyシアターMBS"
+    },
+    "pref": "大阪府",
+    "city": "大阪",
+    "address": "大阪府大阪市北区梅田3丁目2-4 JR大阪駅前「JPタワー大阪」内",
+    "seats": 1289,
+    "theaterId": "8748"
+  },
+  {
+    "id": "v675",
+    "name": {
+      "zh": "ステラボール（Stellar Ball）",
+      "ja": "ステラボール（Stellar Ball）"
+    },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "東京都港区高輪4-10-30　品川プリンスホテル　エプソン品川アクアスタジアム内",
+    "seats": 1884,
+    "theaterId": "675"
+  },
+  {
+    "id": "v1059",
+    "name": {
+      "zh": "多賀城市民會館",
+      "ja": "多賀城市民会館"
+    },
+    "pref": "宮城県",
+    "city": "仙台",
+    "address": "宮城県多賀城市中央2丁目27-1",
+    "seats": null,
+    "theaterId": "1059"
+  },
+  {
+    "id": "v3273",
+    "name": {
+      "zh": "AiiA 2.5 Theater Kobe",
+      "ja": "AiiA 2.5 Theater Kobe"
+    },
+    "pref": "兵庫県",
+    "city": "神戸",
+    "address": "兵庫県神戸市中央区北野町1 コトノハコ神戸2F",
+    "seats": 808,
+    "theaterId": "3273"
+  },
+  {
+    "id": "v1806",
+    "name": {
+      "zh": "Kanadevia Hall",
+      "ja": "Kanadevia Hall"
+    },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "東京都文京区後楽1丁目3-61",
+    "seats": 3000,
+    "theaterId": "1806"
+  },
+  {
+    "id": "v9077",
+    "name": {
+      "zh": "土岐市文化プラザ・サン音樂廳",
+      "ja": "土岐市文化プラザ・サンホール"
+    },
+    "pref": "岐阜県",
+    "city": "岐阜",
+    "address": "岐阜県岐阜県土岐市土岐津町土岐口2121-1",
+    "seats": 1500,
+    "theaterId": "9077"
+  },
+  {
+    "id": "v8747",
+    "name": {
+      "zh": "劇場H",
+      "ja": "シアターH"
+    },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "東京都品川区勝島1丁目6番29号",
+    "seats": 747,
+    "theaterId": "8747"
+  },
+  {
+    "id": "v3226",
+    "name": {
+      "zh": "COOL JAPAN PARK OSAKA・TT音樂廳",
+      "ja": "COOL JAPAN PARK OSAKA・TTホール"
+    },
+    "pref": "大阪府",
+    "city": "大阪",
+    "address": "大阪府大阪市中央区大阪城3-6",
+    "seats": 702,
+    "theaterId": "3226"
+  },
+  {
+    "id": "v2499",
+    "name": {
+      "zh": "Zepp DiverCity TOKYO",
+      "ja": "Zepp DiverCity TOKYO"
+    },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "東京都江東区青海1-1-10ダイバーシティ東京プラザ",
+    "seats": 2473,
+    "theaterId": "2499"
+  },
+  {
+    "id": "zepp-nambaosaka-x",
+    "name": {
+      "zh": "Zepp Namba(OSAKA)",
+      "ja": "Zepp Namba(OSAKA)"
+    },
+    "pref": "大阪府",
+    "city": "大阪",
+    "address": "",
+    "seats": null,
+    "theaterId": null
+  },
+  {
+    "id": "v562",
+    "name": {
+      "zh": "Zepp Sapporo",
+      "ja": "Zepp Sapporo"
+    },
+    "pref": "北海道",
+    "city": "札幌",
+    "address": "北海道札幌市中央区南9条西4丁目4番",
+    "seats": 2009,
+    "theaterId": "562"
+  },
+  {
+    "id": "v3390",
+    "name": {
+      "zh": "高円寺K'sスタジオ【本館】",
+      "ja": "高円寺K'sスタジオ【本館】"
+    },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "東京都杉並区梅里1-22-22　​パラシオン高円寺B1－100号",
+    "seats": null,
+    "theaterId": "3390"
+  },
+  {
+    "id": "v232",
+    "name": {
+      "zh": "明治座",
+      "ja": "明治座"
+    },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "東京都中央区日本橋浜町2-31-1",
+    "seats": 1368,
+    "theaterId": "232"
+  },
+  {
+    "id": "v1282",
+    "name": {
+      "zh": "大阪新歌舞伎座",
+      "ja": "大阪新歌舞伎座"
+    },
+    "pref": "大阪府",
+    "city": "大阪",
+    "address": "大阪府大阪市天王寺区上本町6丁目5番13号",
+    "seats": 1453,
+    "theaterId": "1282"
+  },
+  {
+    "id": "sgc-hall-ariake-x",
+    "name": {
+      "zh": "SGC HALL ARIAKE",
+      "ja": "SGC HALL ARIAKE"
+    },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "",
+    "seats": null,
+    "theaterId": null
+  },
+  {
+    "id": "v3214",
+    "name": {
+      "zh": "日本青年館音樂廳",
+      "ja": "日本青年館ホール"
+    },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "東京都新宿区霞ケ丘町4-1",
+    "seats": 1249,
+    "theaterId": "3214"
+  },
+  {
+    "id": "v7394",
+    "name": {
+      "zh": "東京建物 Brillia HALL 箕面（箕面市立文化芸能劇場）・大音樂廳",
+      "ja": "東京建物 Brillia HALL 箕面（箕面市立文化芸能劇場）・大ホール"
+    },
+    "pref": "大阪府",
+    "city": "大阪",
+    "address": "大阪府箕面市船場東3丁目10番1号",
+    "seats": 1401,
+    "theaterId": "7394"
+  },
+  {
+    "id": "v540",
+    "name": {
+      "zh": "呉信用金庫音樂廳（呉市文化音樂廳）",
+      "ja": "呉信用金庫ホール（呉市文化ホール）"
+    },
+    "pref": "広島県",
+    "city": "広島",
+    "address": "広島県呉市中央3丁目10番1号",
+    "seats": 1614,
+    "theaterId": "540"
+  },
+  {
+    "id": "v2559",
+    "name": {
+      "zh": "刈谷市綜合文化中心アイリス・大音樂廳",
+      "ja": "刈谷市総合文化センターアイリス・大ホール"
+    },
+    "pref": "愛知県",
+    "city": "名古屋",
+    "address": "愛知県刈谷市若松町2-104",
+    "seats": 1541,
+    "theaterId": "2559"
+  },
+  {
+    "id": "v3404",
+    "name": {
+      "zh": "立川ステージガーデン TACHIKAWA STAGE GARDEN",
+      "ja": "立川ステージガーデン TACHIKAWA STAGE GARDEN"
+    },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "東京都立川市緑町3-3 N1",
+    "seats": 2500,
+    "theaterId": "3404"
+  },
+  {
+    "id": "v7163",
+    "name": {
+      "zh": "THEATER MILANO-Za",
+      "ja": "THEATER MILANO-Za"
+    },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "東京都新宿区歌舞伎町一丁目29番1号 東急歌舞伎町タワー6階",
+    "seats": 900,
+    "theaterId": "7163"
   }
 ]

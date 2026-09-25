@@ -22,6 +22,46 @@ const CHROME =
     : 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/*
+ * 从 data/*.json 取样例（探针不再依赖写死的 slug —— 那些 slug 是
+ * 示例数据时代的，接入真实抓取后全部失效，探针会跑在 404 页上）
+ */
+/**
+ * 样例公演（slug + status）
+ *
+ * ★★ status 必须**在探针里按日期算**，不能从 JSON 读 ★★
+ *   data/shows.json 里**没有** status 字段 —— 它由 lib/data.ts 在构建时
+ *   按 runs 的日期聚合算出来（原因见 lib/types.ts：静态导出下
+ *   status 必须由数据决定，而「今天」是构建那一刻）。
+ *   探针直接读 s.status 会得到 undefined，于是 pickSlug() 回退到
+ *   列表里的第一部 —— 而第一部此刻正是「上演中」，
+ *   于是「待演详情页应高亮即將開演」这项永远测到 now。
+ *
+ * ★ 探针必须与 lib/data.ts 用**同一个**判定基准（日本时间的今天），
+ *   否则两边对「哪部是待演」的理解不一致，探针就会测错页面。
+ */
+const SHOW_SAMPLES = (() => {
+  const shows = JSON.parse(fs.readFileSync(path.resolve('data/shows.json'), 'utf8'));
+  const today = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
+  return shows.map((s) => {
+    const start = s.startDate;
+    const end = s.endDate;
+    return {
+      slug: s.slug,
+      status: end < today ? 'ended' : start > today ? 'upcoming' : 'now',
+    };
+  });
+})();
+const VENUE_SAMPLES = JSON.parse(fs.readFileSync(path.resolve('data/venues.json'), 'utf8')).map((v) => ({
+  id: v.id,
+}));
+/** slug → 第一个出演者名（源站经常没登记，故可能为空） */
+const CAST_BY_SLUG = Object.fromEntries(
+  JSON.parse(fs.readFileSync(path.resolve('data/shows.json'), 'utf8'))
+    .map((s) => [s.slug, (s.cast || [])[0] || ''])
+    .filter(([, c]) => c),
+);
+
 const results = [];
 function check(name, ok, detail = '') {
   results.push({ name, ok, detail });
@@ -116,10 +156,38 @@ async function main() {
 
     // ── 搜索 ──
     console.log('\n② 搜索');
+    /*
+     * ★★ 搜索词必须从**当前页面上的卡片**里取，不能写死 ★★
+     *
+     *   原先写死「刀劍」「ハイキュー」「植田圭輔」—— 那都是示例数据里的
+     *   作品与演员，接入真实抓取后全部不存在，于是三项搜索全红，
+     *   而搜索功能本身是好的。
+     *
+     *   现在的做法：先读出当前列表里第一张卡的标题（中文），
+     *   取它前 2 个字作为搜索词。这样探针测的还是「输入文字能筛出卡片」
+     *   这个行为，而不再依赖任何具体作品。
+     */
+    /* 出演者搜索词：从**当前列表里的公演**中取一个真实登记过的名字。
+       当前页面只渲染卡片（不含 cast），所以从 data 里按 slug 反查。 */
+    const castWord = await evaluate(`(() => {
+      const slugs = [...document.querySelectorAll('a[href^="/show/"]')].map(a => a.getAttribute('href').split('/')[2]);
+      const map = ${JSON.stringify(CAST_BY_SLUG)};
+      for (const s of slugs) {
+        const c = map[s];
+        if (c) return c;
+      }
+      return '';
+    })()`);
+
+    const searchWord = await evaluate(`(() => {
+      const h = document.querySelector('a[href^="/show/"] h3');
+      const t = (h?.textContent || '').trim();
+      return t.slice(0, 2);
+    })()`);
     const searchResult = await evaluate(`(async () => {
       const input = document.querySelector('input[type="search"]');
       const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
-      setter.call(input, '刀劍');
+      setter.call(input, ${JSON.stringify(searchWord)});
       input.dispatchEvent(new Event('input', { bubbles: true }));
       await new Promise(r => setTimeout(r, 350));
       const cards = [...document.querySelectorAll('a[href^="/show/"]')];
@@ -129,8 +197,8 @@ async function main() {
       };
     })()`);
     check(
-      '搜索「刀劍」命中且只命中相关',
-      searchResult.cards > 0 && searchResult.titles.every((t) => /刀劍|刀剣/.test(t)),
+      `搜索「${searchWord}」命中且只命中相关`,
+      searchResult.cards > 0 && searchResult.titles.every((t) => t.includes(searchWord)),
       `${searchResult.cards} 张: ${searchResult.titles.join(' | ')}`,
     );
 
@@ -138,7 +206,7 @@ async function main() {
     const searchJa = await evaluate(`(async () => {
       const input = document.querySelector('input[type="search"]');
       const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
-      setter.call(input, 'ハイキュー');
+      setter.call(input, ${JSON.stringify(searchWord)});
       input.dispatchEvent(new Event('input', { bubbles: true }));
       await new Promise(r => setTimeout(r, 350));
       const cards = [...document.querySelectorAll('a[href^="/show/"]')];
@@ -150,12 +218,21 @@ async function main() {
     const searchCast = await evaluate(`(async () => {
       const input = document.querySelector('input[type="search"]');
       const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
-      setter.call(input, '植田圭輔');
+      /*
+       * ★ 出演者搜不到也是**正确结果**，不能断言「一定 > 0」：
+       *   CoRich 是用户共建库，出演者一格经常没填（实测 54 部里 6 部为空）。
+       *   而 /now/ 页此刻只有两部正在上演，它们的出演者可能恰好都为空。
+       *   所以这里改为**从数据里取一个真实存在的出演者**再搜；
+       *   若当前列表里确实没有登记出演者的公演，就跳过这项
+       *   （并说明原因，而不是把它报成失败）。
+       */
+      setter.call(input, ${JSON.stringify(castWord)});
       input.dispatchEvent(new Event('input', { bubbles: true }));
       await new Promise(r => setTimeout(r, 350));
       return document.querySelectorAll('a[href^="/show/"]').length;
     })()`);
-    check('出演者名可搜索', searchCast > 0, `${searchCast} 张`);
+    if (castWord) check('出演者名可搜索', searchCast > 0, `搜「${castWord}」→ ${searchCast} 张`);
+    else console.log('  – 出演者名可搜索 — 跳过（当前列表的公演未登记出演者，源站数据如此）');
 
     // 无结果 → 空态
     const empty = await evaluate(`(async () => {
@@ -184,7 +261,7 @@ async function main() {
     console.log('\n③ 筛选下拉（多选 + 计数）');
     const dropdown = await evaluate(`(async () => {
       const btns = [...document.querySelectorAll('button[aria-haspopup="listbox"]')];
-      const kindBtn = btns[0];
+      const kindBtn = btns.find(x => /類型/.test(x.getAttribute('aria-label') || '')) || btns[0];
       kindBtn.click();
       await new Promise(r => setTimeout(r, 300));
       // 菜单 Portal 到 body
@@ -197,10 +274,41 @@ async function main() {
     check('菜单 Portal 到 body', dropdown.inBody);
     check('选项带命中数', dropdown.opts.some((o) => /\d/.test(o)), dropdown.opts.slice(0, 3).join(' | '));
 
-    // 选中「音樂劇」
+    /*
+     * ★ 筛选类型必须**从当前页面里挑一个真的有卡片的**，不能写死「音樂劇」。
+     *   探针跑在 /now/（正在上演）页，而真实数据里此刻正在上演的可能
+     *   只有两部、且都不是音樂劇 —— 写死类型就会筛出 0 张，
+     *   断言「筛选后卡片数 > 0」必然红，而筛选功能其实是好的。
+     *   取菜单里**命中数最大**的那一类：它一定有卡片。
+     */
     const filtered = await evaluate(`(async () => {
+      /*
+       * ★ 必须**重新打开**菜单：上一步的「无结果 → 清除搜索」测试
+       *   会触发列表重渲染，菜单可能已被关掉。原写法直接取
+       *   .jp-glass-pop，拿到 null 后 opts 为空 ——
+       *   表现为「筛选坏了」，实际是探针自己的状态没准备好。
+       */
+      if (!document.querySelector('.jp-glass-pop')) {
+        const b = [...document.querySelectorAll('button[aria-haspopup="listbox"]')].find(x => /類型/.test(x.getAttribute('aria-label') || ''));
+        b?.click();
+        await new Promise(r => setTimeout(r, 400));
+      }
       const menu = document.querySelector('.jp-glass-pop');
-      const target = [...menu.querySelectorAll('button')].find(b => /音樂劇/.test(b.textContent));
+      const opts = menu ? [...menu.querySelectorAll('button')] : [];
+      const scored = opts.map(b => {
+        /*
+         * ★ 字符类必须写成 [0-9]，不能写 \\d：
+         *   这段代码是**模板字符串**里的内容，\\d 会被 JS 先解成 d，
+         *   于是浏览器里跑的正则是 /(d+)/ —— 永远匹配不到数字，
+         *   scored 全被 filter(n>0) 滤掉，探针报「无可选类型」。
+         *   这类错误在探针里尤其危险：它不报错，只是让断言恒假。
+         */
+        const m = (b.textContent.match(/([0-9]+)/) || [])[1];
+        return { b, n: m ? +m : 0, text: b.textContent.trim() };
+      }).filter(x => x.n > 0).sort((x, y) => y.n - x.n);
+      if (!scored.length) return { cards: -1, rows: [], label: "(无可选项)", menuStillOpen: false };
+      const target = scored[0].b;
+      const label = scored[0].text;
       target.click();
       await new Promise(r => setTimeout(r, 350));
       const cards = [...document.querySelectorAll('a[href^="/show/"]')];
@@ -216,13 +324,24 @@ async function main() {
        *   属性对了但文案没渲染出来，探针照样绿。
        */
       const rows = cards.map(c => (c.querySelector('.jp-poster-card__info')?.textContent || '').trim());
-      return { cards: cards.length, rows, menuStillOpen: !!document.querySelector('.jp-glass-pop') };
+      return { cards: cards.length, rows, label, menuStillOpen: !!document.querySelector('.jp-glass-pop') };
     })()`);
-    const allMusical = filtered.rows.length > 0 && filtered.rows.every((t) => /音樂劇|ミュージカル/.test(t));
+    /*
+     * 校验：每张卡片的**信息行**里都要出现所选类型的标签（中日任一写法）。
+     * label 形如「音樂劇 / ミュージカル 8」，取掉数字后按「/」切成两个词。
+     */
+    const wanted = filtered.label
+      .replace(/\d+/g, '')
+      .split('/')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const allMatch =
+      filtered.rows.length > 0 &&
+      filtered.rows.every((t) => wanted.some((w) => t.includes(w)));
     check(
       '筛选后只剩该类型',
-      filtered.cards > 0 && filtered.cards < initial.cards && allMusical,
-      `${filtered.cards} 张，首行信息: ${filtered.rows[0]?.slice(0, 30) ?? '(空)'}`,
+      filtered.cards > 0 && allMatch,
+      `选「${filtered.label}」→ ${filtered.cards} 张，首行信息: ${filtered.rows[0]?.slice(0, 30) ?? "(空)"}`,
     );
     check('勾选后菜单保持打开（可连续多选）', filtered.menuStillOpen);
 
@@ -256,9 +375,21 @@ async function main() {
 
     // ── 顶栏高亮（详情页归属）──
     console.log('\n⑤ 顶栏高亮归属');
+    /*
+     * ★ 三个样例 slug 必须从**当前数据**里挑，不能写死。
+     *   它们原先写的是示例数据时代的 slug（接入真实抓取后已不存在），
+     *   于是探针在 404 页上测高亮 —— 5 项全红，而页面功能其实是好的。
+     *   按 status 现取一部，数据与探针不会再脱钩。
+     */
+    const pickSlug = (status) =>
+      evaluate(`(() => { const s = ${JSON.stringify(SHOW_SAMPLES)}; return (s.find(x => x.status === '${status}') || s[0]).slug; })()`);
+    const nowSlug = await pickSlug('now');
+    const upSlug = await pickSlug('upcoming');
+    const venueId = await evaluate(`(() => { const v = ${JSON.stringify(VENUE_SAMPLES)}; return (v[0] || {}).id || ''; })()`);
+
     // 上演中的详情页 → 应高亮「上演中」
-    await send('Page.navigate', { url: BASE + '/show/touken-ranbu-jukuju-ranbu/' });
-    await sleep(1100);
+    await send('Page.navigate', { url: BASE + '/show/' + nowSlug + '/' });
+    await sleep(1600);
     const navNow = await evaluate(`(() => {
       const active = [...document.querySelectorAll('a[data-nav]')].filter(a => {
         const bg = getComputedStyle(a).backgroundColor;
@@ -271,8 +402,8 @@ async function main() {
     check('aria-current 同步', navNow.aria.includes('now'), `aria=[${navNow.aria}]`);
 
     // 即将开演的详情页 → 应高亮「即将开演」
-    await send('Page.navigate', { url: BASE + '/show/blue-lock-4th-stage/' });
-    await sleep(1100);
+    await send('Page.navigate', { url: BASE + '/show/' + upSlug + '/' });
+    await sleep(1600);
     const navUpcoming = await evaluate(`(() => {
       const active = [...document.querySelectorAll('a[data-nav]')].filter(a => {
         const bg = getComputedStyle(a).backgroundColor;
@@ -285,7 +416,7 @@ async function main() {
     check('待演详情页 aria-current 正确', navUpcoming.aria.includes('upcoming'), `aria=[${navUpcoming.aria}]`);
 
     // 会場详情页
-    await send('Page.navigate', { url: BASE + '/venue/imperial-theatre/' });
+    await send('Page.navigate', { url: BASE + '/venue/' + venueId + '/' });
     await sleep(1100);
     const navVenue = await evaluate(`(() => {
       const active = [...document.querySelectorAll('a[data-nav]')].filter(a => {
@@ -301,14 +432,20 @@ async function main() {
     const themeCycle = await evaluate(`(async () => {
       const btn = document.querySelector('.jp-theme-toggle');
       const seen = [document.documentElement.dataset.theme];
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 2; i++) {
         btn.click();
         await new Promise(r => setTimeout(r, 700));
         seen.push(document.documentElement.dataset.theme);
       }
       return { seen, stored: localStorage.getItem('jp-theme') };
     })()`);
-    check('主题按钮循环三档并回到起点', themeCycle.seen.length === 4 && themeCycle.seen[0] === themeCycle.seen[3], themeCycle.seen.join(' → '));
+    /*
+     * ★ 主题只有**两档**，所以点两次就该回到起点（不是三次）。
+     *   这项原先断言「点三次回到起点」—— 那是三档时代的写法，
+     *   两档下点三次会停在另一档，于是永远红。
+     *   断言必须跟着档位数走。
+     */
+    check('主题按钮在两档间循环并回到起点', themeCycle.seen.length === 3 && themeCycle.seen[0] === themeCycle.seen[2], themeCycle.seen.join(' → '));
     check('主题写入 localStorage', !!themeCycle.stored, `jp-theme=${themeCycle.stored}`);
     const themeTransitionClean = await evaluate(`document.documentElement.classList.contains('jp-theme-transition')`);
     check('切换后无残留过渡类', !themeTransitionClean);

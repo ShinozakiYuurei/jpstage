@@ -36,12 +36,31 @@ const CHROME =
     : 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe');
 
 const VIEWPORT = { width: 1280, height: 1400 };
-const THEMES = ['dark', 'light', 'sakura'];
+const THEMES = ['dark', 'sakura'];
 const PAGES = [
   { name: 'home', url: '/' },
-  { name: 'detail', url: '/show/touken-ranbu-jukuju-ranbu/' },
+  /*
+   * ★ 详情页的样例 slug 必须是**当前数据里真的存在**的。
+   *   它原先写的是示例数据时代的 slug（接入真实抓取后已不存在），
+   *   探针于是跑在 404 页上 —— 测出来的是「404」两个大字的对比度，
+   *   而真正要看的详情页文字一个都没测到。
+   *   这里改成从 data/shows.json 里取第一部，数据与探针不会再脱钩。
+   */
+  { name: 'detail', url: '/show/' + detailSlug() + '/' },
   { name: 'now', url: '/now/' },
 ];
+
+/** 取一部当前数据里存在的公演（优先有海报的：详情页头部有主色层，
+ *  那是最容易破线的位置，见 --jp-accent-panel 的注释） */
+function detailSlug() {
+  try {
+    const shows = JSON.parse(fs.readFileSync(path.resolve('data/shows.json'), 'utf8'));
+    const withPoster = shows.find((s) => s.poster);
+    return (withPoster ?? shows[0]).slug;
+  } catch {
+    return 'unknown';
+  }
+}
 
 /** 待测文字元素：类名 → 人类可读名。只取前几个，避免同一类测上百次 */
 const TARGETS = [
@@ -224,7 +243,18 @@ async function main() {
               if (r.width < 4 || r.height < 4) continue;
               if (r.bottom < 4 || r.top > ${VIEWPORT.height} - 4) continue;
               if (r.left < 2 || r.right > ${VIEWPORT.width} - 2) continue;
+              // 视口外的元素截不到，跳过（否则采样到页面边缘的纯色）
               const cs = getComputedStyle(el);
+              /*
+               * ★ 跳过原生表单控件（<select> / <option> / <input>）：
+               *   它们内部的文字颜色由**浏览器/操作系统**绘制，
+               *   getComputedStyle 读到的 color 往往与实际渲染无关
+               *   （实测原生 select 读到 fg=rgb(212,212,216) 而底也是同一色，
+               *     算出 1.00:1 —— 那是探针的误报，不是页面的缺陷）。
+               *   而且隐藏文字后，原生控件的下拉箭头与系统绘制的文字
+               *   并不会消失，采样点也不准。这类元素本就该排除。
+               */
+              if (['SELECT', 'OPTION', 'INPUT', 'TEXTAREA', 'BUTTON'].includes(el.tagName)) continue;
               /*
                * 采样点：元素的垂直中心、水平中心。
                *

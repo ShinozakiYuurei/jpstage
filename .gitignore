@@ -29,5 +29,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# 抓取脚本的 HTML 缓存（会话内加速用，见 scripts/scrape.mjs）
+.cache/
+
 # TypeScript 增量编译缓存
 *.tsbuildinfo

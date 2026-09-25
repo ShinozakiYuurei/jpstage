@@ -336,4 +336,14 @@ export function allVenueIds(): string[] {
  */
 export const SOURCE_NAME: Record<string, LocalizedText> = {
   sample: { zh: '示範資料', ja: 'サンプルデータ' },
+  /*
+   * CoRich 舞台芸術！
+   *
+   * ★ 为什么用**日文原名**而不是译成「舞台艺术」：
+   *   它是站点的品牌名（CoRich 舞台芸術！），而「芸術」这个词
+   *   在中文语境里指的范围与日文的「芸術（此处泛指表演艺术）」不同。
+   *   品牌名保持原文是通行做法，用户在页脚点过去时看到的也确实是
+   *   「CoRich舞台芸術！」这几个字 —— 名称一致才对得上。
+   */
+  corich: { zh: 'CoRich 舞台芸術！', ja: 'CoRich舞台芸術！' },
 };

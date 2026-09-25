@@ -27,6 +27,7 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://jpstage.example';
  *
  * 本站的启动脚本要同时处理**主题与语言**两件事（见下方 LANG 的说明），
  * 而且语言部分是自己的一套（next-themes 不管语言）。
+ * 主题现在只有两档（dark / sakura），判断逻辑更是只剩两行。
  * 与其装一个库再在外面补一半逻辑，不如把这十几行写清楚 ——
  * 它足够短，也足够关键，值得被完整理解。
  *
@@ -47,13 +48,13 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://jpstage.example';
 const BOOT_SCRIPT = `(function(){try{
 var d=document.documentElement;
 var t=localStorage.getItem('jp-theme');
-if(t!=='light'&&t!=='sakura'&&t!=='dark'){
-t=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';
+if(t!=='sakura'&&t!=='dark'){
+t=window.matchMedia('(prefers-color-scheme: light)').matches?'sakura':'dark';
 }
 d.dataset.theme=t;
 if(t==='dark')d.classList.add('dark');
 var m=document.querySelector('meta[name="theme-color"]');
-if(m)m.setAttribute('content',t==='dark'?'#111113':t==='sakura'?'#fff0f6':'#f1f2f6');
+if(m)m.setAttribute('content',t==='dark'?'#111113':'#fff0f6');
 var g=localStorage.getItem('jp-lang');
 if(g==='ja'){d.dataset.lang='ja';d.lang='ja';}
 }catch(e){}})();`;

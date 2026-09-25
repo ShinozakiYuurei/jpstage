@@ -3,10 +3,16 @@
 import { useRef, useState } from 'react';
 
 /**
- * 主题切换（深色 / 浅色 / 樱粉）
+ * 主题切换（深色 / 粉色）
+ *
+ * ★★ 为什么只有两档，不再有中性浅色 ★★
+ *   早先是「深 → 浅 → 粉」三档。而浅（#F1F2F6 中性浅灰）与粉（#FFF0F6）
+ *   在明度、玻璃参数上几乎重合 —— 用户在切换器里分辨不出刚点到了哪一档，
+ *   却要为每个新令牌在两套明色里各标一次对比度。
+ *   两档下每一档都一眼可辨（一个是近黑、一个是粉），维护成本也减半。
  *
  * 首次访问由 app/layout.tsx 的启动脚本按 prefers-color-scheme 决定，
- * 这里在三档之间循环并记住手动选择。
+ * 这里在两档之间切换并记住手动选择。
  *
  * ===== 为什么图标用 CSS 切换而不是 React state =====
  *
@@ -22,13 +28,12 @@ import { useRef, useState } from 'react';
  *   · 启动脚本在首次绘制前就设好了 data-theme → 首屏就是对的图标；
  *   · React state 只控制过渡期间的交互锁，不影响首屏图标。
  *
- * ===== 三档的循环顺序为什么是 深色 → 浅色 → 樱粉 =====
+ * ===== 只有两档，所以不存在「循环顺序」问题 =====
  *
- * 相邻两档的视觉差异最小（深↔浅是明暗切换，浅↔樱粉是同为浅色系的色相变化），
- * 因此每一次点击的观感变化都是「温和」的，不会出现深色直接跳到粉色
- * 那种突兀感。若排成 深→粉→浅，粉与深之间的跳变最剧烈，
- * 而它恰好是最高频的一次点击（用户在深色下想试粉色只需点两下，
- * 第二次会从粉直接跳回深色）。
+ *   深↔粉是**唯一的**一对切换，怎么点都是这两者之一，
+ *   不存在「排在中间的那一档被跳过」这类问题 —— 三档循环时
+ *   「顺序」才是个需要斟酌的设计决定（哪一档放中间决定了
+ *   相邻两次点击的观感差异）。
  *
  * ===== 为什么 aria-label 是固定的 =====
  *
@@ -36,23 +41,27 @@ import { useRef, useState } from 'react';
  * 名称固定比依主题动态改写更稳定，也避免了需要 JS 动态更新的名称。
  */
 
-type Theme = 'dark' | 'light' | 'sakura';
+type Theme = 'dark' | 'sakura';
 
 /** 目前实际生效的主题（以 <html> 上的 data-theme 为唯一事实来源） */
 function currentTheme(): Theme {
-  const t = document.documentElement.dataset.theme;
-  return t === 'light' || t === 'sakura' ? t : 'dark';
+  return document.documentElement.dataset.theme === 'sakura' ? 'sakura' : 'dark';
 }
 
-/** 下一档（循环） */
+/** 另一档 */
 function nextTheme(t: Theme): Theme {
-  return t === 'dark' ? 'light' : t === 'light' ? 'sakura' : 'dark';
+  return t === 'dark' ? 'sakura' : 'dark';
 }
 
-/** 移动端地址栏颜色，按主题同步 */
+/** 移动端地址栏颜色，按主题同步
+ *
+ * ★ 这两个字面值必须与 app/globals.css 里两套主题的 --jp-canvas 一致。
+ *   它们是同一件事的两次声明（一次给浏览器 UI、一次给页面），
+ *   而不一致时**页面上看不出来** —— 只有手机地址栏的颜色对不上，
+ *   而那块区域在桌面端根本不存在，开发时不会注意到。
+ */
 const THEME_COLOR: Record<Theme, string> = {
   dark: '#111113',
-  light: '#f1f2f6',
   sakura: '#fff0f6',
 };
 
@@ -145,7 +154,7 @@ export function ThemeToggle() {
       onClick={toggle}
       aria-disabled={animating}
       aria-label="切換主題 / テーマ切替"
-      title="深色 → 淺色 → 櫻粉 / ダーク → ライト → さくら"
+      title="深色 ⇄ 櫻粉 / ダーク ⇄ さくら"
       className="jp-theme-toggle"
     >
       {/* 太阳：深色时显示，表示「下一步切到浅色」 */}
@@ -163,25 +172,7 @@ export function ThemeToggle() {
         <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
       </svg>
 
-      {/* 花朵：浅色时显示，表示「下一步切到樱粉」 */}
-      <svg
-        className="jp-theme-flower h-[18px] w-[18px]"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
-      >
-        <path d="M12 12c-2.5-2.2-4.5-4.2-2.8-5.9 1.1-1.1 2.4-.3 2.8 1.2.4-1.5 1.7-2.3 2.8-1.2C16.5 7.8 14.5 9.8 12 12Z" />
-        <path d="M12 12c2.2-2.5 4.2-4.5 5.9-2.8 1.1 1.1.3 2.4-1.2 2.8 1.5.4 2.3 1.7 1.2 2.8C16.2 16.5 14.2 14.5 12 12Z" />
-        <path d="M12 12c2.5 2.2 4.5 4.2 2.8 5.9-1.1 1.1-2.4.3-2.8-1.2-.4 1.5-1.7 2.3-2.8 1.2C7.5 16.2 9.5 14.2 12 12Z" />
-        <path d="M12 12c-2.2 2.5-4.2 4.5-5.9 2.8-1.1-1.1-.3-2.4 1.2-2.8-1.5-.4-2.3-1.7-1.2-2.8C7.8 7.5 9.8 9.5 12 12Z" />
-        <circle cx="12" cy="12" r="1.25" />
-      </svg>
-
-      {/* 月亮：樱粉时显示，表示「下一步切回深色」 */}
+      {/* 月亮：粉色时显示，表示「下一步切回深色」 */}
       <svg
         className="jp-theme-moon h-[18px] w-[18px]"
         viewBox="0 0 24 24"
