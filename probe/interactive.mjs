@@ -204,10 +204,26 @@ async function main() {
       target.click();
       await new Promise(r => setTimeout(r, 350));
       const cards = [...document.querySelectorAll('a[href^="/show/"]')];
-      const chips = cards.map(c => c.querySelector('.jp-chip')?.textContent.trim());
-      return { cards: cards.length, chips: [...new Set(chips)], menuStillOpen: !!document.querySelector('.jp-glass-pop') };
+      /*
+       * ★ 类型标签的**位置变了**（卡片的信息行由 chip 改为纯文本），
+       *   所以这里不能再找 .jp-chip。
+       *
+       * ★ 为什么改读 .jp-poster-card__info 的整段文字，而不是
+       *   给类型加一个专用的 data 属性：
+       *   探针要验证的是「筛出来的卡片确实都是该类型」——
+       *   它应该读**用户看得到的东西**（卡片上那行信息），
+       *   而不是一个专为测试而加的标记。后者会与真实渲染脱节：
+       *   属性对了但文案没渲染出来，探针照样绿。
+       */
+      const rows = cards.map(c => (c.querySelector('.jp-poster-card__info')?.textContent || '').trim());
+      return { cards: cards.length, rows, menuStillOpen: !!document.querySelector('.jp-glass-pop') };
     })()`);
-    check('筛选后只剩该类型', filtered.cards > 0 && filtered.cards < initial.cards && filtered.chips.every((c) => /音樂劇/.test(c)), `${filtered.cards} 张，类型: ${filtered.chips.join('/')}`);
+    const allMusical = filtered.rows.length > 0 && filtered.rows.every((t) => /音樂劇|ミュージカル/.test(t));
+    check(
+      '筛选后只剩该类型',
+      filtered.cards > 0 && filtered.cards < initial.cards && allMusical,
+      `${filtered.cards} 张，首行信息: ${filtered.rows[0]?.slice(0, 30) ?? '(空)'}`,
+    );
     check('勾选后菜单保持打开（可连续多选）', filtered.menuStillOpen);
 
     // 关闭菜单
