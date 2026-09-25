@@ -1,0 +1,146 @@
+[
+  {
+    "id": "touken-ranbu",
+    "name": { "zh": "刀劍亂舞", "ja": "刀剣乱舞" },
+    "original": { "zh": "遊戲《刀劍亂舞-ONLINE-》", "ja": "ゲーム『刀剣乱舞-ONLINE-』" },
+    "sourceKind": "game"
+  },
+  {
+    "id": "hypnosis-mic",
+    "name": { "zh": "催眠麥克風", "ja": "ヒプノシスマイク" },
+    "original": { "zh": "音樂原作《催眠麥克風 -Division Rap Battle-》", "ja": "音楽原作『ヒプノシスマイク -Division Rap Battle-』" },
+    "sourceKind": "other"
+  },
+  {
+    "id": "haikyuu",
+    "name": { "zh": "排球少年!!", "ja": "ハイキュー!!" },
+    "original": { "zh": "漫畫《排球少年!!》", "ja": "漫画『ハイキュー!!』" },
+    "sourceKind": "manga"
+  },
+  {
+    "id": "naruto",
+    "name": { "zh": "火影忍者", "ja": "NARUTO" },
+    "original": { "zh": "漫畫《火影忍者》", "ja": "漫画『NARUTO -ナルト-』" },
+    "sourceKind": "manga"
+  },
+  {
+    "id": "kimetsu",
+    "name": { "zh": "鬼滅之刃", "ja": "鬼滅の刃" },
+    "original": { "zh": "漫畫《鬼滅之刃》", "ja": "漫画『鬼滅の刃』" },
+    "sourceKind": "manga"
+  },
+  {
+    "id": "jujutsu",
+    "name": { "zh": "咒術迴戰", "ja": "呪術廻戦" },
+    "original": { "zh": "漫畫《咒術迴戰》", "ja": "漫画『呪術廻戦』" },
+    "sourceKind": "manga"
+  },
+  {
+    "id": "spy-family",
+    "name": { "zh": "間諜家家酒", "ja": "SPY×FAMILY" },
+    "original": { "zh": "漫畫《SPY×FAMILY 間諜家家酒》", "ja": "漫画『SPY×FAMILY』" },
+    "sourceKind": "manga"
+  },
+  {
+    "id": "tokyo-revengers",
+    "name": { "zh": "東京復仇者", "ja": "東京リベンジャーズ" },
+    "original": { "zh": "漫畫《東京復仇者》", "ja": "漫画『東京リベンジャーズ』" },
+    "sourceKind": "manga"
+  },
+  {
+    "id": "utapri",
+    "name": { "zh": "歌之王子殿下", "ja": "うたの☆プリンスさまっ♪" },
+    "original": { "zh": "遊戲《歌之王子殿下》", "ja": "ゲーム『うたの☆プリンスさまっ♪』" },
+    "sourceKind": "game"
+  },
+  {
+    "id": "ensemble-stars",
+    "name": { "zh": "偶像夢幻祭", "ja": "あんさんぶるスターズ！" },
+    "original": { "zh": "遊戲《偶像夢幻祭》", "ja": "ゲーム『あんさんぶるスターズ！』" },
+    "sourceKind": "game"
+  },
+  {
+    "id": "idolish7",
+    "name": { "zh": "IDOLiSH7", "ja": "アイドリッシュセブン" },
+    "original": { "zh": "遊戲《IDOLiSH7》", "ja": "ゲーム『アイドリッシュセブン』" },
+    "sourceKind": "game"
+  },
+  {
+    "id": "tennis-no-oujisama",
+    "name": { "zh": "網球王子", "ja": "テニスの王子様" },
+    "original": { "zh": "漫畫《網球王子》", "ja": "漫画『テニスの王子様』" },
+    "sourceKind": "manga"
+  },
+  {
+    "id": "kuroko",
+    "name": { "zh": "影子籃球員", "ja": "黒子のバスケ" },
+    "original": { "zh": "漫畫《影子籃球員》", "ja": "漫画『黒子のバスケ』" },
+    "sourceKind": "manga"
+  },
+  {
+    "id": "bungo-stray-dogs",
+    "name": { "zh": "文豪野犬", "ja": "文豪ストレイドッグス" },
+    "original": { "zh": "漫畫《文豪野犬》", "ja": "漫画『文豪ストレイドッグス』" },
+    "sourceKind": "manga"
+  },
+  {
+    "id": "blue-lock",
+    "name": { "zh": "藍色監獄", "ja": "ブルーロック" },
+    "original": { "zh": "漫畫《藍色監獄》", "ja": "漫画『ブルーロック』" },
+    "sourceKind": "manga"
+  },
+  {
+    "id": "my-hero-academia",
+    "name": { "zh": "我的英雄學院", "ja": "僕のヒーローアカデミア" },
+    "original": { "zh": "漫畫《我的英雄學院》", "ja": "漫画『僕のヒーローアカデミア』" },
+    "sourceKind": "manga"
+  },
+  {
+    "id": "gintama",
+    "name": { "zh": "銀魂", "ja": "銀魂" },
+    "original": { "zh": "漫畫《銀魂》", "ja": "漫画『銀魂』" },
+    "sourceKind": "manga"
+  },
+  {
+    "id": "persona5",
+    "name": { "zh": "女神異聞錄5", "ja": "ペルソナ5" },
+    "original": { "zh": "遊戲《女神異聞錄5》", "ja": "ゲーム『ペルソナ5』" },
+    "sourceKind": "game"
+  },
+  {
+    "id": "nier",
+    "name": { "zh": "尼爾", "ja": "NieR" },
+    "original": { "zh": "遊戲《NieR:Automata》", "ja": "ゲーム『NieR:Automata』" },
+    "sourceKind": "game"
+  },
+  {
+    "id": "sailor-moon",
+    "name": { "zh": "美少女戰士", "ja": "美少女戦士セーラームーン" },
+    "original": { "zh": "漫畫《美少女戰士》", "ja": "漫画『美少女戦士セーラームーン』" },
+    "sourceKind": "manga"
+  },
+  {
+    "id": "cardfight-vanguard",
+    "name": { "zh": "卡片戰鬥先導者", "ja": "カードファイト!! ヴァンガード" },
+    "original": { "zh": "遊戲《卡片戰鬥先導者》", "ja": "ゲーム『カードファイト!! ヴァンガード』" },
+    "sourceKind": "game"
+  },
+  {
+    "id": "fruits-basket",
+    "name": { "zh": "魔法水果籃", "ja": "フルーツバスケット" },
+    "original": { "zh": "漫畫《魔法水果籃》", "ja": "漫画『フルーツバスケット』" },
+    "sourceKind": "manga"
+  },
+  {
+    "id": "yuri-on-ice",
+    "name": { "zh": "YURI!!! on ICE", "ja": "ユーリ!!! on ICE" },
+    "original": { "zh": "動畫《YURI!!! on ICE》", "ja": "アニメ『ユーリ!!! on ICE』" },
+    "sourceKind": "anime"
+  },
+  {
+    "id": "higeki-no-genkyou",
+    "name": { "zh": "悲劇始於元凶", "ja": "悲劇の元凶となる最強外道ラスボス女王は民の為に尽くします。" },
+    "original": { "zh": "小說《悲劇始於元凶》", "ja": "小説『悲劇の元凶となる最強外道ラスボス女王は民の為に尽くします。』" },
+    "sourceKind": "novel"
+  }
+]

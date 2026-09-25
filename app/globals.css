@@ -1,0 +1,1943 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/*
+ * ════════════════════════════════════════════════════════════════════
+ *  jpstage 视觉体系
+ *
+ *  移植自 hkmovie 的「液态玻璃 + 环境光」体系（2026-09-23 那一版），
+ *  保留其全部工程结论，并按本站场景做了三处调整：
+ *
+ *   ① 令牌前缀 --hkm-* → --jp-*：两站并存，同名前缀会让「这是哪站的变量」
+ *      在跨仓库粘贴代码时彻底失去线索。
+ *
+ *   ② 新增日语主题的**字体栈**：hkmovie 是纯中文站，字体只考虑
+ *      Noto Sans HK / PingFang；本站中日双语，日文部分必须排到
+ *      日文字体之前，否则「ミュージカル」这类假名会被中文字体的
+ *      假名字形渲染（微软雅黑、PingFang 都带假名，但字形是中文习惯的，
+ *      与日文正字法不同，日语用户一眼能看出别扭）。
+ *
+ *   ③ 新增双语显示机制（.i18n-zh / .i18n-ja，见文件末尾）——
+ *      这是 hkmovie 完全没有的一块，理由写在那里。
+ *
+ *  ⚠️ 沿用 hkmovie 的两条硬性约定，改动前务必先读对应注释：
+ *    · backdrop-filter 必须 **-webkit- 在前、标准在后**。
+ *      lightningcss 会把两者当同一属性的两种写法而只保留最后一条 ——
+ *      写反等于把模糊删掉，且 DevTools 里看不出异常。
+ *    · 玻璃的显形机制在明暗两套主题下**方向相反**，
+ *      不是把颜色取反就能得到另一套（详见明色主题块）。
+ * ════════════════════════════════════════════════════════════════════
+ */
+
+/*
+ * dark: 变体的判定条件
+ *
+ * 本站主题切换用的是 <html data-theme="dark|light|sakura">（见 ThemeToggle.tsx），
+ * 而 Tailwind 的 dark: 变体默认只认 .dark 类。若不扩，日后任何人写一个
+ * dark:bg-xxx，它都会在浅色模式下**永远生效**（因为 .dark 类从没被加上过），
+ * 而且这种错很难看出是变体判定失配。
+ *
+ * 为什么不让 JS 同时维护 .dark 类：class 是服务端渲染时就写定的，
+ * 而 data-theme 是启动脚本在 hydrate 之前改的 —— 两者混用等于让 React
+ * 去调和它不认识的 class。data-theme 是唯一事实来源，变体跟着它走最干净。
+ */
+@custom-variant dark (&:is(.dark *, [data-theme='dark'] *));
+
+/* ============================================================
+   暗色设计令牌（默认主题）
+
+   层级由「表面色差 + 发丝边框」表达，不靠大投影、光晕、彩色渐变去堆。
+
+   四层色彩决策：
+     画布底层  #111113   柔和的近黑，拒绝纯黑与明显彩色泛光
+     悬浮卡片  #18181B   比底层亮一档，容器自然浮起
+     主文字    #F4F4F5   微弱的米白，避免亮字在暗底上发光晕开
+     次级文字  #A1A1AA
+
+   让卡片立起来的关键是**边框**，不是阴影：1px、透明度 6%~8% 的
+   极细半透明边框，与背景之间产生一点若隐若现的「环境漫反射」。
+   ============================================================ */
+:root {
+  /*
+   * 字体栈
+   *
+   * ★ 顺序即优先级，日文字体必须排在中文之前（理由见文件头 ②）：
+   *     Noto Sans JP → Hiragino Kaku Gothic → Yu Gothic → Meiryo  日文
+   *     Noto Sans TC → PingFang TC → Microsoft JhengHei            中文
+   *   最后是 system-ui 兜底。
+   *
+   * ★ 为什么不引 webfont：中文字体文件动辄 5~15MB（子集化后也常有 1~3MB），
+   *   而本站首屏价值在「一眼看到有哪些公演」。用系统字体可以做到
+   *   0 字体请求、首屏零等待；代价是不同平台的观感略有差异 ——
+   *   对信息型站点这个取舍是划算的（hkmovie 引入的是子集化的
+   *   Inter + Noto Sans HK，那是它已经做过字体的权衡；本站从简）。
+   */
+  --jp-font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans',
+    'Yu Gothic', 'YuGothic', Meiryo, 'Noto Sans TC', 'PingFang TC',
+    'Microsoft JhengHei', system-ui, -apple-system, BlinkMacSystemFont,
+    'Segoe UI', Arial, sans-serif;
+
+  /*
+   * 顶栏高度（单一事实源）
+   *
+   * ★ 为什么必须固定：顶栏是 sticky 的，页面内所有「需要避开顶栏」的地方
+   *   （内容区 padding-top、锚点 scroll-margin、二级 sticky 条）都得知道
+   *   它到底多高。用 padding 撑出来的高度会随字号/行高微调而变，
+   *   一旦与别处写死的数字对不上，就会出现「内容顶进 header 下面」的叠压。
+   */
+  --jp-header-h: 3.5rem; /* 56px */
+
+  /* ---- 表面层 ---- */
+  --jp-canvas: #111113;
+  --jp-surface: #18181b;
+  --jp-surface-hover: #1f1f23;
+
+  /* ---- 文字层级 ----
+   * 对比度（WCAG 相对亮度公式，画布 / 实心卡片）：
+   *   fg     #F4F4F5 → 18.00:1 / 16.12:1
+   *   soft   #D4D4D8 → 13.38:1 / 11.99:1
+   *   muted  #A1A1AA →  7.72:1 /  6.91:1
+   *   dim    #90909A →  6.24:1 /  5.58:1   ← 两者均过 AA 正文
+   *   faint  #5A5A63 →  2.99:1             ← ⚠️ 仅限装饰
+   *
+   * ⚠️ faint 为什么只能用于装饰：它不达 AA（低于 4.5:1），放在正文/免责
+   *   声明上属于可读性缺陷。它只用于卡片信息行里的分隔符「·」这类
+   *   **纯装饰**字符（去掉也不影响理解）。任何真正要读的文字都走 dim 及以上。
+   *
+   * ★ dim 的取值来自 hkmovie 的实测修正（原 #8A8A94 → #90909A）：
+   *   卡片早已是半透明玻璃，身后有极光，「实心卡片 5.58:1」这个前提不成立。
+   *   实测玻璃上的 dim 最差只有 4.32:1，落在 AA 线下。只提亮 6/255 就把
+   *   最差处抬到 4.67:1 —— 肉眼几乎看不出差别，但过线了。
+   *   本站的玻璃参数与 hkmovie 同源，因此这个结论直接适用。
+   */
+  --jp-fg: #f4f4f5;
+  --jp-fg-soft: #d4d4d8;
+  --jp-fg-muted: #a1a1aa;
+  --jp-fg-dim: #90909a;
+  --jp-fg-faint: #5a5a63;
+
+  /* ---- 发丝边框（保留给分隔线等非玻璃元素） ---- */
+  --jp-hairline-soft: rgb(255 255 255 / 0.06);
+  --jp-hairline: rgb(255 255 255 / 0.08);
+  --jp-hairline-strong: rgb(255 255 255 / 0.14);
+
+  /* ============================================================
+     液态玻璃令牌（来源：gitee.com/greyd097/yzrt《纯 CSS 液态玻璃》）
+
+     原手法四层，逐层翻译到**暗色**场景：
+       ① 父层 filter: contrast(3)     → 拉伸对比，把边缘「挤」出透镜感
+       ② 半透明底 + backdrop-filter   → 透出并模糊身后的内容
+       ③ 四条 inset 白光              → 玻璃棱边的折射高光
+       ④ ::after 斜向白色渐变         → 镜面反光
+
+     ★ ① 为什么**不用**：它作用在父容器上，会连同子元素里的文字、海报
+       一起拉对比度 —— 海报会过曝、正文会变脆。原 demo 父层只有一个
+       纯色图标所以看不出问题；本站父层是整页内容，用了必然出事。
+       透镜感改由棱边高光 + 内暗边模拟，视觉等效而零副作用。
+
+     ★ 白高光为什么从 0.8~0.9 收到 0.10~0.30：
+       原 demo 是浅色底，白高光是「提亮」；在近黑画布上却是「糊一层白雾」。
+       方向不变、只调透明度是修不好的 —— 详见下方 .jp-glass 的骨架注释。
+
+     ★ 外观令牌为什么抽出来而不是写死在规则里：
+       本站有三套主题（暗 / 浅 / 樱粉）。若靠「浅色块里再写一遍 .jp-glass」
+       来覆盖，等于同一个外观有**两份定义**，日后调暗色的棱边高光时
+       必然忘记同步浅色那份。收成令牌后，规则只描述结构（哪几层、什么形状），
+       令牌描述值，三套主题各自给一组值。
+
+     ★ 暗色这一组必须与 hkmovie 抽取前的字面值**逐字相同**：
+       下面所有对比度结论都是在这些值下实测的。抽取令牌只是搬家，不是调色 ——
+       任何一个数字变了，之前所有实测结论都作废。
+     ============================================================ */
+  --jp-glass-border: rgb(255 255 255 / 0.13);
+  --jp-glass-bg: rgb(24 24 27 / 0.72);
+  --jp-glass-bg-hover: rgb(30 30 34 / 0.42);
+  --jp-glass-pop-bg: rgb(20 20 24 / 0.82);
+  --jp-glass-sticky-bg: rgb(20 20 24 / 0.86);
+  --jp-glass-bar-bg: rgb(10 10 12 / 0.58);
+
+  /* 顶栏的上下切口反光与底色渐变 */
+  --jp-bar-sheen-top: rgb(255 255 255 / 0.07);
+  --jp-bar-sheen-bottom: rgb(255 255 255 / 0.02);
+  --jp-bar-edge-top: rgb(255 255 255 / 0.16);
+  --jp-bar-edge-bottom: rgb(255 255 255 / 0.07);
+  --jp-bar-outer: rgb(0 0 0 / 0.9);
+
+  /* 棱边折射高光：四条 inset 白光，上左最亮、下右次之 */
+  --jp-glass-edge-1: rgb(255 255 255 / 0.22);
+  --jp-glass-edge-2: rgb(255 255 255 / 0.16);
+  --jp-glass-edge-3: rgb(255 255 255 / 0.14);
+  --jp-glass-edge-4: rgb(255 255 255 / 0.1);
+  --jp-glass-edge-hover-1: rgb(255 255 255 / 0.34);
+  --jp-glass-edge-hover-2: rgb(255 255 255 / 0.24);
+  --jp-glass-edge-hover-3: rgb(255 255 255 / 0.2);
+  --jp-glass-edge-hover-4: rgb(255 255 255 / 0.16);
+  --jp-glass-outer: rgb(0 0 0 / 0.7);
+  --jp-glass-outer-hover: rgb(0 0 0 / 0.85);
+
+  --jp-panel-edge-1: rgb(255 255 255 / 0.18);
+  --jp-panel-edge-2: rgb(255 255 255 / 0.13);
+  --jp-panel-outer: rgb(0 0 0 / 0.65);
+  --jp-sticky-edge-1: rgb(255 255 255 / 0.24);
+  --jp-sticky-edge-2: rgb(255 255 255 / 0.18);
+  --jp-sticky-outer: rgb(0 0 0 / 0.9);
+  --jp-pop-inset: rgb(255 255 255 / 0.16);
+  --jp-pop-outer: rgb(0 0 0 / 0.9);
+
+  /* 镜面反光带：0.30 → 0.22，卡片里是海报，扫光叠在海报上会洗掉画面中部 */
+  --jp-glass-sheen: rgb(255 255 255 / 0.22);
+  /* 玻璃「厚度」：内侧一圈暗边，让边缘有体积而不是一张贴纸 */
+  --jp-glass-inner-rim: rgb(0 0 0 / 0.45);
+  /* 玻璃的模糊/提亮强度（各层按需覆写） */
+  --jp-glass-blur: 20px;
+  --jp-glass-sat: 180%;
+  --jp-glass-lift: 1.1;
+
+  /* 药丸标签 */
+  --jp-chip-border: rgb(255 255 255 / 0.14);
+  --jp-chip-bg-1: rgb(255 255 255 / 0.1);
+  --jp-chip-bg-2: rgb(255 255 255 / 0.04);
+  --jp-chip-inset-top: rgb(255 255 255 / 0.16);
+  --jp-chip-inset-bottom: rgb(0 0 0 / 0.3);
+
+  /* 次要按钮（真玻璃那颗） */
+  --jp-ghost-border: rgb(255 255 255 / 0.16);
+  --jp-ghost-bg-1: rgb(255 255 255 / 0.12);
+  --jp-ghost-bg-2: rgb(255 255 255 / 0.05);
+  --jp-ghost-bg: rgb(24 24 27 / 0.3);
+  --jp-ghost-inset-top: rgb(255 255 255 / 0.2);
+  --jp-ghost-inset-bottom: rgb(0 0 0 / 0.28);
+  --jp-ghost-outer: rgb(0 0 0 / 0.6);
+
+  /* 海报：1px 细边 + 两层投影 */
+  --jp-poster-border: rgb(255 255 255 / 0.14);
+  --jp-poster-shadow-1: rgb(0 0 0 / 0.85);
+  --jp-poster-shadow-2: rgb(0 0 0 / 0.95);
+  --jp-poster-frame: #000;
+
+  /* 骨架微光 */
+  --jp-skeleton-a: rgb(255 255 255 / 0.04);
+  --jp-skeleton-b: rgb(255 255 255 / 0.09);
+
+  /* 渐变强调字的第二端 */
+  --jp-grad-2: #67e8f9;
+
+  /* 公演简介正文 */
+  --jp-summary-fg: rgb(255 255 255 / 0.85);
+
+  /* 弹层遮罩 */
+  --jp-scrim: rgb(0 0 0 / 0.7);
+
+  /* 状态徽章：上演中 / 即將開演 / 已結束
+   *
+   * ★ 为什么不用品牌紫做「上演中」：品牌色是**交互色**（按钮、链接、选中态），
+   *   拿它表示状态会让「可点的东西」与「状态的标签」混为一谈。
+   *   状态用独立的三色（绿 / 琥珀 / 灰），与座位档位的色系一致 ——
+   *   全站「绿=进行中/可购、琥珀=即将、灰=已过」是同一套语义。
+   *
+   * ★★ 为什么徽章必须自带一块**底板**，而不能只靠淡彩背景 ★★
+   *
+   *   初版写的是「淡彩底 + 状态色文字」（bg 仅 10%~16% 不透明度）。
+   *   实测（probe/theme-contrast.mjs）发现这会让徽章的可读性
+   *   **取决于身后是什么**：
+   *     浅色主题 / 首页：「即將開演」的深绿字压在卡片主色层
+   *                      （深蓝海报取出的 #2b4a8f）上 → **1.14:1**
+   *     樱粉主题 / 详情页：「上演中」压在 accent 层上 → 4.34:1（仍不达 AA）
+   *   10% 不透明的底等于没有底，颜色 90% 来自身后 ——
+   *   而身后可能是**任意**颜色（作品主视觉取出的主色，与主题无关）。
+   *
+   *   修法：给徽章一块高不透明度的底板（plate），再把状态色当作
+   *   一层 tint 叠在板上。这样底色由自己决定，文字对比度就与身后无关。
+   *   这与 hkmovie 把评分卡底色由半透明改为不透明是同一个道理，
+   *   也和本文件上方「玻璃不该靠加白显形」是同一条原则的反面用例：
+   *   **玻璃可以透，但承载状态信息的徽章不行**。
+   *
+   *   为什么 plate 不是 1.0（纯不透明）：
+   *     徽章压在海报的**角落**，那里往往正好是主视觉的一部分。
+   *     完全不透明会像贴了一张不干胶；0.92~0.95 + backdrop 模糊后
+   *     仍能透出一丝身后的色相，观感上是「玻璃上的标签」。
+   *     而这个不透明度已经足够压住最亮的黄褐海报。
+   *
+   *   ★ 文字色为什么不随主题取反：底板是自己画的，所以文字只与底板有关。
+   *     浅色主题的底板也是浅的（#FDFEFE），所以文字是深色 ——
+   *     这与「深色主题用亮字」并不矛盾，两者都是「按底板标定」。
+   */
+  --jp-st-plate: rgb(14 15 17 / 0.92);
+  --jp-st-now-tint: rgb(34 197 94 / 0.22);
+  --jp-st-now-border: rgb(34 197 94 / 0.5);
+  --jp-st-now-fg: #86efac;
+  --jp-st-now-dot: #22c55e;
+  --jp-st-soon-tint: rgb(245 158 11 / 0.22);
+  --jp-st-soon-border: rgb(245 158 11 / 0.5);
+  --jp-st-soon-fg: #fcd34d;
+  --jp-st-soon-dot: #f59e0b;
+  --jp-st-end-tint: rgb(255 255 255 / 0.1);
+  --jp-st-end-border: rgb(255 255 255 / 0.16);
+  --jp-st-end-fg: #a1a1aa;
+  --jp-st-end-dot: #71717a;
+
+  /*
+   * 叠在**海报**上的状态徽章（.jp-status--on-art）
+   *
+   * ★ 为什么它需要**另一套**底板与文字色，而且**不随主题变**：
+   *   海报颜色来自作品主视觉，与页面主题完全无关 ——
+   *   可能是深蓝、深红、也可能是亮黄。
+   *   所以它的底板恒为暗色、文字恒为亮色，这样在任何海报上都成立。
+   *   若让它跟着主题走（浅色主题用浅底深字），就会出现
+   *   「深绿字压在深蓝海报上」的 1.14:1（实测值）。
+   *   这不是「忘了覆盖」，而是**刻意不覆盖**。
+   */
+  --jp-st-onart-plate: rgb(10 10 14 / 0.72);
+  --jp-st-onart-border: rgb(255 255 255 / 0.18);
+  --jp-st-onart-now-fg: #86efac;
+  --jp-st-onart-soon-fg: #fcd34d;
+  --jp-st-onart-end-fg: #d4d4d8;
+
+  /* 极淡填充（chip / 次级按钮 / 内嵌块） */
+  --jp-veil: rgb(255 255 255 / 0.04);
+  --jp-veil-strong: rgb(255 255 255 / 0.07);
+
+  /*
+   * 药丸标签内部的次级文字
+   *
+   * ★★ 为什么不能直接用 --jp-fg-dim ★★
+   *
+   *   实测（probe/theme-contrast.mjs）：同一个 dim 令牌，
+   *   落在普通玻璃卡上还有 5.5:1，落进 .jp-chip 内部就只剩 **4.19:1**（不达 AA）。
+   *
+   *   原因不是 dim 不够亮，而是 chip 自身就是**又一层半透明表面**：
+   *   它的 10% 白渐变 + 上下内高光会把身后的底再抬亮一档。
+   *   于是「玻璃 → 主色层 → chip」三层叠加后，背景已经比玻璃本身亮不少，
+   *   而 dim 是按「玻璃上的最差值」标定的，到这里就没有余量了。
+   *
+   *   修法有两条路：把 chip 做不透明（牺牲标签的通透感，且它数量多、
+   *   面积小，观感上会变成一排硬色块），或者**给 chip 上的文字单独标定**。
+   *   选后者：chip 是一个「表面」，表面上就该有属于它的文字令牌 ——
+   *   这也是本文件「令牌是单一事实源」的一贯做法。
+   *
+   *   取值依据（深色主题，最差底色取自实测的 rgb(58 45 39)，
+   *   即 chip 压在暖色主色层上的情形）：
+   *     #90909A（= dim）.. 4.19:1  ✗
+   *     #9A9AA4 ........... 4.76:1  ✓  ← 采用
+   *     #A1A1AA（= muted）. 5.13:1  ✓
+   *   取 4.76 而不是更宽裕的 5.13：chip 上的文字都是「+2」这类短标注，
+   *   提到 muted 的亮度会让它与 chip 主体文字（soft）失去层级差别，
+   *   反而看不出哪个是主、哪个是附注。
+   */
+  --jp-fg-onchip: #9a9aa4;
+
+  /* 品牌强调色：2.5 次元公演海报以蓝紫/青为主，取偏蓝的紫罗兰作主色 */
+  --jp-accent: #8b7cff;
+  --jp-accent-soft: #a78bfa;
+  --jp-accent-glow-rgb: 124 108 255;
+  /* 主按钮渐变两端。★ 浅色主题必须换深一档：按钮上是白字，
+     白字压在 #8B7CFF 上只有 3.4:1，不达 AA。 */
+  --jp-btn-primary-1: #8b7cff;
+  --jp-btn-primary-2: #6d5cf0;
+
+  /* 暗色背景保持柔和平滑；不绘制彩色光斑（见 .jp-aurora 的说明）。 */
+  --jp-aurora-base: #111113;
+  --jp-aurora-1: rgb(99 102 120 / 0.14);
+  --jp-aurora-2: rgb(74 100 106 / 0.08);
+  --jp-aurora-3: rgb(100 87 123 / 0.1);
+
+  /*
+   * shadcn 默认注入的是浅色变量，与本站无关（本站未引 shadcn），
+   * 但保留这组映射以便日后接入时不会得到一套突兀的配色。
+   */
+  color-scheme: dark;
+  --background: var(--jp-canvas);
+  --foreground: var(--jp-fg);
+  --border: var(--jp-hairline);
+  --ring: var(--jp-accent);
+  --radius: 0.625rem;
+}
+
+/* ============================================================
+   浅色主题令牌
+
+   ★★ 浅色不是把暗色的值取反 ★★
+
+   最容易想到的做法是把画布改白、文字改黑，然后玻璃底色也从
+   rgb(24 24 27 / 0.72) 换成 rgb(255 255 255 / 0.72) 就完事。
+   但这样出来的浅色卡**根本没有玻璃感**，原因是「显形机制」变了：
+
+     暗色玻璃靠「比画布亮一档 + 白色棱边」显形（白在暗底上是提亮）；
+     浅色画布本身就是亮的，再加白只会白成一团 —— 卡片边界消失。
+
+   所以浅色玻璃改用三条**另外**的机制：
+     ① 底色比画布更白（画布 #F1F2F6 → 玻璃 0.62 白 ≈ #FAFAFC）；
+     ② 棱边高光提到 0.4~0.9（暗色是 0.22）—— 浅色里白光必须
+        **比自身底色更白**才看得见，低透明度的白等于没写；
+     ③ 形状改由「内暗边 + 外投影」定义（0.10 / 0.16）——
+        这是浅色玻璃最关键的差别：暗色用内暗边表达「厚度」，
+        浅色还得靠它表达「边界在哪」。
+
+   ★ 浅色文字令牌同样不是取反，而是各自标定（对着玻璃实测底 #FAFAFC）：
+
+     fg     #18181B → 17.0:1   （暗色 18.0:1）
+     soft   #3F3F46 → 10.0:1
+     muted  #52525B →  7.4:1
+     dim    #5A5A63 →  6.6:1   （暗色 4.67:1，浅色余量更大）
+     faint  #A8A8B0 →  2.3:1   ← ⚠️ 与暗色的 #5A5A63 一样，仅限装饰
+
+   ★ 强调色必须换（这条最容易漏）：
+     品牌紫 #8B7CFF 在 #F1F2F6 画布上只有 **2.9:1** —— 它在暗底上是
+     合格的高亮色，在浅底上却是「浅紫糊在白纸上」，全站所有
+     text-accent（待演日期、按钮 hover、筛选选中态）会一起变得读不清。
+     浅色改用同色系的深紫 #6B46E5（画布 5.2:1 / 玻璃 5.6:1）。
+
+   ★ 渐变强调字（.jp-grad-text）的两端也要一起换：
+     暗色那组 #A78BFA → #67E8F9 在浅底上最亮端只有 1.4:1，
+     等于区块大标题里那两个字直接消失。
+     浅色改用 #6B46E5 → #0E7490，保留「紫 → 青」的走向与品牌辨识度。
+
+   ★ 为什么用 html[data-theme='light'] 而不是 .light 类：
+     属性选择器（0,1,1）权重高于 :root（0,1,0），因此**无论写在文件哪里
+     都能稳定覆盖**，不依赖书写顺序。而 .light 与 :root 同为 (0,1,0)，
+     一旦有人把浅色块挪到 :root 之前，覆盖就会静默失效。
+   ============================================================ */
+html[data-theme='light'],
+html[data-theme='sakura'] {
+  /* 让浏览器原生控件（滚动条、表单、下拉）也跟着切 */
+  color-scheme: light;
+
+  /* ---- 表面层：画布是「带一点冷调的浅灰」，不是纯白 ----
+   * 与暗色画布 #111113（柔和近黑、拒绝死黑）同一个思路：
+   * 纯白 #FFFFFF 上玻璃「更白一档」就没有空间了，卡片只能靠阴影硬撑。 */
+  --jp-canvas: #f1f2f6;
+  --jp-surface: #ffffff;
+  --jp-surface-hover: #f7f7fa;
+
+  /* ---- 文字层级（对比度见上方注释） ----
+   *
+   * ★★ 为什么 muted / dim 比「看起来该有的值」再深一档 ★★
+   *
+   *   初版取的是 dim #5A5A63（与暗色主题同值）。实测（probe/theme-contrast.mjs）
+   *   它在最差处只剩 **4.62:1** —— 看似达标，但离 AA 线（4.5）只有 0.12。
+   *   而最差处是**面包屑压在极光层峰值**上（bg rgb(207 210 248)）：
+   *   极光亮度、玻璃底色、主色层 alpha 任意一处微调，都能把它推回线下，
+   *   而本地很难复现（要恰好停在那一屏、那一个位置）。
+   *   （hkmovie 的 dim 令牌就是在这个位置上反复擦线，最后靠提亮 6/255 修好。）
+   *
+   *   所以这里不取「刚好过线」的值，而是一次给足余量：
+   *     muted #4B4B54 .. 5.85:1（原 5.24）
+   *     dim   #55555D .. 5.00:1（原 4.62）  ← 留 0.50 余量
+   *   同时保持四个层级的**可辨认递降**（画布对比度）：
+   *     fg 17.0 / soft 9.3 / muted 6.9 / dim 6.0，相邻比值 1.8 / 1.35 / 1.15
+   */
+  --jp-fg: #18181b;
+  --jp-fg-soft: #3f3f46;
+  --jp-fg-muted: #4b4b54;
+  --jp-fg-dim: #55555d;
+  --jp-fg-faint: #a8a8b0;
+
+  /* ---- 发丝边框：暗色是「白 6/8/14%」，浅色换成「黑 6/10/16%」 ---- */
+  --jp-hairline-soft: rgb(9 9 11 / 0.06);
+  --jp-hairline: rgb(9 9 11 / 0.1);
+  --jp-hairline-strong: rgb(9 9 11 / 0.16);
+
+  --jp-veil: rgb(9 9 11 / 0.04);
+  --jp-veil-strong: rgb(9 9 11 / 0.07);
+
+  /* chip 上的次级文字：
+   *   浅色：与 dim 同值的深灰（对白底 6.6:1，余量充足）
+   *   樱粉：取樱粉主题的 muted 值 —— 实测（probe/theme-contrast.mjs）
+   *         樱粉的 dim #785968 压在 chip（叠在 accent 层上）只有 **4.40:1**，
+   *         而 #704D5D 是 5.19:1。樱粉的底比浅色偏暖偏深，
+   *         同一个「看起来差不多深」的值实际会低 0.5~1.0。 */
+  /* chip 上的次级文字：与 dim 同值（实测 chip 上 5.0:1 以上） */
+  --jp-fg-onchip: #55555d;
+
+  /* ---- 品牌强调色（浅底上换深一档） ---- */
+  --jp-accent: #6b46e5;
+  --jp-accent-soft: #6b46e5;
+  --jp-accent-glow-rgb: 91 57 214;
+  --jp-grad-2: #0e7490;
+  --jp-btn-primary-1: #6b46e5;
+  --jp-btn-primary-2: #5b39d6;
+
+  /* ---- 玻璃（浅色三机制，见上方注释） ---- */
+  --jp-glass-border: rgb(255 255 255 / 0.7);
+  --jp-glass-bg: rgb(255 255 255 / 0.62);
+  --jp-glass-bg-hover: rgb(255 255 255 / 0.78);
+  --jp-glass-pop-bg: rgb(255 255 255 / 0.88);
+  --jp-glass-sticky-bg: rgb(255 255 255 / 0.9);
+  --jp-glass-bar-bg: rgb(252 252 253 / 0.78);
+  /* 提亮系数：暗色用 1.1 把暗底抬起来；浅色只给 1.03，
+     再高就把身后的浅色内容冲成一片死白（玻璃要透得出东西才叫玻璃） */
+  --jp-glass-lift: 1.03;
+  /* 内暗边：浅色里它同时承担「厚度」与「边界」两件事 */
+  --jp-glass-inner-rim: rgb(9 9 11 / 0.1);
+
+  /* 棱边高光：浅色必须比自身底色更白才看得见，故整体拉到 0.4~0.9 */
+  --jp-glass-edge-1: rgb(255 255 255 / 0.9);
+  --jp-glass-edge-2: rgb(255 255 255 / 0.6);
+  --jp-glass-edge-3: rgb(255 255 255 / 0.55);
+  --jp-glass-edge-4: rgb(255 255 255 / 0.4);
+  --jp-glass-edge-hover-1: rgb(255 255 255 / 1);
+  --jp-glass-edge-hover-2: rgb(255 255 255 / 0.75);
+  --jp-glass-edge-hover-3: rgb(255 255 255 / 0.7);
+  --jp-glass-edge-hover-4: rgb(255 255 255 / 0.5);
+
+  /* 外投影：暗色靠它「浮起」，浅色还得靠它「画出轮廓」，
+     所以从 0.7 收到 0.16 但**更实**（暗色那层黑在浅底上会糊成一团脏灰） */
+  --jp-glass-outer: rgb(9 9 11 / 0.16);
+  --jp-glass-outer-hover: rgb(9 9 11 / 0.22);
+
+  --jp-panel-edge-1: rgb(255 255 255 / 0.85);
+  --jp-panel-edge-2: rgb(255 255 255 / 0.6);
+  --jp-panel-outer: rgb(9 9 11 / 0.12);
+  --jp-sticky-edge-1: rgb(255 255 255 / 0.9);
+  --jp-sticky-edge-2: rgb(255 255 255 / 0.7);
+  --jp-sticky-outer: rgb(9 9 11 / 0.16);
+  --jp-pop-inset: rgb(255 255 255 / 0.9);
+  --jp-pop-outer: rgb(9 9 11 / 0.18);
+
+  /* 顶栏：身后的渐变在浅色里是「白 → 更白」，形同虚设，
+     所以定义轮廓的责任交给**下沿那条发丝线**（--jp-bar-edge-bottom 改黑） */
+  --jp-bar-sheen-top: rgb(255 255 255 / 0.6);
+  --jp-bar-sheen-bottom: rgb(255 255 255 / 0.25);
+  --jp-bar-edge-top: rgb(255 255 255 / 0.9);
+  --jp-bar-edge-bottom: rgb(9 9 11 / 0.08);
+  --jp-bar-outer: rgb(9 9 11 / 0.12);
+
+  /* 镜面扫光：浅色玻璃本身已接近纯白，低透明度的白扫上去等于没扫。
+     它仍有可见度 —— 玻璃底色带紫/青调（身后是极光层），
+     高透明度的白扫过时会把那点色调洗掉，观感上就是一道掠过的反光。 */
+  --jp-glass-sheen: rgb(255 255 255 / 0.8);
+
+  --jp-chip-border: rgb(9 9 11 / 0.1);
+  --jp-chip-bg-1: rgb(255 255 255 / 0.9);
+  --jp-chip-bg-2: rgb(255 255 255 / 0.5);
+  --jp-chip-inset-top: rgb(255 255 255 / 0.95);
+  --jp-chip-inset-bottom: rgb(9 9 11 / 0.06);
+
+  --jp-ghost-border: rgb(9 9 11 / 0.14);
+  --jp-ghost-bg-1: rgb(255 255 255 / 0.8);
+  --jp-ghost-bg-2: rgb(255 255 255 / 0.45);
+  --jp-ghost-bg: rgb(255 255 255 / 0.5);
+  --jp-ghost-inset-top: rgb(255 255 255 / 0.9);
+  --jp-ghost-inset-bottom: rgb(9 9 11 / 0.06);
+  --jp-ghost-outer: rgb(9 9 11 / 0.12);
+
+  --jp-poster-border: rgb(9 9 11 / 0.12);
+  --jp-poster-shadow-1: rgb(9 9 11 / 0.22);
+  --jp-poster-shadow-2: rgb(9 9 11 / 0.3);
+  --jp-poster-frame: rgb(9 9 11 / 0.06);
+
+  --jp-skeleton-a: rgb(9 9 11 / 0.05);
+  --jp-skeleton-b: rgb(9 9 11 / 0.1);
+
+  --jp-summary-fg: rgb(24 24 27 / 0.88);
+  --jp-scrim: rgb(9 9 11 / 0.45);
+
+  /* 状态徽章：底板改为**近白**（自己画底，不再依赖身后是什么）
+   *
+   * 文字实测（对自画的浅底，见 --jp-st-plate 的注释）：
+   *   绿 5.84:1 / 琥珀 5.93:1 / 灰 8.94:1 —— 均过 AA
+   */
+  --jp-st-plate: rgb(253 254 254 / 0.95);
+  --jp-st-now-tint: rgb(22 163 74 / 0.16);
+  --jp-st-now-border: rgb(22 163 74 / 0.45);
+  --jp-st-now-fg: #166534;
+  --jp-st-now-dot: #16a34a;
+  --jp-st-soon-tint: rgb(217 119 6 / 0.16);
+  --jp-st-soon-border: rgb(217 119 6 / 0.45);
+  --jp-st-soon-fg: #92400e;
+  --jp-st-soon-dot: #d97706;
+  --jp-st-end-tint: rgb(9 9 11 / 0.06);
+  --jp-st-end-border: rgb(9 9 11 / 0.12);
+  --jp-st-end-fg: #3f3f46;
+  --jp-st-end-dot: #71717a;
+
+  /* 极光层：暗色是「暗底上的冷紫/青」，浅色换成「浅底上的淡紫/淡青」。
+     ★ 亮度必须卡住：它是玻璃的**输入数据**（身后要有东西可折射），
+       但它同时也抬高了玻璃身后的亮度 —— 峰值处（顶部 0.6 的淡紫）
+       实测次级文字仍有 5.16:1，留有余量。 */
+  --jp-aurora-base:
+    radial-gradient(ellipse 120% 80% at 50% 0%, rgb(206 208 255 / 0.6), transparent 70%),
+    radial-gradient(ellipse 100% 70% at 80% 55%, rgb(198 240 248 / 0.5), transparent 72%),
+    #f1f2f6;
+  --jp-aurora-1: rgb(99 102 241 / 0.22);
+  --jp-aurora-2: rgb(34 211 238 / 0.16);
+  --jp-aurora-3: rgb(139 124 255 / 0.2);
+
+  --background: var(--jp-canvas);
+  --foreground: var(--jp-fg);
+  --border: var(--jp-hairline);
+  --ring: var(--jp-accent);
+}
+
+/* ============================================================
+   樱粉主题
+
+   沿用浅色主题的**玻璃层级与全部可读性结论**（棱边、内暗边、外投影、
+   极光亮度），只把色相换成温柔的玫瑰粉 —— 这一条很重要：
+   若只改颜色而不改玻璃机制，会得到一个「粉得没有层次」的页面，
+   因为浅色玻璃的显形依赖那三组白高光与暗边，色相与它们是正交的。
+
+   ★ 为什么给这个站单独做一套粉色：2.5 次元公演的主力观众对
+     「应援色」有强感知，粉色是舞台企划最常用的一套视觉语言；
+     它同时是浅色模式的一种，而不是「第三种明暗档」。
+   ============================================================ */
+html[data-theme='sakura'] {
+  --jp-canvas: #fff0f6;
+  --jp-surface: #fff8fb;
+  --jp-surface-hover: #ffeff5;
+  /* ---- 文字层级 ----
+   *
+   * ★★ 为什么樱粉的文字层级比浅色整体**再深一档** ★★
+   *
+   *   樱粉的画布（#FFF0F6）本身就是暖而偏深的浅色 —— 它的相对亮度比浅色的
+   *   #F1F2F6 低。同一个文字色放在上面，对比度会低 0.5~1.0。
+   *   实测（probe/theme-contrast.mjs，详情页头部：主色层叠在玻璃上）：
+   *     dim  #785968 .. 4.40:1  ✗ 不达 AA
+   *     dim  #745363 .. 4.77:1  ✓
+   *     muted #704d5d .. 5.19:1  ✓
+   *     muted #6b4757 .. 5.66:1  ✓
+   *
+   *   而 dim 与 muted 在原值下只差 1.05 倍 —— 肉眼根本分不出「辅助说明」
+   *   与「次级正文」。四个层级（fg / soft / muted / dim）的设计意图是
+   *   **可辨认的递降**，只把 dim 调暗到 4.77 会让它和 muted 挤在一起，
+   *   层级仍然是坏的。所以两个一起下移，保持与浅色主题同形的间距：
+   *     浅色（画布对比度）17.0 / 10.0 / 7.4 / 6.6  → 比值 1.70 / 1.35 / 1.12
+   *     樱粉（画布对比度）14.7 /  9.7 / 7.2 / 6.0 → 比值 1.52 / 1.35 / 1.19
+   */
+  --jp-fg: #2d1b24;
+  --jp-fg-soft: #543542;
+  --jp-fg-muted: #6b4757;
+  --jp-fg-dim: #745363;
+  --jp-fg-faint: #b8a1ac;
+
+  /* chip 上的次级文字：与樱粉的 dim 同值（实测 chip 上 4.84:1） */
+  --jp-fg-onchip: #745363;
+
+  --jp-accent: #b42362;
+  --jp-accent-soft: #a51d58;
+  --jp-accent-glow-rgb: 146 24 76;
+  --jp-grad-2: #9d174d;
+  --jp-btn-primary-1: #b42362;
+  --jp-btn-primary-2: #92184c;
+
+  --jp-glass-border: rgb(190 24 84 / 0.15);
+  --jp-glass-bg: rgb(255 236 244 / 0.86);
+  --jp-glass-bg-hover: rgb(255 224 237 / 0.92);
+  --jp-glass-pop-bg: rgb(255 247 250 / 0.94);
+  --jp-glass-sticky-bg: rgb(255 239 246 / 0.94);
+  --jp-glass-bar-bg: rgb(255 239 246 / 0.92);
+  --jp-glass-outer: rgb(120 35 72 / 0.14);
+  --jp-glass-outer-hover: rgb(120 35 72 / 0.2);
+  --jp-panel-outer: rgb(120 35 72 / 0.1);
+  --jp-sticky-outer: rgb(120 35 72 / 0.14);
+  --jp-pop-outer: rgb(120 35 72 / 0.16);
+  --jp-bar-outer: rgb(120 35 72 / 0.1);
+  --jp-poster-shadow-1: rgb(72 20 42 / 0.22);
+  --jp-poster-shadow-2: rgb(72 20 42 / 0.3);
+
+  --jp-aurora-base:
+    radial-gradient(ellipse 120% 80% at 50% 0%, rgb(255 190 214 / 0.55), transparent 70%),
+    radial-gradient(ellipse 100% 70% at 80% 55%, rgb(255 220 226 / 0.48), transparent 72%),
+    #fff0f6;
+  --jp-aurora-1: rgb(244 114 182 / 0.2);
+  --jp-aurora-2: rgb(251 146 180 / 0.15);
+  --jp-aurora-3: rgb(217 70 130 / 0.15);
+}
+
+/*
+ * 画布底色
+ *
+ * ★★ 为什么底色写在 html 上，body 必须透明 ★★
+ *
+ * 这是液态玻璃改造里最隐蔽的一个坑，实测才找到：
+ *   原先 html 与 body 都写了 background: var(--jp-canvas)。
+ *   而极光层是 position: fixed; z-index: -1 —— 负 z-index 的子元素
+ *   会画在**父元素背景之上、内容之下**。可 body 自己有不透明背景，
+ *   于是极光被 body 的背景直接盖住，一个像素都看不见。
+ *
+ *   症状极具误导性：CSS 全部生效（DevTools 里渐变、网格、blur 都在），
+ *   但页面看上去只有纯黑 —— 很容易误判成「渐变色太淡」而不断加亮度。
+ *   实测方法是把极光临时涂成红色：
+ *     z-index:-1 → 仍是近黑（被盖住）
+ *     z-index: 0 → 变成纯红（确实在渲染）
+ *
+ *   修法：底色只写在 html 上，body 透明。层序变为
+ *     html 底色 → 极光层(z:-1) → 内容
+ */
+html {
+  background: var(--jp-canvas);
+  transition: background-color 0.25s ease;
+}
+
+/* 主题快照过渡期间：底色交给 ::view-transition 的伪元素接管，
+   本体必须先透明，否则会看到「旧底色 → 新底色」的硬切 */
+html.jp-theme-transition {
+  background: transparent;
+  transition: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html.jp-theme-transition .jp-aurora {
+    view-transition-name: jp-theme-background;
+  }
+
+  html.jp-theme-transition::view-transition-group(root),
+  html.jp-theme-transition::view-transition-old(root),
+  html.jp-theme-transition::view-transition-new(root) {
+    animation-duration: 320ms;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  html.jp-theme-transition::view-transition-group(root) {
+    z-index: 1;
+  }
+  html.jp-theme-transition::view-transition-group(jp-theme-background),
+  html.jp-theme-transition::view-transition-old(jp-theme-background),
+  html.jp-theme-transition::view-transition-new(jp-theme-background) {
+    animation-duration: 560ms;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  html.jp-theme-transition::view-transition-group(jp-theme-background) {
+    z-index: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html,
+  body {
+    transition: none;
+  }
+}
+
+body {
+  /* 必须透明：详见上方注释。设了背景色，极光层就白做了。 */
+  background: transparent;
+  color: var(--jp-fg);
+  font-family: var(--jp-font-family);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ============================================================
+   环境光背景（「极光」层）
+
+   ★ 亮度不是「为了好看」，而是**玻璃效果的输入数据**：
+     玻璃身后必须有东西可透，否则 blur() 采样到的是一片纯黑，
+     玻璃与实心灰块在观感上完全一样，白付性能。
+
+   ★ 定位单位必须用 vh/vw，不能用 rem：
+     容器是 position: fixed + inset: 0 + overflow: hidden，也就是
+     **只有视口大**。用 rem 把光团放在 top: 78rem，在 900px 高的屏幕上
+     那是 1248px，完全在视口下方，被 overflow: hidden 直接裁掉，等于没写。
+
+   ★ 三团光必须**在视口上重叠覆盖**，不留缝隙：
+     否则首屏第一排卡片身后可能是完全无光的纯黑，玻璃采样不到任何东西。
+     副作用是好的：容器 fixed，所以滚动时光斑**不动**，内容从光下划过 ——
+     这正是真实玻璃划过固定光源的观感。
+
+   ★ 为什么还要一层底渐变（.jp-aurora 自身的 background）：
+     光斑都是圆形径向渐变，圆与圆之间必然有低谷。纯黑低谷处
+     backdrop-filter 采样到 0，玻璃就只能靠自身白色 tint 显形 ——
+     那就是一块灰。底渐变把最低亮度抬到柔和近黑画布之上，
+     保证玻璃在任何位置都有可折射的内容。
+   ============================================================ */
+.jp-aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  background: var(--jp-aurora-base);
+}
+
+/* 暗色主题下不绘制彩色光斑，只保留底渐变（纯色近黑）。
+   ★ 为什么不是删除整个元素：玻璃仍需要那层「比纯黑亮一点」的底，
+     否则暗色卡片会显得像贴在虚空里，边缘的发丝光没有可对比的基准。 */
+html:not([data-theme='light']):not([data-theme='sakura']) .jp-aurora > i {
+  display: none;
+}
+
+.jp-aurora > i {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.75;
+  will-change: transform;
+}
+
+/* 顶部中央的冷紫「天光」：全站最大光源，顶栏与首屏上半区靠它显形。
+   高度给到 85vh，确保一直覆盖到首屏第一排卡片的下沿。 */
+.jp-aurora > .a1 {
+  width: 95vw;
+  height: 85vh;
+  top: -34vh;
+  left: 50%;
+  margin-left: -47.5vw; /* 代替 translateX(-50%)，把 transform 通道让给动画 */
+  background: radial-gradient(ellipse, var(--jp-aurora-1), transparent 66%);
+}
+
+/* 右侧青色补光：打破左右对称，并覆盖右半边的卡片 */
+.jp-aurora > .a2 {
+  width: 60vw;
+  height: 85vh;
+  top: 12vh;
+  right: -18vw;
+  background: radial-gradient(ellipse, var(--jp-aurora-2), transparent 68%);
+}
+
+/* 左下紫罗兰补光：覆盖左半边与首屏下半区 */
+.jp-aurora > .a3 {
+  width: 75vw;
+  height: 80vh;
+  bottom: -30vh;
+  left: -18vw;
+  background: radial-gradient(ellipse, var(--jp-aurora-3), transparent 68%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .jp-aurora > .a1 {
+    animation: jp-aurora-drift 34s ease-in-out infinite;
+  }
+  .jp-aurora > .a2 {
+    animation: jp-aurora-drift 42s ease-in-out infinite reverse;
+  }
+  .jp-aurora > .a3 {
+    animation: jp-aurora-drift 50s ease-in-out infinite;
+    animation-delay: -18s; /* 相位错开，避免三团同步呼吸 */
+  }
+}
+
+@keyframes jp-aurora-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(3%, -3%, 0) scale(1.08);
+  }
+}
+
+/* ============================================================
+   液态玻璃：公共骨架
+
+   ★★ 去掉白色 tint，边环改用真实 border ★★
+
+   起因（hkmovie 的实测，本站同源参数下结论一致）：把「谁在把背景抬亮」
+   逐层拆开后，两个与直觉相反的结果：
+
+   ① **白色 tint 是主因，而且它正是「糊一层白雾」的那个东西。**
+      要过 AA 就得把方向换掉：暗色玻璃不该靠加白来显形，
+      该靠「比画布略亮一档 + backdrop-filter 折射身后的极光」。
+
+   ② **「只在 1px 边框上的渐变」会整片漏出来。**
+      原设计意图是内层 padding-box 盖住内部、外层 border-box 只在边框区
+      露出。但内层本身只有 0.07 的白、是**半透明**的，根本盖不住 ——
+      外层从底下整片透出来铺满卡片。
+      所以边环改用**真实的 border** 表达，不再靠两层背景叠加假装。
+
+   保留的玻璃质感：
+     · 1px 半透明边框 —— 棱边反光，改用真 border 后行为可预测
+     · backdrop-filter 的模糊 + 饱和 + 提亮 —— 折射身后的极光
+     · 比画布亮一档
+
+   底色不透明度 0.36 → 0.72：过 AA 后 alpha 是**自由变量**
+   （0.60~0.90 全部达标），既然自由，就取实一点，别那么透。
+
+   ★★ 属性书写顺序：-webkit- 必须在前，标准属性在后 ★★
+
+   这是整个效果里**最隐蔽的一个坑**，代价是效果白做一遍：
+
+   现象：CSS 全部生效、DevTools 里渐变/网格/高光都在，
+         但页面看着只是「半透明色块」，完全没有玻璃质感。
+
+   根因：Next.js 生产构建用 lightningcss 压缩，它把
+         -webkit-backdrop-filter 与 backdrop-filter 当成**同一个属性**
+         的两种写法，只保留**最后一条**。若写成「标准在前、前缀在后」，
+         标准属性会被丢掉，产物里只剩 -webkit-backdrop-filter ——
+         而新版 Chromium 已不识别这个前缀，实测
+         getComputedStyle(el).backdropFilter 返回 "none"，模糊从未生效。
+
+   实测验证：
+     .a{backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+       → .a{-webkit-backdrop-filter:blur(10px)}      ← 标准属性消失
+     .a{-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+       → .a{backdrop-filter:blur(10px)}              ← 正确
+
+   所以本文件所有 backdrop-filter **必须前缀在前、标准在后**。
+   不要「为了可读性」把它们调换 —— 调换等于删掉模糊。
+   ============================================================ */
+.jp-glass,
+.jp-panel,
+.jp-panel-sticky {
+  /* 边框即棱边：1px 半透明白，直接表达「玻璃的边缘」。
+     用 border 而不是 background 叠加，是为了让「只在边缘」这件事
+     由布局保证，而不是靠 background-clip 的计算结果。 */
+  border: 1px solid var(--jp-glass-border);
+  background-image: none;
+  /* 玻璃必须知道自己叠在谁上面，否则混合/合成会穿到更远的层 */
+  isolation: isolate;
+}
+
+/* ---- 卡片：可交互的玻璃 ---- */
+.jp-glass {
+  /* ★ position 只在卡片上声明：它需要一个定位上下文来放 hover 扫光。
+     卡片从不 sticky，所以安全；筛选条那种 sticky 元素刻意排除在外。 */
+  position: relative;
+  /* ★ overflow 必须在共享类里裁，不能指望调用方自己加 overflow-hidden。
+     扫光 ::after 靠 translateX(-60% → 60%) 扫过整个盒子，全程有相当
+     一部分时间在盒子之外 —— 不裁就会有一条白影甩到框外。
+     海报卡一直没暴露，只是因为调用方自己带了 overflow-hidden ——
+     于是「裁不裁」变成调用方的责任，任何新加的 .jp-glass 忘了写就复发。 */
+  overflow: hidden;
+  background-color: var(--jp-glass-bg);
+  -webkit-backdrop-filter: blur(var(--jp-glass-blur)) saturate(var(--jp-glass-sat))
+    brightness(var(--jp-glass-lift));
+  backdrop-filter: blur(var(--jp-glass-blur)) saturate(var(--jp-glass-sat))
+    brightness(var(--jp-glass-lift));
+  box-shadow:
+    /* 棱边折射高光：上左最亮、下右次之（对应原 demo 的四条 inset 白光） */
+    inset 2px -2px 1px -1px var(--jp-glass-edge-1),
+    inset -2px 2px 1px -1px var(--jp-glass-edge-2),
+    inset 6px -6px 1px -6px var(--jp-glass-edge-3),
+    inset -6px 6px 1px -6px var(--jp-glass-edge-4),
+    /* 内暗边：玻璃的厚度 */
+    inset 0 0 3px var(--jp-glass-inner-rim),
+    /* 外投影：把玻璃从画布上抬起来 */
+    0 6px 20px -10px var(--jp-glass-outer);
+  transition:
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.32s ease,
+    box-shadow 0.32s ease;
+}
+
+.jp-glass:hover {
+  background-color: var(--jp-glass-bg-hover);
+  box-shadow:
+    inset 2px -2px 1px -1px var(--jp-glass-edge-hover-1),
+    inset -2px 2px 1px -1px var(--jp-glass-edge-hover-2),
+    inset 6px -6px 1px -6px var(--jp-glass-edge-hover-3),
+    inset -6px 6px 1px -6px var(--jp-glass-edge-hover-4),
+    inset 0 0 3px var(--jp-glass-inner-rim),
+    0 14px 34px -14px var(--jp-glass-outer-hover);
+}
+
+/*
+ * 镜面扫光：hover 时一条斜向高光扫过
+ *
+ * ★ 为什么是「窄带」而不是原 demo 的「铺满」：
+ *   铺满等于给海报糊一层白纱。收窄成约 12% 宽的带，观感上就是一道
+ *   掠过的掠光 —— 这才是真实玻璃上的镜面反射（面积小、亮度高、转瞬即逝）。
+ *
+ * 为什么单独一个伪元素而不并进背景层：
+ *   扫光需要独立的 transform 通道；并进背景层就只能静态显示，不会动。
+ * 成本：只用 transform + opacity，全程在合成层，不触发 layout/paint。
+ */
+.jp-glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2; /* 压在内容之上：反光本来就是「照在表面」的 */
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 42%,
+    var(--jp-glass-sheen) 50%,
+    transparent 58%
+  );
+  opacity: 0;
+  transform: translateX(-60%);
+  transition: opacity 0.4s ease, transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (hover: hover) {
+  .jp-glass:not(.jp-poster-card):hover::after {
+    opacity: 0.55;
+    transform: translateX(60%);
+  }
+  .jp-glass:hover {
+    transform: translateY(-2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jp-glass::after {
+    display: none;
+  }
+  .jp-glass:hover {
+    transform: none;
+  }
+}
+
+/* ---- 面板：静态玻璃，无 hover 位移 ---- */
+.jp-panel {
+  background-color: var(--jp-glass-bg);
+  -webkit-backdrop-filter: blur(var(--jp-glass-blur)) saturate(var(--jp-glass-sat))
+    brightness(var(--jp-glass-lift));
+  backdrop-filter: blur(var(--jp-glass-blur)) saturate(var(--jp-glass-sat))
+    brightness(var(--jp-glass-lift));
+  box-shadow:
+    inset 2px -2px 1px -1px var(--jp-panel-edge-1),
+    inset -2px 2px 1px -1px var(--jp-panel-edge-2),
+    inset 0 0 3px var(--jp-glass-inner-rim),
+    0 6px 20px -10px var(--jp-panel-outer);
+}
+
+/*
+ * sticky 版面板（列表页的筛选区）
+ *
+ * ★ 与普通玻璃的关键差别：底色不透明度更高 + 模糊更重（30px）。
+ *   原因：它 sticky 悬浮在滚动的卡片列表之上，如果像卡片那样通透，
+ *   用户会看到「筛选项和卡片文字叠在一起」。
+ *   加重模糊后，身后的文字被糊成一片无色块，既保住通透感，
+ *   又不会产生可读性冲突 —— 这也是 Apple 对浮层玻璃的处理方式。
+ *
+ * ⚠️ 这里**不声明 position**：该元素的吸附行为由 Tailwind 的 sticky 控制，
+ *    任何 position 覆盖都会静默地把它变回 static。
+ */
+.jp-panel-sticky {
+  --jp-glass-blur: 30px;
+  background-color: var(--jp-glass-sticky-bg);
+  background-image: none;
+  -webkit-backdrop-filter: blur(var(--jp-glass-blur)) saturate(var(--jp-glass-sat))
+    brightness(var(--jp-glass-lift));
+  backdrop-filter: blur(var(--jp-glass-blur)) saturate(var(--jp-glass-sat))
+    brightness(var(--jp-glass-lift));
+  box-shadow:
+    inset 2px -2px 1px -1px var(--jp-sticky-edge-1),
+    inset -2px 2px 1px -1px var(--jp-sticky-edge-2),
+    inset 0 0 3px var(--jp-glass-inner-rim),
+    0 12px 32px -14px var(--jp-sticky-outer);
+}
+
+/*
+ * 悬浮玻璃（下拉菜单 / 弹窗菜单）
+ *
+ * ★ 为什么单独一个类而不直接用 .jp-glass：
+ *   .jp-glass 带 hover 上浮 + 镜面扫光，那是「卡片」的交互语言。
+ *   菜单项自己会 hover，如果整个菜单也跟着动，鼠标在菜单里移动时
+ *   菜单本体就跟着飘，体验很怪。
+ *
+ * ★ 为什么不透明度比卡片高：菜单直接盖在**文字**上，而不像卡片盖在
+ *   背景光斑上。像顶栏一样，身后是文字时以可读性优先。
+ */
+.jp-glass-pop {
+  --jp-glass-blur: 26px;
+  background-color: var(--jp-glass-pop-bg);
+  background-image: none;
+  border: 1px solid var(--jp-glass-border);
+  -webkit-backdrop-filter: blur(var(--jp-glass-blur)) saturate(var(--jp-glass-sat));
+  backdrop-filter: blur(var(--jp-glass-blur)) saturate(var(--jp-glass-sat));
+  box-shadow:
+    inset 0 1px 0 0 var(--jp-pop-inset),
+    0 18px 50px -12px var(--jp-pop-outer);
+}
+
+/*
+ * 顶栏：全站最**实**的一层（不是最透的）
+ *
+ * 正确的权衡是按「身后是什么」分，不是按「动不动」分：
+ *   顶栏  身后是滚动正文 → 可读性优先 → 不透明度高 + 模糊 28px
+ *   卡片  身后是背景光斑 → 通透感优先 → 不透明度低 + 模糊 20px
+ * 这也是 iOS 的实际做法：工具栏玻璃比卡片玻璃实得多。
+ *
+ * brightness 为什么是 1：给所有玻璃加 brightness(1.1) 的作用是
+ * 「把暗底提亮一档」，这对卡片是对的（让玻璃显形）。但顶栏身后是**文字**，
+ * 提亮等于帮对方变清晰，反而加重了叠压 —— 自相矛盾。
+ * 顶栏保持 1，靠不透明度自己解决可读性。
+ */
+.jp-glass-bar {
+  --jp-glass-blur: 28px;
+  --jp-glass-lift: 1;
+  background-color: var(--jp-glass-bar-bg);
+  background-image: linear-gradient(
+    180deg,
+    var(--jp-bar-sheen-top) 0%,
+    var(--jp-bar-sheen-bottom) 100%
+  );
+  -webkit-backdrop-filter: blur(var(--jp-glass-blur)) saturate(var(--jp-glass-sat))
+    brightness(var(--jp-glass-lift));
+  backdrop-filter: blur(var(--jp-glass-blur)) saturate(var(--jp-glass-sat))
+    brightness(var(--jp-glass-lift));
+  /* 底边一条高光线 = 玻璃的切口反光，替代实心发丝边。
+   * ★ 浅色下 --jp-bar-edge-bottom 换成黑色 8%：顶栏身后是浅色画布，
+   *   「白光切口」在浅底上看不见，得靠一条发丝暗线才分得出顶栏的边界。 */
+  box-shadow:
+    inset 0 1px 0 0 var(--jp-bar-edge-top),
+    inset 0 -1px 0 0 var(--jp-bar-edge-bottom),
+    0 8px 24px -18px var(--jp-bar-outer);
+}
+
+/*
+ * 系统级无障碍：用户开了「减少透明度」时，全部退回不透明底。
+ * 为什么必须做：玻璃效果依赖背景可见，而该开关的存在正是因为
+ * 部分用户（前庭功能障碍 / 低视力）会因半透明层叠而无法阅读。
+ */
+@media (prefers-reduced-transparency: reduce) {
+  .jp-glass,
+  .jp-panel,
+  .jp-panel-sticky,
+  .jp-glass-bar {
+    background-color: var(--jp-surface);
+    background-image: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border-color: var(--jp-hairline);
+  }
+  .jp-glass::after {
+    display: none;
+  }
+  /* 主色填充也一并收一档：该开关是为「半透明层叠导致无法阅读」的用户设的，
+     而主色层同样会抬高背景亮度。不整个关掉是因为它是**实色**、
+     不是透明度效果，留着才能保住「背景跟着海报变色」这个功能。 */
+  .jp-accent-panel {
+    opacity: 0.5;
+  }
+}
+
+/* ============================================================
+   海报：立体浮现
+
+   两件东西叠加（都很克制）：
+     1. 1px 极细半透明白边
+     2. 两层暗投影：紧贴的一层负责「浮起」，外圈一层负责与背景分离
+
+   为什么用 border 而不是 box-shadow 做白边：海报是 object-cover 的
+   <img>，阴影在图片**背后**，1px 白边会被图片自身的像素盖掉一部分；
+   border 占位在图片外，才能得到干净的一圈。
+   ============================================================ */
+.jp-poster {
+  border: 1px solid var(--jp-poster-border);
+  box-shadow:
+    0 8px 24px -8px var(--jp-poster-shadow-1),
+    0 20px 50px -28px var(--jp-poster-shadow-2);
+}
+
+/* ============================================================
+   主色填充（Accent fill）—— 卡片 / 详情页按作品主色着色
+
+   ★ 实现要点：背景是一块**从海报里取出来的颜色**（网易云播放页那种手法），
+     而不是「模糊的海报本身」。模糊海报保留的是画面的多色块，
+     人脸/白字/渐变糊在一起是一片混沌的灰蓝，看不出「这张作品是什么颜色」；
+     主色是一块干净的单色。
+
+   ★ 为什么颜色用变量传进来：
+     --jp-accent-rgb 由组件的内联 style 按作品写入（值形如 "27 46 126"）。
+     用空格分隔的 RGB 通道而不是 hex，是因为 CSS 侧要**逐档控制透明度**
+     （rgb(var(--x) / 0.52)）；用 hex 就得引 color-mix()，
+     而它在旧浏览器上没有回退，一旦不支持整块背景就全丢。
+
+   ★ 为什么渐变末端写 rgb(... / 0) 而不是 transparent：
+     写法等价、观感也等价，但 transparent 是 rgba(0,0,0,0)，
+     在**非预乘插值**的老引擎上会让渐变中途发黑（灰雾）。
+     同色零透明没有这个歧义，代价为零。
+
+   ★ 透明度是**标定**出来的，不是估的：
+     约束是「次级文字 / 元信息 / 白字在着色后都别掉太多」，
+     而黄色系主色是压力最大的一档 —— 它比蓝紫亮得多。
+     实测（含 2 部黄色海报）定稿参数下的最差值：
+       次级 2.77:1（改前 2.91）、元信息 3.69:1（改前 3.89）、白字 8.61:1
+     而蓝色系海报（占大多数）是**变好**的：次级 +0.43~+0.65，
+     因为深色主色比身后的青绿极光暗，等于给文字垫了一层更深的底。
+
+   ★ wash（整卡均匀洗色）为什么必须够大：
+     那种「整块是同一个颜色」的观感，关键就在这里。
+     只有左上光斑（wash 0）时整卡色相标准差 16°（左上蓝、右下青绿），
+     像一块渐变玻璃而不是「跟着海报变色」。
+     wash 提到 0.30 后标准差降到 8°，颜色忠实度从 12~20° 降到 6~8°。
+     主光斑仍保留，因为它提供「颜色从海报那侧溢出」的方向感。
+
+   ★★ 收窄半径 130% → 60% ★★
+     失败是**均匀**的（整卡 2.69~3.95），而不是只在海报那一侧 ——
+     说明 130% 的半径已经把主色摊到了整个文字区，文字落在哪里都吃亏。
+     所以正确解法不是「把主色整体调弱」（那会连海报旁边的氛围感一起牺牲），
+     而是**收窄它的覆盖范围**：颜色集中在海报侧，文字区少沾。
+     实测：半径 130% 最差 4.13:1（左上角一片不达标）；
+           半径  52% 最差 4.98:1（全卡达标）。
+     取 60% 而不是最优的 52%：留余量给主色更亮的那些海报。
+   ============================================================ */
+.jp-accent-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background-image:
+    /* 主光斑：贴着左上角（桌面端海报所在的那一侧），向右下衰减。
+       半径 60%：刚好盖住海报区与卡片左侧，不再摊到右侧文字区。 */
+    radial-gradient(
+      60% 120% at 0% 0%,
+      rgb(var(--jp-accent-rgb) / 0.34) 0%,
+      rgb(var(--jp-accent-rgb) / 0.1) 55%,
+      rgb(var(--jp-accent-rgb) / 0) 100%
+    ),
+    /* 整卡洗色：让整块卡有同一个色调倾向。
+       ★ 它是唯一会**均匀抬高文字区**的一层 —— 收窄光斑对它无效，
+         所以压对比度时先动它。但压太狠主色会明显变弱
+         （海报侧色差 27 → 17），等于把「按海报取色」做没了。
+         1.1× 是「刚好仍过 AA」的最大值，且恰好等于原来的视觉强度。 */
+    linear-gradient(
+      158deg,
+      rgb(var(--jp-accent-rgb) / 0.22) 0%,
+      rgb(var(--jp-accent-rgb) / 0.154) 60%,
+      rgb(var(--jp-accent-rgb) / 0.088) 100%
+    );
+}
+
+/* 手机上光斑收窄：屏幕窄，同样的 120% 会把整张卡都染成主色，
+   标题与正文全部落在浓色区（实测次级文字对比度掉到 3.9:1）。
+   收窄后热点只盖住海报那一块，文字区回到中性。 */
+@media (max-width: 640px) {
+  .jp-accent-panel {
+    background-image:
+      radial-gradient(
+        95% 78% at 50% 0%,
+        rgb(var(--jp-accent-rgb) / 0.26) 0%,
+        rgb(var(--jp-accent-rgb) / 0.1) 40%,
+        rgb(var(--jp-accent-rgb) / 0) 72%
+      ),
+      linear-gradient(
+        172deg,
+        rgb(var(--jp-accent-rgb) / 0.26) 0%,
+        rgb(var(--jp-accent-rgb) / 0.2) 60%,
+        rgb(var(--jp-accent-rgb) / 0.12) 100%
+      );
+  }
+}
+
+/*
+ * 主色层在浅色主题下的强度
+ *
+ * ★ 浅色主题下主色层必须**减弱**，而且理由与暗色**相反** —— 这点很容易搞反：
+ *
+ *     暗色：主色是**亮**色，压在暗画布上 → 抬亮背景 → 深色文字吃亏
+ *     浅色：主色是**暗**色（从深色海报里取的），压在浅玻璃上
+ *           → 压暗背景 → 深色文字同样吃亏（文字与底的亮度差被压缩）
+ *
+ *   即两套主题都要压，但方向相反。
+ *   所以不能把暗色的那组 alpha 直接搬过来：同一组值下浅色最差只到 4.26:1。
+ *
+ * ★ 0.70× 是扫出来的，而且扫描必须覆盖主色的**取值域**：
+ *   主色是按海报取的，取到什么取决于抓到了哪些海报。
+ *   实测 288 个主色的亮度跨度为 0.0116（#041D35）~ 0.1015（#6E5709）——
+ *   浅色下**最暗的那一档最吃对比度**。
+ *   若只在现有几部片上标定，下一部深蓝海报的作品上线后才会破线。
+ *
+ *   把 --jp-accent-rgb 覆写成四个极端值后逐档扫（最差值）：
+ *     强度    最暗 #041D35  次暗 #31121D  中位 #1B2E7E  最亮 #6E5709
+ *     1.00×      4.25 ✗       4.25 ✗       4.43 ✗       4.71 ✓
+ *     0.80×      4.56 ✓       4.56 ✓       4.71 ✓       4.96 ✓
+ *     0.70×      4.76 ✓       4.77 ✓       4.92 ✓       5.13 ✓   ← 采用
+ *     0.60×      4.90 ✓       4.87 ✓       4.99 ✓       5.21 ✓
+ *
+ *   取 0.70× 而不是刚好达标的 0.80×：4.56 距 AA 线只剩 0.06，
+ *   任何一处上游微调都能把它推回线下。0.70× 留 0.26 的余量，
+ *   而 0.60× 换来的额外余量已经很难看出差别了。
+ */
+html[data-theme='light'] .jp-accent-panel,
+html[data-theme='sakura'] .jp-accent-panel {
+  background-image:
+    radial-gradient(
+      60% 120% at 0% 0%,
+      rgb(var(--jp-accent-rgb) / 0.168) 0%,
+      rgb(var(--jp-accent-rgb) / 0.049) 55%,
+      rgb(var(--jp-accent-rgb) / 0) 100%
+    ),
+    linear-gradient(
+      158deg,
+      rgb(var(--jp-accent-rgb) / 0.105) 0%,
+      rgb(var(--jp-accent-rgb) / 0.074) 60%,
+      rgb(var(--jp-accent-rgb) / 0.042) 100%
+    );
+}
+
+@media (max-width: 640px) {
+  html[data-theme='light'] .jp-accent-panel,
+  html[data-theme='sakura'] .jp-accent-panel {
+    background-image:
+      radial-gradient(
+        95% 78% at 50% 0%,
+        rgb(var(--jp-accent-rgb) / 0.126) 0%,
+        rgb(var(--jp-accent-rgb) / 0.049) 40%,
+        rgb(var(--jp-accent-rgb) / 0) 72%
+      ),
+      linear-gradient(
+        172deg,
+        rgb(var(--jp-accent-rgb) / 0.126) 0%,
+        rgb(var(--jp-accent-rgb) / 0.098) 60%,
+        rgb(var(--jp-accent-rgb) / 0.056) 100%
+      );
+  }
+}
+
+/* ============================================================
+   药丸标签（类型 / 城市 / 原作媒体等）
+
+   ★ 为什么它**不上** backdrop-filter：
+     标签面积极小（约 60×20px），身后那点背景被模糊 20px 后与不模糊
+     在肉眼上几乎无差别 —— 但每个标签都是一次独立的背景采样，
+     一屏能有几十个。用最小的视觉收益换最大的合成开销，不划算。
+     所以它只取液态玻璃的「静态部分」：半透明填充 + 棱边高光。
+
+   ★★ 也正因为它是「又一层半透明表面」，它内部的次级文字**不能**用
+      --jp-fg-dim（实测会掉到 4.19:1）—— 见 --jp-fg-onchip 的注释。
+      调用方写 chip 内的附注文字时用 text-fg-onchip，而不是 text-fg-dim。
+   ============================================================ */
+.jp-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--jp-chip-border);
+  background: linear-gradient(150deg, var(--jp-chip-bg-1) 0%, var(--jp-chip-bg-2) 100%);
+  box-shadow:
+    inset 0 1px 0 0 var(--jp-chip-inset-top),
+    inset 0 -1px 0 0 var(--jp-chip-inset-bottom);
+  padding: 0.125rem 0.5rem;
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  color: var(--jp-fg-soft);
+}
+
+/* ============================================================
+   状态徽章（上演中 / 即將開演 / 已結束）
+
+   ★ 与 .jp-chip 的区别：状态是**有信息量的**（决定用户要不要现在行动），
+     所以它比普通标签更醒目：带一个色点、文字用状态色而非次级灰。
+     色点在这里不是装饰 —— 它让状态在快速滚动时也能被识别，
+     不依赖用户去读文字（三色对色觉障碍不友好，所以文字始终保留）。
+
+   ★★ 两层背景：不透明底板 + 状态色 tint ★★
+
+     初版只有一层 10% 不透明的淡彩底，实测（probe/theme-contrast.mjs）
+     发现徽章的可读性**取决于身后是什么**：
+       浅色主题 / 首页：「即將開演」的深绿字压在卡片主色层（深蓝海报
+                       取出的 #2b4a8f）上 → **1.14:1**，几乎看不见。
+     10% 不透明的底等于没有底，颜色 90% 来自身后 —— 而身后可能是
+     **任意**颜色（作品主视觉取出的主色，与页面主题无关）。
+
+     修法：底色由徽章自己决定 ——
+       background-color: 高不透明度的底板（--jp-st-plate）
+       background-image: 状态色 tint（叠在板上，只负责色相）
+     这样文字对比度就与身后完全无关，只与底板有关。
+     这与 hkmovie 把评分卡底色由半透明改为不透明是同一个道理。
+
+     ⚠️ 不能用「半透明背景色 + 半透明渐变」两层叠加来近似：
+        两层半透明是**乘算**的，最终仍会透出相当比例的身后颜色，
+        问题原样保留。底板必须是不透明（或接近不透明）的实色。
+   ============================================================ */
+.jp-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 999px;
+  border: 1px solid var(--jp-st-end-border);
+  background-color: var(--jp-st-plate);
+  background-image: linear-gradient(var(--jp-st-end-tint), var(--jp-st-end-tint));
+  color: var(--jp-st-end-fg);
+  padding: 0.125rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.jp-status::before {
+  content: '';
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 999px;
+  background: var(--jp-st-end-dot);
+}
+
+.jp-status--now {
+  border-color: var(--jp-st-now-border);
+  background-image: linear-gradient(var(--jp-st-now-tint), var(--jp-st-now-tint));
+  color: var(--jp-st-now-fg);
+}
+.jp-status--now::before {
+  background: var(--jp-st-now-dot);
+  /* 上演中加一圈呼吸光晕：它是「活的」状态，值得一点动效。
+     只做 box-shadow，不触发 layout/paint。 */
+  animation: jp-pulse 2.4s ease-in-out infinite;
+}
+
+.jp-status--upcoming {
+  border-color: var(--jp-st-soon-border);
+  background-image: linear-gradient(var(--jp-st-soon-tint), var(--jp-st-soon-tint));
+  color: var(--jp-st-soon-fg);
+}
+.jp-status--upcoming::before {
+  background: var(--jp-st-soon-dot);
+}
+
+/*
+ * 叠在**海报**上的状态徽章（.jp-status--on-art）
+ *
+ * ★ 为什么需要另一套底板与文字色，而且**不随主题变**：
+ *   海报颜色来自作品主视觉，与页面主题完全无关 ——
+ *   可能是深蓝、深红、也可能是亮黄。
+ *   所以它的底板恒为暗色、文字恒为亮色，这样在任何海报上都成立。
+ *   若让它跟着主题走（浅色主题用浅底深字），就会出现
+ *   「深绿字压在深蓝海报上」的 1.14:1（实测值）。
+ *
+ * ★ 为什么底板不做到 1.0：徽章压在海报**角落**，那里往往正是主视觉的
+ *   一部分。完全不透明会像贴了一张不干胶；0.72 + backdrop 模糊后
+ *   仍能透出一丝身后的色相，观感上是「玻璃上的标签」。
+ *   而 0.72 已足够压住最亮的黄褐海报（实测最差 7.02:1）。
+ */
+.jp-status--on-art {
+  background-color: var(--jp-st-onart-plate);
+  background-image: none;
+  border-color: var(--jp-st-onart-border);
+  color: var(--jp-st-onart-end-fg);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.jp-status--on-art::before {
+  background: var(--jp-st-end-dot);
+}
+
+.jp-status--on-art.jp-status--now {
+  color: var(--jp-st-onart-now-fg);
+}
+.jp-status--on-art.jp-status--now::before {
+  background: var(--jp-st-now-dot);
+}
+
+.jp-status--on-art.jp-status--upcoming {
+  color: var(--jp-st-onart-soon-fg);
+}
+.jp-status--on-art.jp-status--upcoming::before {
+  background: var(--jp-st-soon-dot);
+}
+
+@keyframes jp-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--jp-st-now-dot);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgb(34 197 94 / 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jp-status--now::before {
+    animation: none;
+  }
+}
+
+/* ============================================================
+   标题强调字（渐变文字）
+
+   ★ 抽成类的原因：同一段渐变若在多个页面各写一遍，
+     改一次色调要动多处，且必然漏掉一处。
+   ============================================================ */
+.jp-grad-text {
+  background-image: linear-gradient(100deg, var(--jp-accent-soft), var(--jp-grad-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/*
+ * 主要按钮：品牌紫渐变 + 一层玻璃光泽
+ *
+ * ★ 为什么**不能**给它加 backdrop-filter：
+ *   主按钮是不透明的紫色渐变，背景完全不透 —— 模糊身后内容根本看不见，
+ *   纯属白交性能费。它的「玻璃感」来自顶部那道内高光（模拟光打在
+ *   按钮上沿的折射），而不是通透度。
+ */
+.jp-btn-primary {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--jp-btn-primary-1), var(--jp-btn-primary-2));
+  color: #fff;
+  box-shadow:
+    /* 上沿亮、下沿暗：一根圆柱形玻璃棒的受光 */
+    inset 0 1px 0 0 rgb(255 255 255 / 0.45),
+    inset 0 -1px 0 0 rgb(0 0 0 / 0.25),
+    0 6px 20px -12px rgb(var(--jp-accent-glow-rgb) / 0.8);
+  transition: box-shadow 0.25s ease, transform 0.25s ease, filter 0.25s ease;
+}
+.jp-btn-primary:hover {
+  box-shadow:
+    inset 0 1px 0 0 rgb(255 255 255 / 0.6),
+    inset 0 -1px 0 0 rgb(0 0 0 / 0.25),
+    0 10px 26px -12px rgb(var(--jp-accent-glow-rgb) / 0.95);
+  filter: brightness(1.06);
+}
+
+/*
+ * 次要按钮：真玻璃
+ *
+ * ★ 与主按钮相反 —— 它是透明的，身后内容确实会被看到，
+ *   所以 backdrop-filter 在这里是有意义的，而且按钮面积小、数量少，
+ *   开销可以接受。
+ */
+.jp-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--jp-ghost-border);
+  background-image: linear-gradient(145deg, var(--jp-ghost-bg-1) 0%, var(--jp-ghost-bg-2) 100%);
+  background-color: var(--jp-ghost-bg);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  backdrop-filter: blur(12px) saturate(160%);
+  color: var(--jp-fg-soft);
+  box-shadow:
+    inset 0 1px 0 0 var(--jp-ghost-inset-top),
+    inset 0 -1px 0 0 var(--jp-ghost-inset-bottom),
+    0 4px 14px -8px var(--jp-ghost-outer);
+  transition:
+    border-color 0.25s ease,
+    background-color 0.25s ease,
+    box-shadow 0.25s ease,
+    color 0.25s ease;
+}
+.jp-btn-ghost:hover {
+  border-color: rgb(var(--jp-accent-glow-rgb) / 0.5);
+  background-color: rgb(var(--jp-accent-glow-rgb) / 0.14);
+  box-shadow:
+    inset 0 1px 0 0 var(--jp-ghost-inset-top),
+    inset 0 -1px 0 0 var(--jp-ghost-inset-bottom),
+    0 8px 22px -10px rgb(var(--jp-accent-glow-rgb) / 0.5);
+  color: var(--jp-fg);
+}
+
+/* 原生 <details> 折叠：无需客户端 JS */
+details > summary {
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* ============================================================
+   动效层（刻意保持轻量）
+
+   设计取舍：
+   - 本站跑在低配 VPS 上，用户端也可能是低端手机。
+     运行库动画（framer-motion 之类）会加 40~60KB JS，
+     这里**不引入**，全部用 CSS 动画实现：
+     0 额外 JS、0 额外请求，动画交给合成器（opacity/transform），
+     不触发 layout/paint，因此不会拖慢滚动。
+   - 统一尊重 prefers-reduced-motion。
+   ============================================================ */
+
+/* 卡片入场：淡入 + 轻微上浮 */
+@keyframes jp-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.jp-enter {
+  animation: jp-fade-up 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* 网格逐个入场（stagger）：靠 --i 变量逐级延时，
+   只给前 24 个卡片递增延时，之后统一封顶，避免长列表尾部等太久 */
+.jp-stagger > * {
+  animation: jp-fade-up 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(min(var(--i, 0), 24) * 28ms);
+}
+
+/* 海报加载完成前显示骨架微光 */
+@keyframes jp-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.jp-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--jp-skeleton-a) 25%,
+    var(--jp-skeleton-b) 37%,
+    var(--jp-skeleton-a) 63%
+  );
+  background-size: 200% 100%;
+  animation: jp-shimmer 1.4s ease-in-out infinite;
+}
+
+.jp-skeleton--done {
+  opacity: 0;
+  transition: opacity 0.35s ease-out;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jp-enter,
+  .jp-stagger > * {
+    animation: none !important;
+  }
+  .jp-skeleton {
+    animation: none !important;
+  }
+}
+
+/* 简介 HTML 渲染样式 */
+.jp-prose p {
+  margin-bottom: 0.75rem;
+  line-height: 1.8;
+}
+.jp-prose strong {
+  color: var(--jp-fg);
+  font-weight: 600;
+}
+
+/* 数值字段等宽（場次數等） */
+.jp-num {
+  display: inline-block;
+  min-width: 3ch;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   隐藏滚动条（但保留滚动能力）
+
+   ★ 用途：顶栏导航在窄屏下需要横向滚动，而顶栏是「一条玻璃」——
+     中间横着一条滚动条会把这条玻璃切成两半，视觉上非常突兀。
+     而滚动条本身不承载信息（用户用手指/触控板滚就知道能滚）。
+
+   ★ 为什么不能直接 overflow: hidden：那会把装不下的导航项**裁掉**，
+     用户在手机上就再也点不到「系列」了 —— 滚动条可以不要，
+     可达性不能不要。
+
+   ★ 两个前缀都要写：
+     -webkit- 给 Chrome/Safari/Edge（Chromium 已不识别它，但 Safari 仍需），
+     标准属性给 Firefox。两者不是同一属性的两种写法（与 backdrop-filter
+     不同），lightningcss 不会合并它们。
+   ============================================================ */
+.no-scrollbar {
+  -ms-overflow-style: none; /* 旧 Edge / IE */
+  scrollbar-width: none; /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome / Safari / 新 Edge */
+}
+
+/* ============================================================
+   语义色令牌（Tailwind v4 CSS-first）
+
+   ⚠️ 项目用的是 Tailwind v4，它**不读 tailwind.config.mjs**，
+   除非显式加 @config 指令。若沿用 v3 的 config 写法，
+   bg-panel / border-edge 这类类名会是**静默失效的死类**
+   （产物 CSS 里 0 条规则，页面上什么都不发生）。
+
+   这里用 v4 原生写法，并把颜色换成**语义命名**：
+     bg-canvas / bg-surface        表面层
+     text-fg / -soft / -muted / -dim / -faint   文字层级
+     border-hairline / -soft / -strong          发丝边框
+     bg-veil / bg-veil-strong                   极淡填充
+   组件里不再出现 gray-400 这类与设计意图无关的内置灰阶 ——
+   想统一调一次文字对比度，改令牌即可，不必全局搜 20 多处灰阶。
+   ============================================================ */
+@theme {
+  --color-canvas: var(--jp-canvas);
+  --color-surface: var(--jp-surface);
+  --color-surface-hover: var(--jp-surface-hover);
+
+  --color-fg: var(--jp-fg);
+  --color-fg-soft: var(--jp-fg-soft);
+  --color-fg-muted: var(--jp-fg-muted);
+  --color-fg-dim: var(--jp-fg-dim);
+  --color-fg-faint: var(--jp-fg-faint);
+
+  --color-hairline: var(--jp-hairline);
+  --color-hairline-soft: var(--jp-hairline-soft);
+  --color-hairline-strong: var(--jp-hairline-strong);
+
+  --color-veil: var(--jp-veil);
+  --color-veil-strong: var(--jp-veil-strong);
+
+  --color-fg-onchip: var(--jp-fg-onchip);
+
+  --color-accent: var(--jp-accent);
+  --color-accent-soft: var(--jp-accent-soft);
+  --color-accent2: var(--jp-grad-2);
+
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.375rem;
+}
+
+@layer base {
+  * {
+    border-color: var(--jp-hairline);
+  }
+  html {
+    font-family: var(--jp-font-family);
+  }
+}
+
+/* ============================================================
+   主题切换按钮的三颗图标（见 components/ThemeToggle.tsx）
+
+   三颗图标**都**在 HTML 里，由 data-theme 决定显示哪一颗。
+   这是刻意的：若改用 React state 判断，服务端只能假设一个默认值，
+   hydrate 后才发现猜错 —— 用户会看到图标闪一下（hydration mismatch）。
+   而 CSS 判定发生在首次绘制，与启动脚本同帧生效，不可能闪。
+
+   注意默认（未设 data-theme，例如 JS 被禁用）按暗色处理，
+   与 :root 的暗色令牌一致。
+   ============================================================ */
+.jp-theme-sun,
+.jp-theme-flower,
+.jp-theme-moon {
+  display: none;
+}
+
+/* 暗色 → 显示太阳（表示「切到浅色」） */
+html:not([data-theme='light']):not([data-theme='sakura']) .jp-theme-sun {
+  display: block;
+}
+/* 浅色 → 显示花朵（表示「切到樱粉」） */
+html[data-theme='light'] .jp-theme-flower {
+  display: block;
+}
+/* 樱粉 → 显示月亮（表示「切回暗色」） */
+html[data-theme='sakura'] .jp-theme-moon {
+  display: block;
+}
+
+.jp-theme-toggle {
+  position: relative;
+  display: flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  color: var(--jp-fg-muted);
+  background-color: transparent;
+  cursor: pointer;
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease;
+}
+
+.jp-theme-toggle:hover:not(:disabled) {
+  color: var(--jp-fg);
+  background-color: var(--jp-veil-strong);
+}
+
+.jp-theme-toggle:focus-visible {
+  outline: 2px solid var(--jp-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jp-theme-toggle {
+    transition: none;
+  }
+}
+
+/* ============================================================
+   语言切换（中文 / 日本語）
+
+   ★ 为什么是「两粒并列的按钮」而不是一颗循环切换的图标：
+     语言只有两种，并列列出比「点一下猜一次」清楚得多，
+     而且用户能一眼看到「现在在哪一种」。主题之所以用图标循环，
+     是因为它是三档的抽象属性（没有文字能简洁表达「暗色」），
+     两者不是同一种交互问题，不该强行统一。
+
+   ★ 选中态为什么由 CSS 决定（html[data-lang]）而不是 React state：
+     语言是执行期才知道的（localStorage），服务端渲染只能假设默认值。
+     用 state 会出现「服务端画中文选中、hydrate 后变成日语选中」的跳动。
+     写成 CSS 后，判定发生在首次绘制，与启动脚本同帧生效，不可能闪。
+   ============================================================ */
+.jp-lang-toggle {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.125rem;
+  border-radius: 9999px;
+  /* 极淡的底：让两粒按钮看起来是一个「切换组」而不是两个独立按钮 */
+  background-color: var(--jp-veil);
+}
+
+.jp-lang-btn {
+  border: 0;
+  border-radius: 9999px;
+  background-color: transparent;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--jp-fg-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 0.22s ease,
+    color 0.22s ease;
+}
+
+.jp-lang-btn:hover {
+  color: var(--jp-fg);
+}
+
+/*
+ * 选中态
+ *
+ * ★ 用 :not(:hover) 的理由与顶栏导航那条完全相同：
+ *   本规则权重（0,1,1 属性选择器 + 类 = 0,2,0 起）高于
+ *   Tailwind 的 hover 工具类，不加 :not(:hover) 的话
+ *   悬停未选中那一粒不会有任何背景反馈。
+ *   选中是「你现在在这里」，hover 是「点下去会去哪里」，两者都要成立。
+ */
+html[data-lang='zh'] .jp-lang-btn[data-lang-btn='zh']:not(:hover),
+html[data-lang='ja'] .jp-lang-btn[data-lang-btn='ja']:not(:hover) {
+  background-color: var(--jp-glass-pop-bg);
+  color: var(--jp-fg);
+  box-shadow:
+    inset 0 1px 0 0 var(--jp-pop-inset),
+    0 2px 8px -4px var(--jp-pop-outer);
+}
+
+.jp-lang-btn:focus-visible {
+  outline: 2px solid var(--jp-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jp-lang-btn {
+    transition: none;
+  }
+}
+
+/* ============================================================
+   顶栏导航的高亮（含详情页）
+
+   ★ 详情页的路由是 /show/<slug>，**同一个前缀装着上演中与待演两种公演**。
+   顶栏在 layout 里，对所有页面共用，拿不到当前详情页的 status ——
+   所以只能拿路径前缀硬猜，一猜就错（「即将开演」的作品点进去，
+   顶栏色块却标在「上演中」上）。
+
+   现在改为：详情页自己在 <article data-page-nav="now|upcoming|venue">
+   上写下属别 —— 它手上有 show.status / venue.id，是唯一知道答案的一层；
+   顶栏这里只负责把它读出来。面包屑与顶栏因此共用同一个事实来源。
+
+   ★ 为什么属性名叫 data-page-nav 而不是 data-show-nav：
+     场馆详情页 /venue/<id> 有**完全相同**的毛病（顶栏「會場」从不点亮，
+     因为它只认精确匹配 pathname === '/venue'）。两者共用一套机制，
+     比分别写两套更不容易漏。
+
+   ★ 为什么用 CSS :has() 而不是 React state：
+     本站是静态导出，HTML 在构建时定稿。state 要等 JS 跑起来才生效，
+     首屏会先亮错（或先不亮），用户看到一次高亮跳动；
+     而 :has() 写在构建产物里，首屏即正确，禁用 JS 也成立。
+
+   ★ 为什么选择器要写这么长：
+     必须同时限定「本页是哪一类」与「要点亮哪一项」。
+     若只写 body:has([data-page-nav=now]) a[data-nav=now]，
+     它在 /now、/upcoming 等**没有** [data-page-nav] 的页面上不会命中
+     （那些页面靠 NavLinks 的 pathname 精确匹配点亮），
+     两套规则互不干扰、也不会同时亮两项。
+
+   ★ :not(:hover) 不是装饰：本规则权重（0,2,2）高于 Tailwind 的
+     .hover\:bg-veil-strong:hover（0,2,0），不加这一条的话，
+     在详情页 hover 另一个导航项就不会有任何背景反馈 ——
+     高亮是「你现在在这里」，hover 是「点下去会去哪里」，两者都要成立。
+
+   高亮样式与 NavLinks.tsx 里 active 的那串必须保持一致
+   （bg-veil-strong + font-medium + text-fg）。
+   ============================================================ */
+body:has([data-page-nav='now']) a[data-nav='now']:not(:hover),
+body:has([data-page-nav='upcoming']) a[data-nav='upcoming']:not(:hover),
+body:has([data-page-nav='venue']) a[data-nav='venue']:not(:hover) {
+  background-color: var(--jp-veil-strong);
+  color: var(--jp-fg);
+  font-weight: 500;
+}
+
+/* ============================================================
+   双语显示机制  ★ 本站特有，hkmovie 没有这一块
+
+   ★ 为什么用 CSS 而不是 React state 只渲染一种语言：
+     本站是静态导出（output: 'export'），HTML 在构建时定稿。
+     若用 state，服务端必须先假设一种语言，hydrate 之后才读 localStorage
+     里的另一种 —— 用户会看到**整页文字换一次**（比主题闪白更难看），
+     而且必然造成 hydration mismatch。
+
+     把两种语言都渲染进 HTML、由 CSS 决定显示哪一种是唯一能保证
+     「首屏语言即正确」的做法，禁用 JS 也成立。
+
+   ★ 代价与取舍（实测，不是估算）：
+     HTML 里有两份文案。在真实产物上量得（node zlib 对 out/*.html）：
+       首页       raw +4.8%   gzip +8.5%
+       列表页     raw +6.2%   gzip +5.4%
+       详情页     raw +5.4%   gzip +4.5%
+     即 gzip 后只多 4.5~8.5%（几千字节）。原因是两种语言的
+     **结构与 class 完全相同**，只有文字节点不同 —— gzip 的
+     字典能极高比例地复用那部分重复。
+     换来的收益是「首屏语言即正确、禁用 JS 也正确」。
+
+     真正该避免的是把**结构化数据**也复制两份（例如两套 DOM 结构），
+     那才是体积与维护成本失控的来源 —— 所以这里的双语只作用于
+     文字节点，结构与交互只有一份。
+
+   ★ 为什么默认显示中文（而不是跟随 navigator.language）：
+     跟随浏览器语言需要 JS 判定，又回到首屏闪烁的问题。
+     中文是本站在无 JS 时的默认呈现，日语用户点一下切换器即可 ——
+     切换状态记在 localStorage，后续访问首屏即正确。
+     （这一点与主题不同：主题可以用 prefers-color-scheme 在 CSS 里
+       判定，而语言没有对应的 CSS 媒体查询可用。）
+
+   ★ 为什么用 display:none 而不是 visibility/opacity：
+     隐藏的语言必须**完全不参与布局与无障碍树**，
+     否则中文模式下的屏幕阅读器会读出两遍内容，
+     而且「日文比中文长」会导致布局按两种语言的较长者预留空间。
+     display:none 同时解决这两件事。
+
+   ★★ 为什么只写「隐藏」的一半，不写「显示」的那一半 ★★
+
+     直觉写法是「隐藏 A、把 B 设成 display: revert」。但那样会踩一个坑：
+     本文件的自定义规则在 @layer 之外，**未分层的样式优先于 Tailwind 的
+     工具类**（v4 把 utilities 放进 @layer utilities）。
+     于是 `display: revert` 会盖掉调用方写的 `block` / `flex` ——
+     任何想把双语文字排成块级的地方都会静默失效。
+
+     现在只声明被隐藏的那一种：
+       html[data-lang='zh'] .i18n-ja { display: none }
+       html[data-lang='ja'] .i18n-zh { display: none }
+     可见的那一种**完全没有规则**，它的 display 就自然来自标签默认值
+     或调用方的工具类，两者不打架。
+
+   ★ 为什么 html 上要预先写好 data-lang="zh"（见 app/layout.tsx）：
+     若完全依赖启动脚本设置，禁用 JS 时属性不存在 —— 两条规则都不命中，
+     **两种语言会同时显示**（页面上一句话出现两遍）。
+     构建时就写死默认值，脚本只负责按 localStorage 覆盖，
+     于是「无 JS」与「首次访问」都落在同一个已知状态上。
+   ============================================================ */
+html[data-lang='zh'] .i18n-ja {
+  display: none;
+}
+
+html[data-lang='ja'] .i18n-zh {
+  display: none;
+}

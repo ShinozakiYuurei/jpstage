@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!--
+    站点图标：舞台帷幕 + 追光
+
+    设计意图：2.5 次元舞台的标志性元素是「开幕的帷幕」与「从上方打下的追光」。
+    两者都是极简几何，在小尺寸（16px）下仍能辨认 —— 这是 favicon 的硬约束
+    （复杂图形在 16px 下会糊成一团）。
+
+    配色取自暗色主题的令牌：画布 #111113 / 品牌紫 #8B7CFF / 强调青 #67E8F9。
+    与站内视觉同源，用户在标签页上看到它就能与页面建立联系。
+  -->
+  <rect width="32" height="32" rx="7" fill="#111113"/>
+  <!-- 追光：从顶部收束到底部展开的一束光 -->
+  <path d="M16 3 L25 27 H7 Z" fill="#8B7CFF" fill-opacity="0.28"/>
+  <!-- 帷幕：左右两片对开的帘幕 -->
+  <path d="M5 4 H14 V28 H5 Z" fill="#8B7CFF" fill-opacity="0.85"/>
+  <path d="M18 4 H27 V28 H18 Z" fill="#8B7CFF" fill-opacity="0.85"/>
+  <!-- 帘幕的褶皱：两条细竖线，给平面色块一点体积 -->
+  <path d="M9.5 4 V28 M22.5 4 V28" stroke="#111113" stroke-opacity="0.45" stroke-width="1.2"/>
+  <!-- 舞台地面：一条青色高光线，呼应站内的强调色 -->
+  <path d="M5 28 H27" stroke="#67E8F9" stroke-width="2" stroke-linecap="round"/>
+</svg>

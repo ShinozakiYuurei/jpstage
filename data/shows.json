@@ -1,0 +1,730 @@
+[
+  {
+    "slug": "touken-ranbu-jukuju-ranbu",
+    "title": { "zh": "音樂劇《刀劍亂舞》〜祝玖壽亂舞〜", "ja": "ミュージカル『刀剣乱舞』〜祝玖寿乱舞〜" },
+    "subtitle": { "zh": "全國巡演", "ja": "全国ツアー" },
+    "seriesId": "touken-ranbu",
+    "company": "ミュージカル『刀剣乱舞』製作委員会",
+    "kind": "musical",
+    "startDate": "2026-08-02",
+    "endDate": "2026-11-23",
+    "poster": null,
+    "accent": "#2b4a8f",
+    "officialUrl": "https://musical-toukenranbu.jp/",
+    "ticketUrl": null,
+    "cast": ["北村諒", "和田雅成", "荒牧慶彦", "佐藤流司", "本田礼生", "和田琢磨"],
+    "staff": [
+      { "role": { "zh": "脚本・演出", "ja": "脚本・演出" }, "name": "末満健一" },
+      { "role": { "zh": "音樂", "ja": "音楽" }, "name": "manzo" },
+      { "role": { "zh": "編舞", "ja": "振付" }, "name": "本山新之助" }
+    ],
+    "summary": {
+      "zh": "刀劍男士們為了守護歷史而戰的音樂劇系列。本作以「祝玖壽」為題，串起歷代名場面與新曲，並加入只有巡演版本才有的歌唱段落。\n全公演均以現場演奏搭配日替出演，各會場的演出構成略有不同。",
+      "ja": "歴史を守るために戦う刀剣男士たちを描くミュージカルシリーズ。本作は「祝玖寿」を題に、歴代の名場面と新曲を織り交ぜた構成で、ツアーver.のみの歌唱パートも追加される。\n全公演生演奏で、日替わり出演により各会場で演出が少しずつ異なる。"
+    },
+    "runs": [
+      { "venueId": "tokyo-dome-city-hall", "startDate": "2026-08-02", "endDate": "2026-08-24", "performances": 26 },
+      { "venueId": "umeda-arts-theatre", "startDate": "2026-09-04", "endDate": "2026-09-21", "performances": 20 },
+      { "venueId": "tokorozawa-sakura-town", "startDate": "2026-10-02", "endDate": "2026-10-04", "performances": 5 },
+      { "venueId": "fukuoka-sun-palace", "startDate": "2026-10-10", "endDate": "2026-10-18", "performances": 10 },
+      { "venueId": "sapporo-kanamoto-hall", "startDate": "2026-11-14", "endDate": "2026-11-23", "performances": 8 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "haikyuu-top-no-keshiki",
+    "title": { "zh": "舞台《排球少年!!》「頂之景色」", "ja": "舞台『ハイキュー!!』「頂の景色」" },
+    "seriesId": "haikyuu",
+    "company": "舞台『ハイキュー!!』製作委員会",
+    "kind": "stage",
+    "startDate": "2026-08-15",
+    "endDate": "2026-10-04",
+    "poster": null,
+    "accent": "#e0611a",
+    "officialUrl": "https://stage-haikyuu.com/",
+    "ticketUrl": null,
+    "cast": ["須賀健太", "小坂涼太郎", "三浦海里", "塩田康平", "武本悠佑"],
+    "staff": [
+      { "role": { "zh": "脚本・演出", "ja": "脚本・演出" }, "name": "ウォーリー木下" },
+      { "role": { "zh": "音樂", "ja": "音楽" }, "name": "和田俊輔" },
+      { "role": { "zh": "編舞", "ja": "振付" }, "name": "西田一生" }
+    ],
+    "summary": {
+      "zh": "以排球為題材的舞台化作品，透過高度符號化的肢體動作與舞台機關重現球場上的攻防。\n本作聚焦春高預選的關鍵賽事，並以烏野高中主將的視角收束整個系列。",
+      "ja": "バレーボールを題材にした舞台化作品。高度に記号化された身体表現と舞台機構で、コート上の攻防を描き出す。\n本作は春高予選の重要な試合に焦点を当て、烏野高校主将の視点でシリーズを締めくくる。"
+    },
+    "runs": [
+      { "venueId": "tokyo-dome-city-hall", "startDate": "2026-08-15", "endDate": "2026-08-31", "performances": 22 },
+      { "venueId": "maihama-amphitheater", "startDate": "2026-09-05", "endDate": "2026-09-06", "performances": 3 },
+      { "venueId": "umeda-arts-theatre", "startDate": "2026-09-18", "endDate": "2026-10-04", "performances": 18 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "hypmic-mtc",
+    "title": { "zh": "舞台《催眠麥克風》-MAD TRIGGER CREW-", "ja": "舞台『ヒプノシスマイク』-MAD TRIGGER CREW-" },
+    "subtitle": { "zh": "Rule the Stage", "ja": "Rule the Stage" },
+    "seriesId": "hypnosis-mic",
+    "company": "『ヒプノシスマイク -Division Rap Battle-』Rule the Stage 製作委員会",
+    "kind": "stage",
+    "startDate": "2026-09-05",
+    "endDate": "2026-10-12",
+    "poster": null,
+    "accent": "#6c1f2e",
+    "officialUrl": "https://hypnosismic-stage.com/",
+    "ticketUrl": null,
+    "cast": ["植田圭輔", "木津つばさ", "深澤大河", "松田昇大", "平井雄基"],
+    "staff": [
+      { "role": { "zh": "演出", "ja": "演出" }, "name": "植木豪" },
+      { "role": { "zh": "脚本", "ja": "脚本" }, "name": "亀田真二郎" },
+      { "role": { "zh": "音樂", "ja": "音楽" }, "name": "KEN THE 390" }
+    ],
+    "summary": {
+      "zh": "以饒舌對決為核心的音樂原作企劃舞台版。本作以橫濱為舞台，描寫 MAD TRIGGER CREW 在 Division Rap Battle 之外的日常與衝突。\n全篇採用現場演唱的饒舌段落，並加入觀眾席應援的互動橋段。",
+      "ja": "ラップバトルを軸にした音楽原作企画の舞台版。本作は横浜を舞台に、MAD TRIGGER CREW のディビジョン・ラップバトル外での日常と衝突を描く。\n全編生歌唱のラップパートで構成され、客席のコールによる参加型の演出も含まれる。"
+    },
+    "runs": [
+      { "venueId": "tokyo-dome-city-hall", "startDate": "2026-09-05", "endDate": "2026-09-23", "performances": 24 },
+      { "venueId": "festival-hall", "startDate": "2026-10-02", "endDate": "2026-10-12", "performances": 12 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "kimetsu-sono-go",
+    "title": { "zh": "舞台《鬼滅之刃》其之伍", "ja": "舞台『鬼滅の刃』其ノ伍" },
+    "seriesId": "kimetsu",
+    "company": "舞台『鬼滅の刃』製作委員会",
+    "kind": "stage",
+    "startDate": "2026-09-12",
+    "endDate": "2026-11-08",
+    "poster": null,
+    "accent": "#1f6f63",
+    "officialUrl": "https://stage-kimetsu.com/",
+    "ticketUrl": null,
+    "cast": ["小林亮太", "高石あかり", "植田圭輔", "其原有沙", "佐藤祐吾"],
+    "staff": [
+      { "role": { "zh": "脚本・演出", "ja": "脚本・演出" }, "name": "末満健一" },
+      { "role": { "zh": "音樂", "ja": "音楽" }, "name": "和田俊輔" },
+      { "role": { "zh": "殺陣", "ja": "殺陣" }, "name": "六本木康弘" }
+    ],
+    "summary": {
+      "zh": "以劍戟動作與舞台機關重現原作戰鬥場面的系列第五作。\n本作以「柱合會議」與後續的集訓篇為主軸，並在開場加入前作名場面的回顧。",
+      "ja": "殺陣と舞台機構で原作の戦闘シーンを再現するシリーズ第五作。\n本作は「柱合会議」とそれに続く合宿編を主軸に据え、開幕には前作の名場面の回想を組み込む。"
+    },
+    "runs": [
+      { "venueId": "tokyo-dome-city-hall", "startDate": "2026-09-12", "endDate": "2026-10-05", "performances": 26 },
+      { "venueId": "rohm-theatre-kyoto", "startDate": "2026-10-24", "endDate": "2026-11-08", "performances": 16 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "naruto-ninkai-taisen",
+    "title": { "zh": "舞台《火影忍者》忍界大戰、再來", "ja": "舞台『NARUTO-ナルト-』忍界大戦、再び" },
+    "seriesId": "naruto",
+    "company": "舞台『NARUTO-ナルト-』製作委員会",
+    "kind": "stage",
+    "startDate": "2026-09-18",
+    "endDate": "2026-10-25",
+    "poster": null,
+    "accent": "#c2570f",
+    "officialUrl": "https://stage-naruto.com/",
+    "ticketUrl": null,
+    "cast": ["中尾暢樹", "松岡広大", "佐藤流司", "伊藤優衣", "萩尾圭志"],
+    "staff": [
+      { "role": { "zh": "演出", "ja": "演出" }, "name": "児玉明子" },
+      { "role": { "zh": "脚本", "ja": "脚本" }, "name": "浅井さやか" },
+      { "role": { "zh": "殺陣", "ja": "殺陣" }, "name": "六本木康弘" }
+    ],
+    "summary": {
+      "zh": "改編自忍界大戰篇的舞台作品，以大量殺陣與威亞動作構成。\n舞台中央設有可升降的立體布景，用以表現尾獸與須佐能乎的對峙。",
+      "ja": "忍界大戦編を舞台化した作品。多数の殺陣とワイヤーアクションで構成される。\n舞台中央には昇降式の立体セットを設え、尾獣と須佐能乎の対峙を表現する。"
+    },
+    "runs": [
+      { "venueId": "tokyo-dome-city-hall", "startDate": "2026-09-18", "endDate": "2026-10-25", "performances": 30 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "ensemble-stars-party-live",
+    "title": { "zh": "舞台《偶像夢幻祭！》-Party Live-", "ja": "舞台『あんさんぶるスターズ！』-Party Live-" },
+    "seriesId": "ensemble-stars",
+    "company": "舞台『あんさんぶるスターズ！』製作委員会",
+    "kind": "live",
+    "startDate": "2026-09-19",
+    "endDate": "2026-10-04",
+    "poster": null,
+    "accent": "#8c2f5e",
+    "officialUrl": "https://ensemble-stage.jp/",
+    "ticketUrl": null,
+    "cast": ["山本一慶", "笹森裕貴", "竹中凌平", "赤澤遼太郎", "小南光司"],
+    "staff": [
+      { "role": { "zh": "演出", "ja": "演出" }, "name": "宇治川まさなり" },
+      { "role": { "zh": "脚本", "ja": "脚本" }, "name": "赤澤ムック" },
+      { "role": { "zh": "編舞", "ja": "振付" }, "name": "MAMORU" }
+    ],
+    "summary": {
+      "zh": "以演唱會形式為主的舞台作品，曲目橫跨歷代系列的主題曲與各組合的專屬曲。\n現場樂團編制，並設有中途的談話段落與日替曲目。",
+      "ja": "ライブ形式を主軸にした舞台作品。楽曲は歴代シリーズのテーマ曲と各ユニットの専用曲に及ぶ。\n生バンド編成で、途中にはトークコーナーと日替わり楽曲も設けられる。"
+    },
+    "runs": [
+      { "venueId": "tachikawa-stage-garden", "startDate": "2026-09-19", "endDate": "2026-10-04", "performances": 18 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "utapri-gekidan-shining",
+    "title": { "zh": "舞台《歌之王子殿下》劇團 SHINING", "ja": "舞台『うたの☆プリンスさまっ♪』劇団シャイニング" },
+    "seriesId": "utapri",
+    "company": "うたの☆プリンスさまっ♪ 舞台製作委員会",
+    "kind": "musical",
+    "startDate": "2026-09-22",
+    "endDate": "2026-10-18",
+    "poster": null,
+    "accent": "#3f2a86",
+    "officialUrl": "https://utapri-stage.jp/",
+    "ticketUrl": null,
+    "cast": ["蒼井翔太", "寺島惇太", "諏訪部順一", "高橋広樹", "下野紘"],
+    "staff": [
+      { "role": { "zh": "演出", "ja": "演出" }, "name": "吉谷晃太朗" },
+      { "role": { "zh": "脚本", "ja": "脚本" }, "name": "御笠ノ忠次" },
+      { "role": { "zh": "音樂", "ja": "音楽" }, "name": "Elements Garden" }
+    ],
+    "summary": {
+      "zh": "以劇中劇「劇團 SHINING」為框架的音樂劇，演出內容是原創的音樂劇橋段。\n全篇由歌唱段落構成，並在幕間穿插角色們的排練日常。",
+      "ja": "劇中劇「劇団シャイニング」を枠組みにしたミュージカル。上演内容はオリジナルのミュージカル・ナンバーで構成される。\n全編が歌唱パートで構成され、幕間にはキャラクターたちの稽古風景が挿入される。"
+    },
+    "runs": [
+      { "venueId": "nissay-theatre", "startDate": "2026-09-22", "endDate": "2026-10-18", "performances": 26 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "tenimyu-4th-seigaku-vs-rikkai",
+    "title": { "zh": "音樂劇《網球王子》4th 季 青學 vs 立海", "ja": "ミュージカル『テニスの王子様』4thシーズン 青学vs立海" },
+    "seriesId": "tennis-no-oujisama",
+    "company": "ミュージカル『テニスの王子様』製作委員会",
+    "kind": "musical",
+    "startDate": "2026-08-29",
+    "endDate": "2026-10-10",
+    "poster": null,
+    "accent": "#1a5ea8",
+    "officialUrl": "https://www.tennimu.com/",
+    "ticketUrl": null,
+    "cast": ["阿久津仁愛", "大原海輝", "小早川俊輔", "田口司", "丸山瀬南"],
+    "staff": [
+      { "role": { "zh": "脚本・演出", "ja": "脚本・演出" }, "name": "三浦香" },
+      { "role": { "zh": "音樂", "ja": "音楽" }, "name": "坂部剛" },
+      { "role": { "zh": "編舞", "ja": "振付" }, "name": "上島雪夫" }
+    ],
+    "summary": {
+      "zh": "長壽音樂劇系列第四季的全國大賽篇。以歌曲與舞蹈推進比賽，是系列的招牌形式。\n本作描寫青學與立海大附中的決賽，並收錄系列歷代的人氣曲目。",
+      "ja": "長寿ミュージカルシリーズ第四シーズンの全国大会編。歌とダンスで試合を進めるのがシリーズの看板形式。\n本作は青学と立海大附属中の決勝を描き、シリーズ歴代の人気楽曲も収録する。"
+    },
+    "runs": [
+      { "venueId": "tokyo-dome-city-hall", "startDate": "2026-08-29", "endDate": "2026-09-27", "performances": 26 },
+      { "venueId": "kanayama-forest-hall", "startDate": "2026-10-03", "endDate": "2026-10-10", "performances": 8 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "kuroko-ignite-zone",
+    "title": { "zh": "舞台《影子籃球員》IGNITE-ZONE", "ja": "舞台『黒子のバスケ』IGNITE-ZONE" },
+    "seriesId": "kuroko",
+    "company": "舞台『黒子のバスケ』製作委員会",
+    "kind": "stage",
+    "startDate": "2026-09-10",
+    "endDate": "2026-10-02",
+    "poster": null,
+    "accent": "#0f6fa8",
+    "officialUrl": "https://kuroko-stage.com/",
+    "ticketUrl": null,
+    "cast": ["小野健斗", "黒羽麻璃央", "松本唯", "安里勇哉", "稲垣成弥"],
+    "staff": [
+      { "role": { "zh": "演出", "ja": "演出" }, "name": "伊勢直弘" },
+      { "role": { "zh": "脚本", "ja": "脚本" }, "name": "広瀬格" },
+      { "role": { "zh": "編舞", "ja": "振付" }, "name": "EBATO" }
+    ],
+    "summary": {
+      "zh": "以「帝光中學」時代為主軸的舞台作品，描寫奇蹟世代成軍的過程。\n球場動作以投影與實體走位混合呈現，並在終盤接回本傳的時間線。",
+      "ja": "「帝光中学校」時代を主軸に据えた舞台作品。キセキの世代が結成される過程を描く。\nコート上の動きはプロジェクションと実体の立ち回りを混ぜて構成され、終盤で本編の時間軸へと接続する。"
+    },
+    "runs": [
+      { "venueId": "tokyo-dome-city-hall", "startDate": "2026-09-10", "endDate": "2026-09-28", "performances": 22 },
+      { "venueId": "omiya-sonic-city", "startDate": "2026-10-01", "endDate": "2026-10-02", "performances": 3 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "idolish7-two-part",
+    "title": { "zh": "舞台《IDOLiSH7》二部作", "ja": "舞台『アイドリッシュセブン』2部作" },
+    "seriesId": "idolish7",
+    "company": "舞台『アイドリッシュセブン』製作委員会",
+    "kind": "musical",
+    "startDate": "2026-09-16",
+    "endDate": "2026-10-06",
+    "poster": null,
+    "accent": "#b03a6a",
+    "officialUrl": "https://idolish7-stage.com/",
+    "ticketUrl": null,
+    "cast": ["種村拓実", "松田岳", "岸本勇太", "和田雅成", "松村優"],
+    "staff": [
+      { "role": { "zh": "演出", "ja": "演出" }, "name": "植木豪" },
+      { "role": { "zh": "脚本", "ja": "脚本" }, "name": "都築真紀" },
+      { "role": { "zh": "音樂", "ja": "音楽" }, "name": "加藤達也" }
+    ],
+    "summary": {
+      "zh": "以偶像團體的成長與衝突為主軸的音樂劇，分前後兩部連續上演。\n前後部之間設有特別的連結段落，觀眾需依序觀賞。",
+      "ja": "アイドルグループの成長と衝突を主軸にしたミュージカル。前後2部に分けて連続上演される。\n前後部の間には特別な接続パートが設けられ、順番に観劇する形式となる。"
+    },
+    "runs": [
+      { "venueId": "theatre-creation", "startDate": "2026-09-16", "endDate": "2026-10-06", "performances": 28 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "bungo-stray-dogs-dazai-chuya",
+    "title": { "zh": "舞台《文豪野犬》太宰、中也、十五歲", "ja": "舞台『文豪ストレイドッグス』太宰、中也、十五歳" },
+    "seriesId": "bungo-stray-dogs",
+    "company": "舞台『文豪ストレイドッグス』製作委員会",
+    "kind": "stage",
+    "startDate": "2026-09-20",
+    "endDate": "2026-10-11",
+    "poster": null,
+    "accent": "#4a3f8f",
+    "officialUrl": "https://bungo-stage.com/",
+    "ticketUrl": null,
+    "cast": ["鳥越裕貴", "多和田秀弥", "植田圭輔", "長江崚行", "橋本祥平"],
+    "staff": [
+      { "role": { "zh": "演出", "ja": "演出" }, "name": "中屋敷法仁" },
+      { "role": { "zh": "脚本", "ja": "脚本" }, "name": "中屋敷法仁" },
+      { "role": { "zh": "殺陣", "ja": "殺陣" }, "name": "六本木康弘" }
+    ],
+    "summary": {
+      "zh": "改編自原作小說外傳的舞台作品，描寫雙黑搭檔初遇的那一年。\n全篇以雙人場面為主，舞台布景刻意留白以突出兩人的對手戲。",
+      "ja": "原作小説の外伝を舞台化した作品。双黒コンビの出会いの年を描く。\n全編を通して二人の場面が中心となり、舞台美術は意図的に余白を残して二人の掛け合いを際立たせる。"
+    },
+    "runs": [
+      { "venueId": "tokyo-dome-city-hall", "startDate": "2026-09-20", "endDate": "2026-10-11", "performances": 24 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "blue-lock-4th-stage",
+    "title": { "zh": "舞台《藍色監獄》4th STAGE", "ja": "舞台『ブルーロック』4th STAGE" },
+    "seriesId": "blue-lock",
+    "company": "舞台『ブルーロック』製作委員会",
+    "kind": "stage",
+    "startDate": "2026-10-17",
+    "endDate": "2026-11-15",
+    "poster": null,
+    "accent": "#1b3f9c",
+    "officialUrl": "https://bluelock-stage.com/",
+    "ticketUrl": null,
+    "cast": ["竹中凌平", "佐藤信長", "松田昇大", "上山航平", "菊池修司"],
+    "staff": [
+      { "role": { "zh": "演出", "ja": "演出" }, "name": "伊勢直弘" },
+      { "role": { "zh": "脚本", "ja": "脚本" }, "name": "広瀬格" },
+      { "role": { "zh": "編舞", "ja": "振付" }, "name": "EBATO" }
+    ],
+    "summary": {
+      "zh": "以「新英雄大戰」為題的舞台第四作，描寫選手們被重新編成隊伍後的對抗。\n球場以環形投影包圍觀眾席，進球瞬間的影像會同步投在舞台上方。",
+      "ja": "「新英雄大戦」を題材にした舞台第四作。選手たちが再編成されたチームで対抗する様子を描く。\nコートは円環状のプロジェクションで客席を囲み、得点の瞬間の映像が舞台上方に同時投影される。"
+    },
+    "runs": [
+      { "venueId": "tokyo-dome-city-hall", "startDate": "2026-10-17", "endDate": "2026-11-01", "performances": 18 },
+      { "venueId": "umeda-arts-theatre", "startDate": "2026-11-07", "endDate": "2026-11-15", "performances": 10 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "jujutsu-kaigyoku-gyokusetsu",
+    "title": { "zh": "舞台《咒術迴戰》-懷玉・玉折-", "ja": "舞台『呪術廻戦』-懐玉・玉折-" },
+    "seriesId": "jujutsu",
+    "company": "舞台『呪術廻戦』製作委員会",
+    "kind": "stage",
+    "startDate": "2026-10-24",
+    "endDate": "2026-11-30",
+    "poster": null,
+    "accent": "#3d2f6b",
+    "officialUrl": "https://jujutsu-stage.com/",
+    "ticketUrl": null,
+    "cast": ["佐藤流司", "小林由依", "植田圭輔", "安里勇哉", "橋本祥平"],
+    "staff": [
+      { "role": { "zh": "演出", "ja": "演出" }, "name": "小林顕作" },
+      { "role": { "zh": "脚本", "ja": "脚本" }, "name": "赤澤ムック" },
+      { "role": { "zh": "殺陣", "ja": "殺陣" }, "name": "六本木康弘" }
+    ],
+    "summary": {
+      "zh": "改編自高專時代篇章的舞台作品，描寫兩名摯友走向分歧的那段時間。\n以大量室內場景與細膩的對話場面為主，動作場面集中在中後段。",
+      "ja": "高専時代の章を舞台化した作品。親友二人が袂を分かつまでの時間を描く。\n室内の場面と繊細な会話劇が中心で、アクションは中盤以降に集中する。"
+    },
+    "runs": [
+      { "venueId": "tokyo-dome-city-hall", "startDate": "2026-10-24", "endDate": "2026-11-15", "performances": 22 },
+      { "venueId": "fukuoka-sun-palace", "startDate": "2026-11-24", "endDate": "2026-11-30", "performances": 8 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "my-hero-academia-ultra-stage",
+    "title": { "zh": "舞台《我的英雄學院》The \"Ultra\" Stage 全面戰爭篇", "ja": "舞台『僕のヒーローアカデミア』The \"Ultra\" Stage 全面戦争編" },
+    "seriesId": "my-hero-academia",
+    "company": "舞台『僕のヒーローアカデミア』製作委員会",
+    "kind": "stage",
+    "startDate": "2026-11-07",
+    "endDate": "2026-12-13",
+    "poster": null,
+    "accent": "#1f7a4d",
+    "officialUrl": "https://heroaca-stage.com/",
+    "ticketUrl": null,
+    "cast": ["田村心", "小林亮太", "武本悠佑", "稲垣成弥", "竹内唯人"],
+    "staff": [
+      { "role": { "zh": "演出", "ja": "演出" }, "name": "元吉庸泰" },
+      { "role": { "zh": "脚本", "ja": "脚本" }, "name": "赤澤ムック" },
+      { "role": { "zh": "殺陣", "ja": "殺陣" }, "name": "六本木康弘" }
+    ],
+    "summary": {
+      "zh": "以全面戰爭篇為題的舞台作品，全體英雄與敵聯合正面衝突。\n使用大量威亞與舞台升降，並以多層投影表現大範圍的戰場。",
+      "ja": "全面戦争編を題材にした舞台作品。ヒーロー全員と敵連合が正面から衝突する。\n多数のワイヤーと舞台昇降を用い、多層プロジェクションで広範囲の戦場を表現する。"
+    },
+    "runs": [
+      { "venueId": "tokyo-dome-city-hall", "startDate": "2026-11-07", "endDate": "2026-11-30", "performances": 26 },
+      { "venueId": "umeda-arts-theatre", "startDate": "2026-12-05", "endDate": "2026-12-13", "performances": 10 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "sailor-moon-super-live",
+    "title": { "zh": "《美少女戰士》The Super Live", "ja": "『美少女戦士セーラームーン』The Super Live" },
+    "seriesId": "sailor-moon",
+    "company": "『美少女戦士セーラームーン』The Super Live 製作委員会",
+    "kind": "musical",
+    "startDate": "2026-11-14",
+    "endDate": "2026-12-13",
+    "poster": null,
+    "accent": "#b8265f",
+    "officialUrl": "https://sailormoon-stage.com/",
+    "ticketUrl": null,
+    "cast": ["長谷川里桃", "小泉萌香", "本西彩希帆", "森本さやか", "田中梨瑚"],
+    "staff": [
+      { "role": { "zh": "演出", "ja": "演出" }, "name": "三浦香" },
+      { "role": { "zh": "編舞", "ja": "振付" }, "name": "EBATO" },
+      { "role": { "zh": "音樂", "ja": "音楽" }, "name": "坂部剛" }
+    ],
+    "summary": {
+      "zh": "以歌舞為主體的舞台作品，全篇由歌唱與舞蹈構成，對白極少。\n服裝與投影大量使用粉紅與金色，並設有觀眾席應援的橋段。",
+      "ja": "歌とダンスを主体にした舞台作品。全編が歌唱とダンスで構成され、台詞はごく少ない。\n衣装とプロジェクションにはピンクと金色を多用し、客席のコールを伴う場面も設けられる。"
+    },
+    "runs": [
+      { "venueId": "tokyo-dome-city-hall", "startDate": "2026-11-14", "endDate": "2026-11-29", "performances": 18 },
+      { "venueId": "kanayama-forest-hall", "startDate": "2026-12-05", "endDate": "2026-12-13", "performances": 10 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "spy-family-stage",
+    "title": { "zh": "舞台《SPY×FAMILY 間諜家家酒》", "ja": "舞台『SPY×FAMILY』" },
+    "seriesId": "spy-family",
+    "company": "舞台『SPY×FAMILY』製作委員会",
+    "kind": "musical",
+    "startDate": "2026-11-21",
+    "endDate": "2026-12-20",
+    "poster": null,
+    "accent": "#2a5f7a",
+    "officialUrl": "https://spyfamily-stage.com/",
+    "ticketUrl": null,
+    "cast": ["森崎ウィン", "唯月ふうか", "鈴木勝吾", "瀬戸かずや", "大貫勇輔"],
+    "staff": [
+      { "role": { "zh": "演出", "ja": "演出" }, "name": "山田和也" },
+      { "role": { "zh": "脚本", "ja": "脚本" }, "name": "葛木英" },
+      { "role": { "zh": "音樂", "ja": "音楽" }, "name": "中村巴奈重" }
+    ],
+    "summary": {
+      "zh": "以音樂劇形式改編的間諜喜劇，家族三人的關係是敘事主軸。\n舞台以可旋轉的雙層布景同時呈現住家與任務現場，並用偶戲處理安妮亞的校園場面。",
+      "ja": "ミュージカル形式で描くスパイコメディ。家族三人の関係が物語の主軸となる。\n回転式の二層セットで自宅と任務現場を同時に提示し、アーニャの学校の場面はパペットで処理する。"
+    },
+    "runs": [
+      { "venueId": "imperial-theatre", "startDate": "2026-11-21", "endDate": "2026-12-20", "performances": 30 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "tokyo-revengers-tenjiku",
+    "title": { "zh": "舞台《東京復仇者》-天竺篇-", "ja": "舞台『東京リベンジャーズ』-天竺編-" },
+    "seriesId": "tokyo-revengers",
+    "company": "舞台『東京リベンジャーズ』製作委員会",
+    "kind": "stage",
+    "startDate": "2026-10-31",
+    "endDate": "2026-12-06",
+    "poster": null,
+    "accent": "#8f2b2b",
+    "officialUrl": "https://revengers-stage.com/",
+    "ticketUrl": null,
+    "cast": ["木津つばさ", "植田圭輔", "小坂涼太郎", "松田昇大", "菊池修司"],
+    "staff": [
+      { "role": { "zh": "演出", "ja": "演出" }, "name": "伊勢直弘" },
+      { "role": { "zh": "脚本", "ja": "脚本" }, "name": "広瀬格" },
+      { "role": { "zh": "殺陣", "ja": "殺陣" }, "name": "六本木康弘" }
+    ],
+    "summary": {
+      "zh": "以不良題材為基礎的舞台作品，描寫兩大勢力的正面衝突。\n大量群架場面以慢動作與燈光切割處理，並在終盤使用時間回溯的演出效果。",
+      "ja": "不良ものを題材にした舞台作品。二大勢力の正面衝突を描く。\n多数の乱闘場面はスローモーションと照明の分割で処理し、終盤にはタイムリープの演出効果を用いる。"
+    },
+    "runs": [
+      { "venueId": "tokyo-dome-city-hall", "startDate": "2026-10-31", "endDate": "2026-11-18", "performances": 20 },
+      { "venueId": "festival-hall", "startDate": "2026-11-28", "endDate": "2026-12-06", "performances": 10 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "cardfight-vanguard-stage",
+    "title": { "zh": "舞台《卡片戰鬥先導者》", "ja": "舞台『カードファイト!! ヴァンガード』" },
+    "seriesId": "cardfight-vanguard",
+    "company": "舞台『カードファイト!! ヴァンガード』製作委員会",
+    "kind": "stage",
+    "startDate": "2026-11-28",
+    "endDate": "2026-12-27",
+    "poster": null,
+    "accent": "#1c6ea4",
+    "officialUrl": "https://vanguard-stage.com/",
+    "ticketUrl": null,
+    "cast": ["大平峻也", "松田岳", "安里勇哉", "長江崚行", "橋本祥平"],
+    "staff": [
+      { "role": { "zh": "演出", "ja": "演出" }, "name": "吉谷晃太朗" },
+      { "role": { "zh": "脚本", "ja": "脚本" }, "name": "御笠ノ忠次" },
+      { "role": { "zh": "編舞", "ja": "振付" }, "name": "MAMORU" }
+    ],
+    "summary": {
+      "zh": "以卡牌對戰為題的舞台作品，對戰過程以投影的虛擬影像與演員走位同步呈現。\n觀眾席分區對應不同勢力的應援，開演前有簡短的規則說明。",
+      "ja": "カードファイトを題材にした舞台作品。対戦の過程はプロジェクションの仮想映像と俳優の立ち回りを同期させて提示する。\n客席は勢力ごとの応援区に分かれ、開演前に簡単なルール説明が行われる。"
+    },
+    "runs": [
+      { "venueId": "tachikawa-stage-garden", "startDate": "2026-11-28", "endDate": "2026-12-13", "performances": 16 },
+      { "venueId": "sendai-sunplaza", "startDate": "2026-12-24", "endDate": "2026-12-27", "performances": 5 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "gintama-shitennou",
+    "title": { "zh": "舞台《銀魂》-歌舞伎町四天王篇-", "ja": "舞台『銀魂』-歌舞伎町四天王篇-" },
+    "seriesId": "gintama",
+    "company": "舞台『銀魂』製作委員会",
+    "kind": "stage",
+    "startDate": "2026-12-05",
+    "endDate": "2027-01-17",
+    "poster": null,
+    "accent": "#4a4a52",
+    "officialUrl": "https://gintama-stage.com/",
+    "ticketUrl": null,
+    "cast": ["小栗旬", "橋本祥平", "佐藤流司", "植田圭輔", "太田基裕"],
+    "staff": [
+      { "role": { "zh": "演出", "ja": "演出" }, "name": "中屋敷法仁" },
+      { "role": { "zh": "脚本", "ja": "脚本" }, "name": "中屋敷法仁" },
+      { "role": { "zh": "殺陣", "ja": "殺陣" }, "name": "六本木康弘" }
+    ],
+    "summary": {
+      "zh": "以歌舞伎町為舞台的群像劇，四股勢力的角力在年末爆發。\n喜劇與嚴肅場面交替出現，並保留了原作特有的打破第四面牆的橋段。",
+      "ja": "歌舞伎町を舞台にした群像劇。四つの勢力の攻防が年末に爆発する。\n喜劇とシリアスな場面が交互に現れ、原作特有の第四の壁を破る演出も残されている。"
+    },
+    "runs": [
+      { "venueId": "tokyo-dome-city-hall", "startDate": "2026-12-05", "endDate": "2026-12-27", "performances": 24 },
+      { "venueId": "rohm-theatre-kyoto", "startDate": "2027-01-09", "endDate": "2027-01-17", "performances": 9 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "persona5-the-stage",
+    "title": { "zh": "PERSONA5 the Stage", "ja": "PERSONA5 the Stage" },
+    "seriesId": "persona5",
+    "company": "PERSONA5 the Stage 製作委員会",
+    "kind": "stage",
+    "startDate": "2026-12-12",
+    "endDate": "2027-01-24",
+    "poster": null,
+    "accent": "#b3131a",
+    "officialUrl": "https://p5-stage.com/",
+    "ticketUrl": null,
+    "cast": ["猪野広樹", "塩田康平", "小南光司", "萩尾圭志", "安里勇哉"],
+    "staff": [
+      { "role": { "zh": "演出", "ja": "演出" }, "name": "吉谷晃太朗" },
+      { "role": { "zh": "脚本", "ja": "脚本" }, "name": "御笠ノ忠次" },
+      { "role": { "zh": "殺陣", "ja": "殺陣" }, "name": "六本木康弘" }
+    ],
+    "summary": {
+      "zh": "以遊戲原作改編的舞台作品，宮殿攻略的段落以多層投影與實體布景交替呈現。\n色彩設計沿用原作的紅黑白配色，並在轉場使用動畫風的影像處理。",
+      "ja": "ゲーム原作を舞台化した作品。パレス攻略のパートは多層プロジェクションと実体セットを交互に用いて提示される。\n色彩設計は原作の赤・黒・白を踏襲し、転換にはアニメ調の映像処理を用いる。"
+    },
+    "runs": [
+      { "venueId": "tokyo-dome-city-hall", "startDate": "2026-12-12", "endDate": "2027-01-11", "performances": 26 },
+      { "venueId": "umeda-arts-theatre", "startDate": "2027-01-16", "endDate": "2027-01-24", "performances": 9 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "higeki-no-genkyou-stage",
+    "title": { "zh": "舞台《悲劇始於元凶》", "ja": "舞台『悲劇の元凶となる最強外道ラスボス女王は民の為に尽くします。』" },
+    "seriesId": "higeki-no-genkyou",
+    "company": "舞台『悲劇の元凶』製作委員会",
+    "kind": "stage",
+    "startDate": "2026-12-19",
+    "endDate": "2027-01-31",
+    "poster": null,
+    "accent": "#5a3a86",
+    "officialUrl": "https://higeki-stage.com/",
+    "ticketUrl": null,
+    "cast": ["小泉萌香", "植田圭輔", "松田昇大", "田中梨瑚", "橋本祥平"],
+    "staff": [
+      { "role": { "zh": "演出", "ja": "演出" }, "name": "三浦香" },
+      { "role": { "zh": "脚本", "ja": "脚本" }, "name": "都築真紀" },
+      { "role": { "zh": "音樂", "ja": "音楽" }, "name": "坂部剛" }
+    ],
+    "summary": {
+      "zh": "以轉生題材的宮廷故事改編，描寫被命運指定為反派的女王如何改變結局。\n舞台以左右對稱的宮殿布景為主，並用燈光切換「命運」與「現實」兩條線。",
+      "ja": "転生ものを題材にした宮廷譚の舞台化。運命によりラスボスと定められた女王が結末を変えていく過程を描く。\n舞台は左右対称の宮殿セットを主とし、照明で「運命」と「現実」の二つの線を切り替える。"
+    },
+    "runs": [
+      { "venueId": "nissay-theatre", "startDate": "2026-12-19", "endDate": "2027-01-17", "performances": 24 },
+      { "venueId": "hiroshima-hbg-hall", "startDate": "2027-01-29", "endDate": "2027-01-31", "performances": 4 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "nier-automata-ver12",
+    "title": { "zh": "舞台《NieR:Automata》Ver.1.2", "ja": "舞台『NieR:Automata』Ver.1.2" },
+    "seriesId": "nier",
+    "company": "舞台『NieR:Automata』製作委員会",
+    "kind": "stage",
+    "startDate": "2027-01-09",
+    "endDate": "2027-02-14",
+    "poster": null,
+    "accent": "#6b6459",
+    "officialUrl": "https://nier-stage.com/",
+    "ticketUrl": null,
+    "cast": ["花村想太", "生駒里奈", "松田岳", "小南光司", "萩尾圭志"],
+    "staff": [
+      { "role": { "zh": "演出", "ja": "演出" }, "name": "松多壱岱" },
+      { "role": { "zh": "脚本", "ja": "脚本" }, "name": "松多壱岱" },
+      { "role": { "zh": "音樂", "ja": "音楽" }, "name": "岡部啓一" }
+    ],
+    "summary": {
+      "zh": "以荒廢世界為背景的舞台作品，機械與人類的界線是敘事核心。\n舞台採用單色調的布景與大量投影，並以現場演奏處理原作配樂。",
+      "ja": "荒廃した世界を背景にした舞台作品。機械と人間の境界が物語の核心となる。\n舞台はモノトーンの美術と多数のプロジェクションで構成され、原作楽曲は生演奏で処理される。"
+    },
+    "runs": [
+      { "venueId": "tokyo-dome-city-hall", "startDate": "2027-01-09", "endDate": "2027-01-31", "performances": 20 },
+      { "venueId": "festival-hall", "startDate": "2027-02-06", "endDate": "2027-02-14", "performances": 10 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "fruits-basket-stage",
+    "title": { "zh": "舞台《魔法水果籃》", "ja": "舞台『フルーツバスケット』" },
+    "seriesId": "fruits-basket",
+    "company": "舞台『フルーツバスケット』製作委員会",
+    "kind": "stage",
+    "startDate": "2027-01-16",
+    "endDate": "2027-02-21",
+    "poster": null,
+    "accent": "#c4652f",
+    "officialUrl": "https://fruitsbasket-stage.com/",
+    "ticketUrl": null,
+    "cast": ["小泉萌香", "田口司", "松田昇大", "其原有沙", "安里勇哉"],
+    "staff": [
+      { "role": { "zh": "演出", "ja": "演出" }, "name": "吉谷晃太朗" },
+      { "role": { "zh": "脚本", "ja": "脚本" }, "name": "葛木英" },
+      { "role": { "zh": "音樂", "ja": "音楽" }, "name": "和田俊輔" }
+    ],
+    "summary": {
+      "zh": "改編自少女漫畫的舞台作品，以十二生肖的詛咒為奇幻設定，處理家族與接納的題材。\n舞台以日式家屋的室內景為主，並以燈籠與紙門的透光變化表達情緒。",
+      "ja": "少女漫画を舞台化した作品。十二支の呪いというファンタジー設定を軸に、家族と受容を題材に扱う。\n舞台は和家屋の室内を主とし、提灯と障子の透過光の変化で心情を表す。"
+    },
+    "runs": [
+      { "venueId": "theatre-creation", "startDate": "2027-01-16", "endDate": "2027-02-07", "performances": 22 },
+      { "venueId": "shizuoka-civic-hall", "startDate": "2027-02-20", "endDate": "2027-02-21", "performances": 3 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "yuri-on-ice-musical",
+    "title": { "zh": "音樂劇《YURI!!! on ICE》", "ja": "ミュージカル『ユーリ!!! on ICE』" },
+    "seriesId": "yuri-on-ice",
+    "company": "ミュージカル『ユーリ!!! on ICE』製作委員会",
+    "kind": "musical",
+    "startDate": "2027-02-06",
+    "endDate": "2027-03-14",
+    "poster": null,
+    "accent": "#1f6fa8",
+    "officialUrl": "https://yurionice-musical.com/",
+    "ticketUrl": null,
+    "cast": ["小坂涼太郎", "植田圭輔", "松田岳", "竹内唯人", "菊池修司"],
+    "staff": [
+      { "role": { "zh": "演出", "ja": "演出" }, "name": "山田和也" },
+      { "role": { "zh": "編舞", "ja": "振付" }, "name": "EBATO" },
+      { "role": { "zh": "音樂", "ja": "音楽" }, "name": "梅林太郎" }
+    ],
+    "summary": {
+      "zh": "以花式滑冰為題材的音樂劇，選手的表演曲目以現場演唱搭配冰上演員的走位呈現。\n舞台鋪設特殊塗層模擬冰面，並以環繞投影重現賽場的觀眾席。",
+      "ja": "フィギュアスケートを題材にしたミュージカル。選手の演目は生歌唱とリンク上の立ち回りを組み合わせて提示される。\n舞台には特殊塗装でリンク面を再現し、周囲のプロジェクションで会場の客席を再現する。"
+    },
+    "runs": [
+      { "venueId": "tokyo-dome-city-hall", "startDate": "2027-02-06", "endDate": "2027-02-28", "performances": 20 },
+      { "venueId": "umeda-arts-theatre", "startDate": "2027-03-06", "endDate": "2027-03-14", "performances": 9 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "blue-lock-3rd-stage",
+    "title": { "zh": "舞台《藍色監獄》3rd STAGE", "ja": "舞台『ブルーロック』3rd STAGE" },
+    "seriesId": "blue-lock",
+    "company": "舞台『ブルーロック』製作委員会",
+    "kind": "stage",
+    "startDate": "2026-06-06",
+    "endDate": "2026-07-12",
+    "poster": null,
+    "accent": "#1b3f9c",
+    "officialUrl": "https://bluelock-stage.com/",
+    "ticketUrl": null,
+    "cast": ["竹中凌平", "佐藤信長", "上山航平", "菊池修司", "松田昇大"],
+    "staff": [
+      { "role": { "zh": "演出", "ja": "演出" }, "name": "伊勢直弘" },
+      { "role": { "zh": "脚本", "ja": "脚本" }, "name": "広瀬格" },
+      { "role": { "zh": "編舞", "ja": "振付" }, "name": "EBATO" }
+    ],
+    "summary": {
+      "zh": "以第二次選拔為題的舞台第三作，描寫選手之間的競爭與淘汰。\n球場以投影的線條與實體球門構成，射門瞬間使用高速攝影的影像。",
+      "ja": "第二次選抜を題材にした舞台第三作。選手同士の競争と淘汰を描く。\nコートはプロジェクションのラインと実体のゴールで構成され、シュートの瞬間には高速度撮影の映像を用いる。"
+    },
+    "runs": [
+      { "venueId": "tokyo-dome-city-hall", "startDate": "2026-06-06", "endDate": "2026-06-28", "performances": 22 },
+      { "venueId": "kanayama-forest-hall", "startDate": "2026-07-04", "endDate": "2026-07-12", "performances": 10 }
+    ],
+    "source": "sample"
+  },
+  {
+    "slug": "jujutsu-kyoto-kishu",
+    "title": { "zh": "舞台《咒術迴戰》-京都姊妹校交流會・起首雷同-", "ja": "舞台『呪術廻戦』-京都姉妹校交流会・起首雷同-" },
+    "seriesId": "jujutsu",
+    "company": "舞台『呪術廻戦』製作委員会",
+    "kind": "stage",
+    "startDate": "2026-07-04",
+    "endDate": "2026-08-23",
+    "poster": null,
+    "accent": "#3d2f6b",
+    "officialUrl": "https://jujutsu-stage.com/",
+    "ticketUrl": null,
+    "cast": ["佐藤流司", "小林由依", "植田圭輔", "安里勇哉", "長江崚行"],
+    "staff": [
+      { "role": { "zh": "演出", "ja": "演出" }, "name": "小林顕作" },
+      { "role": { "zh": "脚本", "ja": "脚本" }, "name": "赤澤ムック" },
+      { "role": { "zh": "殺陣", "ja": "殺陣" }, "name": "六本木康弘" }
+    ],
+    "summary": {
+      "zh": "以姊妹校交流會為主軸的舞台作品，兩校學生在對抗形式中交手。\n以團體戰的走位設計為看點，並在終盤揭露與主線相關的線索。",
+      "ja": "姉妹校交流会を主軸にした舞台作品。両校の生徒が対抗形式で渡り合う。\n団体戦の立ち回りの設計が見どころで、終盤には本編に関わる手がかりが示される。"
+    },
+    "runs": [
+      { "venueId": "tokyo-dome-city-hall", "startDate": "2026-07-04", "endDate": "2026-07-26", "performances": 20 },
+      { "venueId": "fukuoka-sun-palace", "startDate": "2026-08-15", "endDate": "2026-08-23", "performances": 9 }
+    ],
+    "source": "sample"
+  }
+]

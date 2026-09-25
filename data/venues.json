@@ -1,0 +1,138 @@
+[
+  {
+    "id": "imperial-theatre",
+    "name": { "zh": "帝國劇場", "ja": "帝国劇場" },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "東京都千代田区丸の内3-1-1",
+    "seats": 1800
+  },
+  {
+    "id": "tokyo-dome-city-hall",
+    "name": { "zh": "TOKYO DOME CITY HALL", "ja": "TOKYO DOME CITY HALL" },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "東京都文京区後楽1-3-61",
+    "seats": 2000
+  },
+  {
+    "id": "theatre-creation",
+    "name": { "zh": "劇場 Creation", "ja": "シアタークリエ" },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "東京都千代田区有楽町1-1-2",
+    "seats": 600
+  },
+  {
+    "id": "nissay-theatre",
+    "name": { "zh": "日生劇場", "ja": "日生劇場" },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "東京都千代田区有楽町1-1-1",
+    "seats": 1330
+  },
+  {
+    "id": "tachikawa-stage-garden",
+    "name": { "zh": "TACHIKAWA STAGE GARDEN", "ja": "TACHIKAWA STAGE GARDEN" },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "東京都立川市緑町3-3",
+    "seats": 1000
+  },
+  {
+    "id": "maihama-amphitheater",
+    "name": { "zh": "舞濱圓形劇場", "ja": "舞浜アンフィシアター" },
+    "pref": "千葉県",
+    "city": "東京",
+    "address": "千葉県浦安市舞浜2-50",
+    "seats": 2200
+  },
+  {
+    "id": "tokorozawa-sakura-town",
+    "name": { "zh": "所澤櫻花城 日本館 Hall A", "ja": "ところざわサクラタウン ジャパンパビリオン ホールA" },
+    "pref": "埼玉県",
+    "city": "埼玉",
+    "address": "埼玉県所沢市東所沢和田3-31-3",
+    "seats": 1200
+  },
+  {
+    "id": "omiya-sonic-city",
+    "name": { "zh": "大宮 SONIC CITY 大廳", "ja": "大宮ソニックシティ 大ホール" },
+    "pref": "埼玉県",
+    "city": "埼玉",
+    "address": "埼玉県さいたま市大宮区桜木町1-7-5",
+    "seats": 2500
+  },
+  {
+    "id": "umeda-arts-theatre",
+    "name": { "zh": "梅田藝術劇場 主廳", "ja": "梅田芸術劇場 メインホール" },
+    "pref": "大阪府",
+    "city": "大阪",
+    "address": "大阪府大阪市北区茶屋町19-1",
+    "seats": 1900
+  },
+  {
+    "id": "festival-hall",
+    "name": { "zh": "Festival Hall", "ja": "フェスティバルホール" },
+    "pref": "大阪府",
+    "city": "大阪",
+    "address": "大阪府大阪市北区中之島2-3-18",
+    "seats": 2700
+  },
+  {
+    "id": "rohm-theatre-kyoto",
+    "name": { "zh": "ROHM 劇場京都 主廳", "ja": "ロームシアター京都 メインホール" },
+    "pref": "京都府",
+    "city": "京都",
+    "address": "京都府京都市左京区岡崎最勝寺町13",
+    "seats": 2000
+  },
+  {
+    "id": "kanayama-forest-hall",
+    "name": { "zh": "日本特殊陶業市民會館 Forest Hall", "ja": "日本特殊陶業市民会館 フォレストホール" },
+    "pref": "愛知県",
+    "city": "名古屋",
+    "address": "愛知県名古屋市中区金山1-5-1",
+    "seats": 1700
+  },
+  {
+    "id": "fukuoka-sun-palace",
+    "name": { "zh": "福岡 Sun Palace", "ja": "福岡サンパレス" },
+    "pref": "福岡県",
+    "city": "福岡",
+    "address": "福岡県福岡市博多区築港本町2-1",
+    "seats": 2300
+  },
+  {
+    "id": "sapporo-kanamoto-hall",
+    "name": { "zh": "札幌市民 Hall（Kanamoto Hall）", "ja": "札幌市民ホール（カナモトホール）" },
+    "pref": "北海道",
+    "city": "札幌",
+    "address": "北海道札幌市中央区北1条西1丁目",
+    "seats": 1500
+  },
+  {
+    "id": "sendai-sunplaza",
+    "name": { "zh": "仙台 Sunplaza Hall", "ja": "仙台サンプラザホール" },
+    "pref": "宮城県",
+    "city": "仙台",
+    "address": "宮城県仙台市宮城野区榴岡4-11-1",
+    "seats": 1600
+  },
+  {
+    "id": "hiroshima-hbg-hall",
+    "name": { "zh": "廣島文化學園 HBG Hall", "ja": "広島文化学園HBGホール" },
+    "pref": "広島県",
+    "city": "広島",
+    "address": "広島県広島市中区加古町3-3",
+    "seats": 2000
+  },
+  {
+    "id": "shizuoka-civic-hall",
+    "name": { "zh": "靜岡市民文化會館 大廳", "ja": "静岡市民文化会館 大ホール" },
+    "pref": "静岡県",
+    "city": "静岡",
+    "address": "静岡県静岡市葵区駿府町2-90",
+    "seats": 2000
+  }
+]
