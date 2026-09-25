@@ -1,0 +1,42 @@
+# 行尾统一为 LF（Unix）
+#
+# ★ 为什么必须有这个文件（本仓库是真会踩到）：
+#   本机 git 配了 core.autocrlf=true，Windows 检出时会把文本文件转成 CRLF。
+#   而本项目的部署脚本是**送到 Linux 服务器用 bash 执行**的
+#   （见 deploy/*.sh —— 它们通过 ssh 的 stdin 传过去跑）。
+#
+#   CRLF 送到 Linux 后：
+#     · `#!/usr/bin/env bash\r` 的 shebang 直接失效（找不到 "bash\r"）
+#     · `if [ "$a" = "b"\r ]` 这类比较会**静默**判假 —— 不报错，只是分支走错
+#     · 路径与变量尾部多出 \r，表现为「文件明明存在却说找不到」
+#   实测 bash 对简单命令有容忍（\r 被当空白），所以这个问题很容易
+#   在开发期看不出来，直到某条 if 分支莫名其妙不生效才发现。
+#
+#   .sh / .mjs / .conf 都是要被解释器或 nginx 读取的文本，
+#   行尾错了就是行为错了 —— 必须强制 LF。
+#   （*.conf 给 nginx 读，同样不能带 \r：nginx 对某些指令的 \r 会报错。）
+
+* text=auto eol=lf
+
+# shell 脚本与配置文件：必须是 LF，否则在 Linux 上会出各种静默怪问题
+*.sh    text eol=lf
+*.mjs   text eol=lf
+*.cjs   text eol=lf
+*.js    text eol=lf
+*.ts    text eol=lf
+*.tsx   text eol=lf
+*.css   text eol=lf
+*.json  text eol=lf
+*.conf  text eol=lf
+*.md    text eol=lf
+
+# 二进制文件：不做任何行尾转换（否则会损坏）
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.webp  binary
+*.avif  binary
+*.ico   binary
+*.woff  binary
+*.woff2 binary
+*.tar   binary
