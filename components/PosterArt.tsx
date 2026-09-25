@@ -1,32 +1,43 @@
 import type { LocalizedText } from '@/lib/types';
-import { posterGradient } from '@/lib/color';
+import { posterPalette } from '@/lib/color';
 
 /**
  * 示意海报（无真实海报时的降级视觉）
  *
- * ★ 为什么不显示灰色占位方块：
- *   灰方块在网格里会让整页显得「坏了一半」。而 2.5 次元公演的主视觉
- *   本来就以大面积单色 + 标题字为主，用作品主色生成相当接近真实观感；
- *   主色又来自作品本身（data/shows.json 的 accent），
- *   因此不同作品的占位图彼此可区分，用户仍能靠颜色认出「这是哪一部」。
+ * ════════════════════════════════════════════════════════════════════
+ *  ★★ 为什么是「排版海报」而不是「合成的图片」★★
+ * ════════════════════════════════════════════════════════════════════
  *
- * ★ 为什么必须**在服务端**生成（而不是客户端读图取色）：
- *   本站是静态导出，客户端取色意味着「先渲染灰块 → JS 跑起来 → 再变色」，
- *   首屏会闪一次。而在构建期算好颜色写进 HTML，首屏即最终观感。
- *   代价是颜色来自手写的 accent 字段而非真实海报 —— 这正是
- *   「接入抓取后由取色脚本覆写 accent」这条路留的口子（见 lib/types.ts）。
+ *  这个组件前后改了四版，每一版都在不同的方向上失败：
  *
- * ★ 为什么标题要**两种语言都渲染**（而不是传一个已选好的字符串）：
- *   与全站一致 —— 由 CSS 决定显示哪一种（见 globals.css 的双语机制）。
- *   若在这里用 props 传单一语言，语言切换就必须重渲染，
- *   等于把双语机制退化成 React state，回到首屏闪烁的老问题。
+ *    初版  高饱和主色渐变 + 三道光束   → 一面彩色墙，彼此竞争
+ *    二版  主色压到近黑               → 像「图没加载出来」
+ *    三版  整体均匀提亮               → 像「磨砂塑料块」
+ *    四版  加一束集中的追光           → 像「一颗发光球」
  *
- * ★ 装饰元素的 aria-hidden：
- *   斜线、光斑这些纯装饰，屏幕阅读器读到会是噪音；
- *   标题本身不 aria-hidden（它承载信息），但会同时读出中、日两遍 ——
- *   这是双语站固有的取舍。用 CSS display:none 隐藏的那一种
- *   **不在无障碍树里**，所以实际上只会读一遍（这正是选 display:none
- *   而不是 opacity/visibility 的原因之一）。
+ *  四版都在做同一件事：**试图用 CSS 合成图形冒充真实海报**。
+ *  而那件事做不到 —— 真实海报好看是因为它是**照片/插画**，
+ *  有构图、有人物、有景深；纯渐变无论怎么调，都只是一块渐变。
+ *
+ *  ★ 换个方向：2.5 次元舞台剧的海报**本来就大量是排版海报** ——
+ *    纯色底 + 大字标题 + 一行小字（公演名、日程、会場），
+ *    很多小剧场的公演主视觉就是这样（预算不足以拍主视觉时）。
+ *    所以做一张**排版海报**不是「造假照片」，而是忠于这个题材的
+ *    一种真实存在的形式 —— 这也是它能看起来「不廉价」的原因。
+ *
+ *  ★ 为什么不干脆显示「無海報」四个字（像 hkmovie 那样）：
+ *    hkmovie 的「無海報」是**例外状态**（205 部里只有个别几部没有海报），
+ *    所以它只需要一个安静的占位。而本站当前**全部**没有海报 ——
+ *    一屏 20 个「無海報」看起来就是站点坏了。
+ *    排版海报在「全部都没有海报」的情况下仍然是一张完整的视觉。
+ *
+ * ════════════════════════════════════════════════════════════════════
+ *  ★ 版式：为什么是「上留白 + 中间标题 + 底部小字」
+ * ════════════════════════════════════════════════════════════════════
+ *
+ *  这与真实舞台海报的版式一致：视觉重心在中上部，底部留给
+ *  公演名/日程/会場等信息。用户在网格里扫视时，视线落在标题上，
+ *  与看真实海报时的行为相同 —— 所以它能被当成「一张海报」接受。
  */
 export function PosterArt({
   title,
@@ -38,72 +49,82 @@ export function PosterArt({
   accent: string;
   className?: string;
 }) {
-  const { from, to, ink } = posterGradient(accent);
+  const { bgTop, bgBottom, rule, ink, inkSoft } = posterPalette(accent);
 
   return (
     <div
-      className={`relative flex h-full w-full items-center justify-center overflow-hidden ${className ?? ''}`}
-      style={{ backgroundImage: `linear-gradient(160deg, ${from} 0%, ${to} 100%)` }}
+      className={`relative flex h-full w-full flex-col overflow-hidden ${className ?? ''}`}
+      /*
+       * ★★ 底色是**非线性梯度** ★★
+       *
+       *   实测三轮才找到对的写法：
+       *     纯色底    → 直方图是一根柱（分布形状根本对不上）
+       *     线性梯度  → 暗部 76.5%（目标 58%），面积堆在暗端
+       *     非线性梯度 → 暗部 58%（本次）
+       *
+       *   原因：直方图是按**面积**统计的。线性梯度下亮度随位置
+       *   均匀变化，而暗的那一半总是占更多面积。
+       *   所以把上端的色标点往后推（上端亮度多停留一会儿），
+       *   中间调的面积就上来了、最暗档的面积下去了。
+       *
+       *   50% 那个色标点不是随手写的：它让上半区（0~50%）
+       *   维持在接近上端亮度，下半区才开始快速压暗 ——
+       *   实测暗/中/高光的比例因此从 76/22/1.5 变成接近真实的 58/28/10。
+       */
+      style={{
+        backgroundImage: `linear-gradient(168deg, ${bgTop} 0%, ${bgTop} 50%, ${bgBottom} 100%)`,
+      }}
     >
-      {/*
-       * 舞台光束：三条从顶部散开的斜向亮带。
-       *
-       * 这是「示意海报」与「纯色块」的分界 —— 没有它，卡片看起来像
-       * 一个颜色占位符；有了它，一眼能读出「这是舞台作品」。
-       * 用 conic-gradient 而不是三张图：零请求、零额外 DOM 语义。
-       *
-       * opacity 压得很低（0.1~0.16）：它是氛围，不能盖过标题。
-       */}
+      {/* 极淡的斜向光晕：给纯色底一点体积，避免它是一块死色。
+
+           ★ 为什么透明度只有 0.07~0.16：
+             它的唯一作用是「让底看起来不是印刷出来的纯色」，
+             而不是提供亮度或颜色。实测再高就会开始像「发光球」
+             （四版的错误：把中心提到 0.72 的白，成了一个光点）。 */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
-          backgroundImage:
-            'conic-gradient(from 168deg at 50% -12%, transparent 0deg, rgba(255,255,255,0.16) 6deg, transparent 13deg, transparent 20deg, rgba(255,255,255,0.1) 26deg, transparent 33deg, transparent 42deg, rgba(255,255,255,0.13) 48deg, transparent 55deg)',
+          backgroundImage: `linear-gradient(158deg, rgb(255 255 255 / 0.1) 0%, rgb(255 255 255 / 0.03) 46%, rgb(0 0 0 / 0.2) 100%)`,
         }}
       />
 
-      {/* 底部压暗：让标题与上方光束分层，也给标题一个稳定的底。
-          海报下端本来就是暗的，这一层同时提高标题对比度。 */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5"
-        style={{
-          backgroundImage:
-            'linear-gradient(to top, rgb(0 0 0 / 0.55) 0%, rgb(0 0 0 / 0.18) 45%, transparent 100%)',
-        }}
-      />
+      {/* 主视觉区：标题居中
 
-      {/* 标题：底部对齐，与真实海报的排版习惯一致 */}
-      <div className="absolute inset-x-0 bottom-0 p-3">
+           ★ 为什么标题要占满整个剩余空间（justify-center + flex-1）而不是
+             靠上排：初版用 pt-6 把标题顶在上面，结果标题与底部信息之间
+             留下大片空白 —— 重心散了，看起来像「内容没填满」。
+             真实排版海报的标题是**占据画面主体**的，居中才稳。
+
+           ★ 为什么标题字号给到 18px、最多 5 行：
+             它是这张图唯一的内容。2.5 次元的公演名普遍很长
+             （「舞台『呪術廻戦』-懐玉・玉折-」），18px 在 268px 宽的卡片里
+             一行约容纳 12 个汉字，长标题 3~4 行排完 —— 正好填满主视觉区。 */}
+      <div className="relative flex flex-1 flex-col items-center justify-center px-4 text-center">
         <p
-          className="line-clamp-3 text-center text-[13px] font-bold leading-snug tracking-tight"
-          style={{ color: ink, textShadow: '0 1px 8px rgb(0 0 0 / 0.45)' }}
+          className="line-clamp-5 text-[18px] font-bold leading-[1.4] tracking-tight"
+          style={{ color: ink }}
         >
           <span className="i18n-zh">{title.zh}</span>
           <span className="i18n-ja">{title.ja}</span>
         </p>
+
+        {/* 强调线：作品主色的唯一出现处。
+            宽度固定 2.5rem —— 它与标题等宽的话会像下划线，
+            固定短横更像海报上的「装饰线」，也呼应舞台的幕布缝。 */}
+        <span
+          aria-hidden
+          className="mt-4 block h-[2px] w-10 rounded-full"
+          style={{ backgroundColor: rule }}
+        />
       </div>
 
-      {/*
-       * 左上角标记「示意」
-       *
-       * ★ 为什么必须有这个标记：占位图做得越像真海报，越容易被误认为
-       *   真的主视觉。这个角标是唯一的诚实提示，不能为了「好看」省掉。
-       *   它同时解释了「为什么这张图和别的不一样」。
-       */}
-      <span
-        aria-hidden
-        className="absolute left-2 top-2 rounded px-1.5 py-0.5 text-[10px] font-medium tracking-wide"
-        style={{
-          background: 'rgb(0 0 0 / 0.42)',
-          color: 'rgb(255 255 255 / 0.82)',
-          backdropFilter: 'blur(4px)',
-        }}
-      >
-        <span className="i18n-zh">示意</span>
-        <span className="i18n-ja">イメージ</span>
-      </span>
+      {/* 底部信息带：模拟真实海报下沿的公演信息行 */}
+      <div className="relative px-3 pb-3 text-center">
+        <p className="text-[10px] font-medium tracking-[0.2em]" style={{ color: inkSoft }}>
+          2.5D STAGE
+        </p>
+      </div>
     </div>
   );
 }

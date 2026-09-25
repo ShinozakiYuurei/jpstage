@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import type { ShowCardData } from '@/lib/types';
-import { hexToChannels } from '@/lib/color';
 import { PosterImage } from './PosterImage';
 import { PosterArt } from './PosterArt';
 import { KIND_LABEL, cityLabel, pick } from '@/lib/i18n';
@@ -77,20 +76,31 @@ export function ShowCard({
     <Link
       href={`/show/${show.slug}`}
       /*
-       * 主色通道值：CSS 侧要逐档控制透明度，故传空格分隔的 RGB 通道。
+       * ★★ 卡片上**没有**主色氛围层（.jp-accent-panel）★★
        *
-       * ★ 为什么放在这里而不是写成 `const style = {...}`：
-       *   --jp-accent-rgb 是**每张卡不同**的数据，不是主题令牌 ——
-       *   它必须跟着这张卡的 show.accent 走。抽成变量只会多一层间接，
-       *   而这里只有一个使用点。
+       *   初版每张卡都铺了一层主色（参照的是 hkmovie 详情页头部的做法），
+       *   结果整个列表变成一面彩色方块墙 —— 蓝/橙/绿/红/紫各占一块。
+       *   而没有真实海报时（全是示意占位图），页面更是只剩颜色。
+       *
+       *   实测对照 hkmovie 线上：它的卡片是
+       *       hkm-glass hkm-poster-card     ← 就这两个类，纯玻璃
+       *   而 hkm-accent-panel **只出现在详情页头部**
+       *   （components/MovieIntro.tsx:247）。
+       *
+       *   为什么详情页可以铺、卡片不可以：
+       *     详情页一屏只有**一个**主色，它是「这一部作品的氛围」，
+       *     用户此刻的注意力就在这一部上；
+       *     而列表页一屏有 20 个主色，它们彼此竞争，谁也不是主角 ——
+       *     结果是整体变成一个没有层次的调色盘，反而看不清任何一部。
+       *     这是「同一种手法在不同信息密度下效果相反」的典型例子。
+       *
+       *   主色因此只留在：
+       *     · 详情页头部（与 hkmovie 一致）
+       *     · 示意占位图的暗底微光（见 PosterArt.tsx，那里也刻意压得很低）
        */
-      style={{ '--jp-accent-rgb': hexToChannels(show.accent) } as React.CSSProperties}
       className="jp-glass jp-poster-card group flex h-full flex-col overflow-hidden rounded-2xl"
     >
-      {/* 主色氛围层：整卡洗色 + 海报侧光斑（见 globals.css 的长注释） */}
-      <div className="jp-accent-panel" aria-hidden />
-
-      <div className="relative z-10 aspect-[2/3] w-full overflow-hidden bg-[var(--jp-poster-frame)]">
+      <div className="relative aspect-[2/3] w-full overflow-hidden bg-[var(--jp-poster-frame)]">
         {show.poster ? (
           <PosterImage
             src={show.poster}
@@ -119,7 +129,7 @@ export function ShowCard({
         </span>
       </div>
 
-      <div className="relative z-10 flex flex-1 flex-col gap-1.5 p-3">
+      <div className="jp-poster-card__info flex flex-1 flex-col gap-1.5 p-3">
         {/*
          * 标题：两行截断。
          *
@@ -136,51 +146,67 @@ export function ShowCard({
           <span className="i18n-ja">{show.title.ja}</span>
         </h3>
 
-        <div className="mt-auto flex flex-wrap items-center gap-x-1.5 gap-y-1 pt-1.5">
-          {/* 类型标签 */}
-          <span className="jp-chip shrink-0">
+        {/*
+         * 信息行：**一行**，纯文本用「·」分隔。
+         *
+         * ★★ 为什么从「两个 chip 标签 + 单独日期行」改成一行纯文本 ★★
+         *
+         *   实测对比（同宽 270px 的卡片，暗色主题）：
+         *     hkmovie  文字区高 87px   ← 标题 + 一行信息
+         *     jpstage  文字区高 121px  ← 标题 + chip 行 + 日期行（初版）
+         *   卡片因此比对方高 34px（524 vs 490），一屏少看到小半行卡片。
+         *
+         *   更关键的是**观感**：两行标签把信息摊平了，每项都不突出；
+         *   而一行紧凑的文字里，日期是视觉重点（它是用户选片的第一依据），
+         *   类型与城市是附注 —— 主次分明。
+         *
+         *   hkmovie 的写法是「94分鐘 · $40 起」这种「数字 + 单位」并列结构，
+         *   本行沿用同一形式（不是抄外观，是同一类信息用同一种排版）。
+         *
+         * ★ 为什么不再用 .jp-chip：
+         *   chip 是「分类标签」的视觉语言，适合筛选面板与详情页；
+         *   卡片上每张都挂两枚彩色胶囊，20 张卡就是 40 枚，
+         *   它们会与海报、状态徽章一起把卡片填满 —— 而卡片要回答的
+         *   只是「这是什么、什么时候、在哪里」。
+         *
+         * ★ 按状态切换显示内容：
+         *   上演中 → 用户关心「演到哪天」；
+         *   即将开演 → 用户关心「还有多久」；
+         *   已结束 → 用户关心「什么时候的事」。
+         *   三种状态的信息需求不同，用同一套文案是偷懒。
+         */}
+        <p className="mt-auto flex flex-wrap items-baseline gap-x-1.5 pt-2 text-[13px] font-medium text-fg-soft">
+          {/* 类型：中日同形的短词，两种语言都渲染 */}
+          <span>
             <span className="i18n-zh">{KIND_LABEL[show.kind].zh}</span>
             <span className="i18n-ja">{KIND_LABEL[show.kind].ja}</span>
           </span>
 
-          {/* 城市标签（首站）+ 巡演提示 */}
           {firstCity && (
-            <span className="jp-chip shrink-0">
-              <span className="i18n-zh">{cityLabel(firstCity, 'zh')}</span>
-              <span className="i18n-ja">{cityLabel(firstCity, 'ja')}</span>
-              {/*
-               * ★ 用 text-fg-onchip 而不是 text-fg-dim：
-               *   chip 自己是又一层半透明表面，会把底抬亮，
-               *   dim 在其上只剩 4.19:1（实测）。详见 globals.css。
-               */}
-              {extraCities > 0 && <span className="text-fg-onchip">+{extraCities}</span>}
-            </span>
-          )}
-        </div>
-
-        {/*
-         * 日期行
-         *
-         * ★ 为什么按状态切换显示内容：
-         *   上演中 → 用户关心「演到哪天」，所以给结束日期；
-         *   即将开演 → 用户关心「还有多久」，所以给倒数 + 开演日；
-         *   已结束 → 用户关心「什么时候的事」，所以给完整期间。
-         *   三种状态的信息需求不同，用同一套文案是偷懒。
-         */}
-        <p className="text-[12px] font-medium leading-tight text-fg-soft">
-          {show.status === 'upcoming' ? (
             <>
+              <span className="text-fg-faint">·</span>
+              <span>
+                <span className="i18n-zh">{cityLabel(firstCity, 'zh')}</span>
+                <span className="i18n-ja">{cityLabel(firstCity, 'ja')}</span>
+                {/* 巡演：首站之外的会場数，只用一个小小的 +N */}
+                {extraCities > 0 && <span className="text-fg-dim">+{extraCities}</span>}
+              </span>
+            </>
+          )}
+
+          <span className="text-fg-faint">·</span>
+
+          {show.status === 'upcoming' ? (
+            <span className="tabular-nums">
               <span className="i18n-zh">{relativeDayLabel(show.startDate, 'zh')}</span>
               <span className="i18n-ja">{relativeDayLabel(show.startDate, 'ja')}</span>
-              <span className="text-fg-faint"> · </span>
-              <span className="tabular-nums">{formatDateShort(show.startDate)}</span>
-            </>
+            </span>
           ) : show.status === 'now' ? (
-            <>
+            <span className="tabular-nums">
               <span className="i18n-zh">至 </span>
               <span className="i18n-ja">〜</span>
-              <span className="tabular-nums">{formatDateShort(show.endDate)}</span>
-            </>
+              {formatDateShort(show.endDate)}
+            </span>
           ) : (
             <span className="tabular-nums">
               {/* 中日同形（都用汉字年/月/日），无需双语渲染 */}

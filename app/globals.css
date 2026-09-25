@@ -1276,6 +1276,32 @@ html[data-theme='sakura'] .jp-accent-panel {
 }
 
 /* ============================================================
+   海报卡片的文字区（.jp-poster-card__info）
+
+   ★★ 为什么文字区要单独给一块**实底**，而不是让它继续用玻璃 ★★
+
+   这是从 hkmovie 线上逐行对照后补上的一条（初版漏了，卡片因此「没做完」）。
+
+   玻璃的显形靠「透出身后的极光」，而卡片下方的文字区身后正好是**画布**
+   （没有光斑）—— 于是玻璃在那里几乎看不出边界，卡片下半部像悬空的。
+   实测截图确认：初版卡片的文字区与页面背景几乎融为一体，
+   整张卡片看上去只有上半张。
+
+   加一块实底 + 一条发丝上边之后，文字区成为卡片真正的「基座」，
+   卡片在视觉上被收住了。hkmovie 的 .hkm-poster-card__info 就是这两条。
+
+   ★ 为什么用 --jp-surface（不透明）而不是半透明玻璃：
+     海报是彩色图片，文字区需要**稳定的底**才能保证文字对比度
+     不受海报主色影响。半透明底会让同一段文字在不同海报上对比度不同 ——
+     而那正是本项目已经踩过的坑（见 --jp-fg-onchip 的注释）。
+     文字区是所有卡片都一样的结构，它的底也应该一样。
+   ============================================================ */
+.jp-poster-card__info {
+  background-color: var(--jp-surface);
+  border-top: 1px solid var(--jp-hairline);
+}
+
+/* ============================================================
    药丸标签（类型 / 城市 / 原作媒体等）
 
    ★ 为什么它**不上** backdrop-filter：
@@ -1676,8 +1702,26 @@ details > summary::-webkit-details-marker {
   --color-accent-soft: var(--jp-accent-soft);
   --color-accent2: var(--jp-grad-2);
 
-  --radius-2xl: 1rem;
-  --radius-3xl: 1.375rem;
+  /*
+   * 圆角阶梯
+   *
+   * ★ 必须与 hkmovie 逐字一致（它那边已线上验证过观感）。
+   *   初版我把 2xl 写成了 1rem(16px)、3xl 写成了 1.375rem(22px)，
+   *   而 hkmovie 是 calc(var(--radius) * 1.8) = 18px 与 * 2.2 = 22px。
+   *   实测卡片圆角因此是 16px 而不是 18px —— 2px 的差别很小，
+   *   但它让本站的卡片与 hkmovie 的卡片**看起来不是同一套设计**。
+   *
+   * ★ 为什么用 calc(var(--radius) * N) 而不是写死值：
+   *   整个阶梯由一个 --radius 派生，改一处就能整体缩放。
+   *   写死值就失去了这个关系，而且必然有人只改其中几档。
+   */
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 @layer base {

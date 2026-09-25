@@ -46,6 +46,18 @@ const PAGES = [
 /** 待测文字元素：类名 → 人类可读名。只取前几个，避免同一类测上百次 */
 const TARGETS = [
   { sel: 'h3.text-fg', label: '卡片標題 fg', max: 3 },
+  /*
+   * 示意海报上的标题
+   *
+   * ★ 它**不在玻璃上**，而是压在自己画的渐变底上（见 components/PosterArt.tsx），
+   *   所以上面那些基于 .text-fg-* 的检查盖不到它。
+   *   而它的可读性完全取决于那个底的亮度 —— 实测已因调底走过四轮弯路，
+   *   正是最容易破线的一处。必须单独列进来。
+   *
+   * ★ 字号 18px 且 font-weight 700：属于 WCAG 的「大文本」，
+   *   阈值是 3.0 而不是 4.5。
+   */
+  { sel: '.line-clamp-5', label: '示意海報標題', max: 3 },
   { sel: '.text-fg-soft', label: '次級正文 soft', max: 4 },
   /*
    * dim 分成两个独立条目来测，而不是合并成一个：
