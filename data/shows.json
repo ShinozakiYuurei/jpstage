@@ -12,7 +12,7 @@
     "endDate": "2027-02-28",
     "runs": [
       {
-        "venueId": "j-com-x",
+        "venueId": "j-com",
         "startDate": "2026-07-04",
         "endDate": "2026-07-04",
         "performances": 1
@@ -30,7 +30,7 @@
         "performances": 2
       },
       {
-        "venueId": "venue-x",
+        "venueId": "v-31ff5db0",
         "startDate": "2026-07-18",
         "endDate": "2026-07-18",
         "performances": 1
@@ -54,19 +54,19 @@
         "performances": 2
       },
       {
-        "venueId": "venue-x",
+        "venueId": "v-d83d1260",
         "startDate": "2026-08-01",
         "endDate": "2026-08-01",
         "performances": 1
       },
       {
-        "venueId": "venue-x",
+        "venueId": "v-450b6e9d",
         "startDate": "2026-08-02",
         "endDate": "2026-08-02",
         "performances": 1
       },
       {
-        "venueId": "venue-x",
+        "venueId": "v-ee0a1b1f",
         "startDate": "2026-08-08",
         "endDate": "2026-08-08",
         "performances": 1
@@ -108,7 +108,7 @@
         "performances": 1
       },
       {
-        "venueId": "venue-x",
+        "venueId": "v-06f34903",
         "startDate": "2026-08-30",
         "endDate": "2026-08-30",
         "performances": 1
@@ -144,7 +144,7 @@
         "performances": 1
       },
       {
-        "venueId": "venue-x",
+        "venueId": "v-eed9d99e",
         "startDate": "2026-10-04",
         "endDate": "2026-10-04",
         "performances": 1
@@ -192,7 +192,7 @@
         "performances": 1
       },
       {
-        "venueId": "venue-x",
+        "venueId": "v-7fb00d6a",
         "startDate": "2026-11-14",
         "endDate": "2026-11-14",
         "performances": 1
@@ -258,7 +258,7 @@
         "performances": 1
       },
       {
-        "venueId": "venue-x",
+        "venueId": "v-a8c0cc38",
         "startDate": "2027-02-27",
         "endDate": "2027-02-27",
         "performances": 1
@@ -296,7 +296,7 @@
     "endDate": "2026-11-29",
     "runs": [
       {
-        "venueId": "shibuya-lovez-x",
+        "venueId": "shibuya-lovez",
         "startDate": "2026-11-14",
         "endDate": "2026-11-23",
         "performances": 10
@@ -1188,7 +1188,7 @@
     "endDate": "2026-10-04",
     "runs": [
       {
-        "venueId": "shibuya-lovez-x",
+        "venueId": "shibuya-lovez",
         "startDate": "2026-09-19",
         "endDate": "2026-09-27",
         "performances": 9
@@ -1546,7 +1546,7 @@
         "performances": 2
       },
       {
-        "venueId": "zepp-nambaosaka-x",
+        "venueId": "zepp-nambaosaka",
         "startDate": "2026-08-14",
         "endDate": "2026-08-15",
         "performances": 2
@@ -1728,7 +1728,7 @@
         "performances": 18
       },
       {
-        "venueId": "sgc-hall-ariake-x",
+        "venueId": "sgc-hall-ariake",
         "startDate": "2026-12-29",
         "endDate": "2026-12-31",
         "performances": 3
@@ -1803,7 +1803,7 @@
         "performances": 3
       },
       {
-        "venueId": "venue-x",
+        "venueId": "v-4e1fa640",
         "startDate": "2026-08-14",
         "endDate": "2026-08-16",
         "performances": 3

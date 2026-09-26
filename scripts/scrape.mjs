@@ -536,13 +536,29 @@ function parseStagePage(html) {
 // ────────────────────────────────────────────────────────────
 
 /** 罗马字 slug（用于会場 id） */
+/**
+ * 会場名 → slug（**仅在没有 theaterId 时用**，见下方「会場 id」注释）
+ *
+ * ★ 为什么纯日文名字不能只靠 slugify：
+ *   「メガネのイタガキ文化ホール伊勢崎」里没有一个 a-z0-9，
+ *   slugify 之后是空串 —— 于是所有纯日文的会場都变成同一个 `venue`
+ *   （或 `venue-x`），彼此撞名。实测 5 个会場中招，
+ *   表现是「巡演的第三站和第五站指向同一个会場页」。
+ *
+ *   所以给纯日文名字加一段**稳定的哈希后缀**：
+ *   名字相同 → 后缀相同（同一会場仍会合并），
+ *   名字不同 → 后缀不同（不会撞名）。
+ */
 function slugifyVenue(ja, en) {
-  const base = (en && /^[A-Za-z0-9 .\-&'()]+$/.test(en) ? en : ja)
+  const src = en && /^[A-Za-z0-9 .\-&'()]+$/.test(en) ? en : ja;
+  const base = src
     .toLowerCase()
     .replace(/[（）()]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
-  return base || 'venue';
+  if (base) return base;
+  // 纯非拉丁字符：用名字的短哈希保证唯一且稳定
+  return 'v-' + crypto.createHash('sha1').update(ja).digest('hex').slice(0, 8);
 }
 
 /** 会場名 → 中文（译名表 + 通用后缀） */
@@ -771,7 +787,9 @@ async function main() {
     if (done % 10 === 0) console.log(`    ${done}/${stages.size} → 已归并 ${works.size} 部作品`);
   }
 
-  // 用总页的 select 补全会場名（它带都道府県，且是官方登记的写法）
+  /*
+   * 用总页的 select 补全会場名（它带都道府県，且是官方登记的写法）
+   */
   for (const w of works.values()) {
     if (!w.venues?.length) continue;
     const byId = new Map(w.venues.map((v) => [v.stageId, v]));
@@ -782,6 +800,58 @@ async function main() {
         r.pref = v.pref;
       }
     }
+  }
+
+  /*
+   * ── 补全缺失的 theaterId ──────────────────────────────────
+   *
+   * ★★ 为什么需要这一步（实测踩到的坑）★★
+   *   会場 id 以 CoRich 的 theaterId 为准（见下方「会場 id」注释）。
+   *   但 theaterId **只出现在单会場页** `/stage/<id>` 的会場链接里，
+   *   而作品总页的那个 select 只有 stageId 与会場名。
+   *
+   *   于是：巡演里「没被搜索命中」的会場（例如第 3、第 7 站）
+   *   永远拿不到 theaterId —— 走名字兜底，而 slugify 遇到
+   *   纯日文会場名会把字符全滤掉，得到 `venue-x`、`j-com-x` 这种
+   *   既不可读、还可能撞名的 id。实测 58 个会場里有 5 个中招。
+   *
+   *   修法：select 里每个 option 都带 stageId，用它去抓一次
+   *   单会場页就能拿到 theaterId。这一步只对**缺 id 的档期**做，
+   *   所以通常只多几个请求。
+   *
+   * ★ 实测结论：这批会場在 CoRich 上**压根没登记** theaterId ——
+   *   单会場页上的会場名是纯文本，不带 /theater/<id> 链接
+   *   （抽样 52 个单会場页：37 个带链接、15 个不带）。
+   *   所以「补抓成功 0」是**源站如此**，不是解析失败 ——
+   *   这段代码仍需保留：它救的是「有链接但恰好没被搜索遍历到」的会場。
+   *
+   * ★ 为什么失败时**保留**兜底 id 而不是跳过这一档：
+   *   这一档是真的公演。拿不到 id 只是 id 难看，
+   *   丢掉它会让「这一站」从日程里消失 —— 那是错的数据。
+   */
+  let idFixed = 0;
+  let idFailed = 0;
+  for (const w of works.values()) {
+    for (const r of w.runs) {
+      if (r.theaterId) continue;
+      if (r.stageId == null) continue;
+      try {
+        const html = await get('https://stage.corich.jp/stage/' + r.stageId);
+        const tid = first(/<p class="theater"><a href="\/theater\/(\d+)">/, html);
+        if (tid) {
+          r.theaterId = tid;
+          idFixed++;
+        } else {
+          idFailed++; 
+        }
+      } catch {
+        idFailed++;
+      }
+      await sleep(DELAY_MS * 0.6);
+    }
+  }
+  if (idFixed || idFailed) {
+    console.log(`\n  会場 id 补全成功 ${idFixed}；仍缺 ${idFailed} 个（源站未登记 theaterId，改用会場名哈希当 id）`);
   }
 
   /*
@@ -901,15 +971,29 @@ async function main() {
     // 会場
     const venueIds = [];
     for (const r of w.runs) {
-      // ★ 会場 id 为什么用「CoRich 的 theaterId」而不是会場名：
-      //   会場名是日文（slug 化后 URL 不可读），而且同一个会場在站上
-      //   常有几种写法（「松山市民会館」/「松山市民会館　大ホール」）,
-      //   按名字做 key 会把同一会場拆成两个。theaterId 是源站主键，
-      //   唯一且稳定。没有 theaterId 时（极少数）才退回名字 slug。
-      const vid =
-        r.theaterId
-          ? 'v' + r.theaterId
-          : slugifyVenue(r.venueName, r.venueName) + '-' + (r.theaterId ?? 'x');
+      /*
+       * ★ 会場 id 为什么用「CoRich 的 theaterId」而不是会場名：
+       *   会場名是日文（slug 化后 URL 不可读），而且同一个会場在站上
+       *   常有几种写法（「松山市民会館」/「松山市民会館　大ホール」）,
+       *   按名字做 key 会把同一会場拆成两个。theaterId 是源站主键，
+       *   唯一且稳定。
+       *
+       * ★★ 没有 theaterId 时怎么办（实测踩到的坑）★★
+       *   CoRich 有相当一部分会場**压根没登记** theaterId ——
+       *   单会場页上的会場名是纯文本，不带 /theater/<id> 链接。
+       *   实测 66 个会場里有 13 个如此，不是解析失败。
+       *
+       *   初版拼成「名字 slug + '-x'」，于是纯日文的会場名
+       *   （slug 化后是空串）全部变成 `venue-x` 这种怪 id，
+       *   而且多个不同会場会撞成同一个。
+       *
+       *   现在：优先 theaterId；拿不到就用**会場名的短哈希**
+       *   （slugifyVenue 内已处理：有拉丁字符 → slug；纯日文 → sha1 前 8 位）。
+       *   哈希保证「同名 → 同 id（仍会合并）、异名 → 异 id（不撞名）」，
+       *   且**跨次抓取稳定** —— 这一点很关键：若 id 每次都变，
+       *   /venue/<id>/ 的旧链接会全部失效，而它们可能已被收录。
+       */
+      const vid = r.theaterId ? 'v' + r.theaterId : slugifyVenue(r.venueName, r.venueName);
       if (!venueMap.has(vid)) {
         venueMap.set(vid, {
           id: vid,

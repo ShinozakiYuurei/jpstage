@@ -1,6 +1,6 @@
 [
   {
-    "id": "j-com-x",
+    "id": "j-com",
     "name": {
       "zh": "J:COM音樂廳八王子",
       "ja": "J:COMホール八王子"
@@ -36,7 +36,7 @@
     "theaterId": "171"
   },
   {
-    "id": "venue-x",
+    "id": "v-31ff5db0",
     "name": {
       "zh": "メガネのイタガキ文化音樂廳伊勢崎",
       "ja": "メガネのイタガキ文化ホール伊勢崎"
@@ -82,6 +82,42 @@
     "address": "神奈川県相模原市中央3丁目13－15",
     "seats": 1270,
     "theaterId": "272"
+  },
+  {
+    "id": "v-d83d1260",
+    "name": {
+      "zh": "磐田市民文化會館「かたりあ」",
+      "ja": "磐田市民文化会館「かたりあ」"
+    },
+    "pref": "静岡県",
+    "city": "静岡",
+    "address": "",
+    "seats": null,
+    "theaterId": null
+  },
+  {
+    "id": "v-450b6e9d",
+    "name": {
+      "zh": "ひらしん平塚文化芸術音樂廳",
+      "ja": "ひらしん平塚文化芸術ホール"
+    },
+    "pref": "神奈川県",
+    "city": "横浜",
+    "address": "",
+    "seats": null,
+    "theaterId": null
+  },
+  {
+    "id": "v-ee0a1b1f",
+    "name": {
+      "zh": "柿安シティ音樂廳",
+      "ja": "柿安シティホール"
+    },
+    "pref": "三重県",
+    "city": "三重",
+    "address": "",
+    "seats": null,
+    "theaterId": null
   },
   {
     "id": "v2755",
@@ -156,6 +192,18 @@
     "theaterId": "208"
   },
   {
+    "id": "v-06f34903",
+    "name": {
+      "zh": "ザ・ヒロサワ・シティ會館",
+      "ja": "ザ・ヒロサワ・シティ会館"
+    },
+    "pref": "茨城県",
+    "city": "茨城",
+    "address": "",
+    "seats": null,
+    "theaterId": null
+  },
+  {
     "id": "v2788",
     "name": {
       "zh": "長野市芸術館・メイン音樂廳",
@@ -214,6 +262,18 @@
     "address": "兵庫県神戸市中央区楠町4丁目2-2　財団法人 神戸市民文化振興財団　神戸文化ホール",
     "seats": null,
     "theaterId": "1003"
+  },
+  {
+    "id": "v-eed9d99e",
+    "name": {
+      "zh": "小山市立文化中心",
+      "ja": "小山市立文化センター"
+    },
+    "pref": "栃木県",
+    "city": "栃木",
+    "address": "",
+    "seats": null,
+    "theaterId": null
   },
   {
     "id": "v880",
@@ -298,6 +358,18 @@
     "address": "静岡県沼津市御幸町１５番１号",
     "seats": null,
     "theaterId": "1030"
+  },
+  {
+    "id": "v-7fb00d6a",
+    "name": {
+      "zh": "不二羽島文化中心",
+      "ja": "不二羽島文化センター"
+    },
+    "pref": "岐阜県",
+    "city": "岐阜",
+    "address": "",
+    "seats": null,
+    "theaterId": null
   },
   {
     "id": "v4325",
@@ -420,6 +492,18 @@
     "theaterId": "3358"
   },
   {
+    "id": "v-a8c0cc38",
+    "name": {
+      "zh": "南海浪切音樂廳",
+      "ja": "南海浪切ホール"
+    },
+    "pref": "大阪府",
+    "city": "大阪",
+    "address": "",
+    "seats": null,
+    "theaterId": null
+  },
+  {
     "id": "v620",
     "name": {
       "zh": "松山市民會館",
@@ -432,7 +516,7 @@
     "theaterId": "620"
   },
   {
-    "id": "shibuya-lovez-x",
+    "id": "shibuya-lovez",
     "name": {
       "zh": "Shibuya LOVEZ",
       "ja": "Shibuya LOVEZ"
@@ -552,7 +636,7 @@
     "theaterId": "2499"
   },
   {
-    "id": "zepp-nambaosaka-x",
+    "id": "zepp-nambaosaka",
     "name": {
       "zh": "Zepp Namba(OSAKA)",
       "ja": "Zepp Namba(OSAKA)"
@@ -612,7 +696,7 @@
     "theaterId": "1282"
   },
   {
-    "id": "sgc-hall-ariake-x",
+    "id": "sgc-hall-ariake",
     "name": {
       "zh": "SGC HALL ARIAKE",
       "ja": "SGC HALL ARIAKE"
@@ -670,6 +754,18 @@
     "address": "愛知県刈谷市若松町2-104",
     "seats": 1541,
     "theaterId": "2559"
+  },
+  {
+    "id": "v-4e1fa640",
+    "name": {
+      "zh": "福岡市民音樂廳 大音樂廳",
+      "ja": "福岡市民ホール 大ホール"
+    },
+    "pref": "福岡県",
+    "city": "福岡",
+    "address": "",
+    "seats": null,
+    "theaterId": null
   },
   {
     "id": "v3404",

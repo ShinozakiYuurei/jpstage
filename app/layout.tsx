@@ -48,8 +48,22 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://jpstage.example';
 const BOOT_SCRIPT = `(function(){try{
 var d=document.documentElement;
 var t=localStorage.getItem('jp-theme');
+/*
+ * ★ 为什么要处理「已废弃的旧值」：
+ *   主题从三档（dark/light/sakura）改成两档（dark/sakura）之后，
+ *   任何在旧版访问过的浏览器 localStorage 里都还留着 'light'。
+ *   若只是「不认识就回落到系统偏好」，那台设备上切主题
+ *   会得到与别人不同的结果，而且**只有它自己复现**——
+ *   典型的一类「我这里好的、用户说不对」的问题。
+ *
+ *   所以这里显式把废弃值**改写成等价的新值并写回**：
+ *   'light'（中性浅灰）在两档体系里对应的就是 'sakura'（粉色）。
+ *   未知值（含 'light'）→ 按系统偏好重取，并立刻落盘，
+ *   从此这台设备不会再读到废弃值。
+ */
 if(t!=='sakura'&&t!=='dark'){
 t=window.matchMedia('(prefers-color-scheme: light)').matches?'sakura':'dark';
+try{localStorage.setItem('jp-theme',t)}catch(e){}
 }
 d.dataset.theme=t;
 if(t==='dark')d.classList.add('dark');
