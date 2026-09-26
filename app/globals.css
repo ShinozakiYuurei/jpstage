@@ -11,11 +11,10 @@
  *   ① 令牌前缀 --hkm-* → --jp-*：两站并存，同名前缀会让「这是哪站的变量」
  *      在跨仓库粘贴代码时彻底失去线索。
  *
- *   ② 新增日语主题的**字体栈**：hkmovie 是纯中文站，字体只考虑
- *      Noto Sans HK / PingFang；本站中日双语，日文部分必须排到
- *      日文字体之前，否则「ミュージカル」这类假名会被中文字体的
- *      假名字形渲染（微软雅黑、PingFang 都带假名，但字形是中文习惯的，
- *      与日文正字法不同，日语用户一眼能看出别扭）。
+ *   ② 新增中日两套 Noto Sans 字体栈：中文和日文模式分别优先使用
+ *      Noto Sans TC / Noto Sans JP，并按 <html lang> 切换；这样不只是
+ *      「能显示」，汉字也会采用对应语言的字形。字体通过 Google Fonts
+ *      加载，系统字体作为离线回退。
  *
  *   ③ 新增双语显示机制（.i18n-zh / .i18n-ja，见文件末尾）——
  *      这是 hkmovie 完全没有的一块，理由写在那里。
@@ -59,23 +58,15 @@
    ============================================================ */
 :root {
   /*
-   * 字体栈
-   *
-   * ★ 顺序即优先级，日文字体必须排在中文之前（理由见文件头 ②）：
-   *     Noto Sans JP → Hiragino Kaku Gothic → Yu Gothic → Meiryo  日文
-   *     Noto Sans TC → PingFang TC → Microsoft JhengHei            中文
-   *   最后是 system-ui 兜底。
-   *
-   * ★ 为什么不引 webfont：中文字体文件动辄 5~15MB（子集化后也常有 1~3MB），
-   *   而本站首屏价值在「一眼看到有哪些公演」。用系统字体可以做到
-   *   0 字体请求、首屏零等待；代价是不同平台的观感略有差异 ——
-   *   对信息型站点这个取舍是划算的（hkmovie 引入的是子集化的
-   *   Inter + Noto Sans HK，那是它已经做过字体的权衡；本站从简）。
+   * 中日分别使用 Noto Sans TC / Noto Sans JP（由 layout 预连接 Google Fonts）。
+   * 按 <html lang> 切换字体栈，确保汉字采用对应语言的字形，而不只是能显示。
+   * 后续系统字体作为离线或字体服务不可用时的兜底。
    */
-  --jp-font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans',
-    'Yu Gothic', 'YuGothic', Meiryo, 'Noto Sans TC', 'PingFang TC',
-    'Microsoft JhengHei', system-ui, -apple-system, BlinkMacSystemFont,
-    'Segoe UI', Arial, sans-serif;
+  --jp-font-family-zh: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei',
+    'Noto Sans JP', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --jp-font-family-ja: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans',
+    'Yu Gothic', 'YuGothic', Meiryo, 'Noto Sans TC', system-ui, sans-serif;
+  --jp-font-family: var(--jp-font-family-zh);
 
   /*
    * 顶栏高度（单一事实源）
@@ -1707,6 +1698,15 @@ details > summary::-webkit-details-marker {
   }
 }
 
+html:lang(ja) {
+  --jp-font-family: var(--jp-font-family-ja);
+}
+
+html:lang(zh),
+html:lang(zh-Hant) {
+  --jp-font-family: var(--jp-font-family-zh);
+}
+
 /* ============================================================
    主题切换按钮的三颗图标（见 components/ThemeToggle.tsx）
 
@@ -1954,4 +1954,200 @@ html[data-lang='zh'] .i18n-ja {
 
 html[data-lang='ja'] .i18n-zh {
   display: none;
+}
+
+/* ============================================================
+   公演日历
+   ============================================================ */
+.jp-calendar-nav {
+  display: inline-flex;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--jp-hairline);
+  border-radius: 9999px;
+  color: var(--jp-fg-soft);
+  background: var(--jp-veil);
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.jp-calendar-nav:hover:not(:disabled) {
+  border-color: var(--jp-hairline-strong);
+  color: var(--jp-fg);
+  background: var(--jp-veil-strong);
+}
+
+.jp-calendar-nav:focus-visible,
+.jp-calendar-current:focus-visible,
+.jp-calendar-day:focus-visible {
+  outline: 2px solid var(--jp-accent);
+  outline-offset: 2px;
+}
+
+.jp-calendar-nav:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.jp-calendar-weekday {
+  display: flex;
+  min-height: 2rem;
+  align-items: center;
+  justify-content: center;
+  color: var(--jp-fg-dim);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.jp-calendar-blank {
+  min-height: 4.5rem;
+}
+
+.jp-calendar-day {
+  display: flex;
+  width: calc(100% - 4px);
+  min-height: 4.5rem;
+  margin: 2px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.25rem;
+  border: 1px solid transparent;
+  border-radius: 0.875rem;
+  padding: 0.45rem 0.125rem 0.3rem;
+  color: var(--jp-fg-soft);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.jp-calendar-day:hover {
+  border-color: var(--jp-hairline);
+  background: var(--jp-veil);
+}
+
+.jp-calendar-day.is-today {
+  border-color: color-mix(in srgb, var(--jp-accent) 55%, var(--jp-hairline));
+}
+
+.jp-calendar-day.is-today .jp-calendar-day__number {
+  border-radius: 9999px;
+  color: var(--jp-canvas);
+  background: var(--jp-accent);
+  font-weight: 800;
+}
+
+.jp-calendar-today-label {
+  color: var(--jp-accent);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 0.75rem;
+}
+
+.jp-calendar-day.is-selected {
+  border-color: var(--jp-accent);
+  color: var(--jp-fg);
+  background: color-mix(in srgb, var(--jp-accent) 14%, transparent);
+}
+
+.jp-calendar-day__number {
+  display: inline-flex;
+  width: 1.5rem;
+  height: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.jp-calendar-dots {
+  display: flex;
+  min-height: 0.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  color: var(--jp-fg-muted);
+  font-size: 0.625rem;
+  line-height: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.jp-calendar-dots i,
+.jp-calendar-legend-dot {
+  display: inline-block;
+  width: 0.45rem;
+  height: 0.45rem;
+  flex: 0 0 auto;
+  border-radius: 9999px;
+}
+
+.jp-calendar-dots .is-now,
+.jp-calendar-legend-dot.is-now {
+  background: var(--jp-st-now-dot);
+}
+
+.jp-calendar-dots .is-upcoming,
+.jp-calendar-legend-dot.is-upcoming {
+  background: var(--jp-st-soon-dot);
+}
+
+.jp-calendar-details {
+  scroll-margin-top: calc(var(--jp-header-h) + 0.75rem);
+}
+
+.jp-calendar-status {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--jp-st-now-border);
+  border-radius: 9999px;
+  padding: 0.125rem 0.5rem;
+  color: var(--jp-st-now-fg);
+  background: var(--jp-st-now-tint);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.jp-calendar-status.is-upcoming {
+  border-color: var(--jp-st-soon-border);
+  color: var(--jp-st-soon-fg);
+  background: var(--jp-st-soon-tint);
+}
+
+.jp-calendar-event {
+  border-radius: 0.5rem;
+  transition: color 140ms ease;
+}
+
+@media (min-width: 640px) {
+  .jp-calendar-blank,
+  .jp-calendar-day {
+    min-height: 5rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .jp-calendar-blank,
+  .jp-calendar-day {
+    min-height: 4rem;
+  }
+
+  .jp-calendar-day {
+    gap: 0.125rem;
+    padding-top: 0.35rem;
+  }
+
+  .jp-calendar-dots {
+    gap: 0.125rem;
+    font-size: 0.5625rem;
+  }
+
+  .jp-calendar-dots i {
+    width: 0.375rem;
+    height: 0.375rem;
+  }
 }

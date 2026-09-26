@@ -173,6 +173,12 @@ export function ShowExplorer({
     count: facets.byStatus.get(s.value) ?? 0,
   }));
 
+  const sortOptions: FilterOption[] = [
+    { value: 'start', label: '開演日 ↓ / 開幕日' },
+    { value: 'end', label: '結束日 ↓ / 終了日' },
+    { value: 'title', label: '作品名 / 作品名' },
+  ];
+
   const activeCount =
     filters.kind.length +
     filters.city.length +
@@ -280,33 +286,17 @@ export function ShowExplorer({
             />
           )}
 
-          {/* 排序：只有三种模式，用原生 <select> 而不是自绘菜单 ——
-              原生控件在手机上会唤起系统选择器，体验比自绘好，且零 JS。 */}
-          <label className="relative flex items-center">
-            <span className="sr-only">排序 / 並び順</span>
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value as Sort)}
-              className="w-full appearance-none rounded-xl border border-hairline-strong bg-veil px-3 py-2 text-sm font-medium text-fg-soft transition hover:bg-veil-strong hover:text-fg focus:border-accent/60 focus:outline-none"
-            >
-              <option value="start">開演日 ↓ / 開幕日</option>
-              <option value="end">結束日 ↓ / 終了日</option>
-              <option value="title">作品名 / 作品名</option>
-            </select>
-            <svg
-              className="pointer-events-none absolute right-3 h-3.5 w-3.5 text-fg-dim"
-              viewBox="0 0 12 12"
-              fill="none"
-              aria-hidden
-            >
-              <path
-                d="M3 4.5L6 7.5L9 4.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-          </label>
+          <FilterDropdown
+            label="排序 / 並び順"
+            placeholder="開演日 ↓ / 開幕日"
+            options={sortOptions}
+            selected={[sort]}
+            onChange={(values) => {
+              const next = values[0];
+              if (next) setSort(next as Sort);
+            }}
+            selectionMode="single"
+          />
         </div>
 
         {/* 结果摘要 + 重置 */}

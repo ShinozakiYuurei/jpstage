@@ -356,13 +356,22 @@ async function main() {
       const reset = [...document.querySelectorAll('button')].find(b => /清除全部條件|条件をすべて/.test(b.textContent));
       reset?.click();
       await new Promise(r => setTimeout(r, 350));
-      const sel = document.querySelector('select');
-      const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set;
-      setter.call(sel, 'title');
-      sel.dispatchEvent(new Event('change', { bubbles: true }));
+      const sortBtn = [...document.querySelectorAll('button[aria-haspopup="listbox"]')]
+        .find(b => b.getAttribute('aria-label') === '排序 / 並び順');
+      sortBtn?.click();
+      await new Promise(r => setTimeout(r, 100));
+      const menu = document.querySelector('[role="listbox"][aria-label="排序 / 並び順"]');
+      const titleOption = [...(menu?.querySelectorAll('[role="option"]') || [])]
+        .find(b => b.textContent.includes('作品名'));
+      titleOption?.click();
       await new Promise(r => setTimeout(r, 350));
       const titles = [...document.querySelectorAll('a[href^="/show/"] h3')].map(h => h.textContent.trim());
-      return { titles, count: titles.length };
+      return {
+        titles,
+        count: titles.length,
+        selectedLabel: sortBtn?.textContent.trim(),
+        menuClosed: !document.querySelector('[role="listbox"][aria-label="排序 / 並び順"]'),
+      };
     })()`);
     const sortedOk = (() => {
       const t = sorted.titles;
@@ -372,6 +381,8 @@ async function main() {
       return t.length > 1;
     })();
     check('按作品名排序生效', sortedOk, `${sorted.count} 张，前 3: ${sorted.titles.slice(0, 3).join(' | ')}`);
+    check('排序选项显示为当前选中项', sorted.selectedLabel?.includes('作品名'), sorted.selectedLabel);
+    check('选择排序后菜单自动收起', sorted.menuClosed);
 
     // ── 顶栏高亮（详情页归属）──
     console.log('\n⑤ 顶栏高亮归属');

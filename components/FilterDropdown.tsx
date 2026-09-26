@@ -33,7 +33,7 @@ import { createPortal } from 'react-dom';
 export interface FilterOption {
   value: string;
   label: string;
-  count: number;
+  count?: number;
   /** 可选分组标题（如「原作媒體」） */
   group?: string;
 }
@@ -45,6 +45,8 @@ export function FilterDropdown({
   onChange,
   /** 无障碍标签：同一页有多个筛选器时，屏幕阅读器需要区分它们 */
   label,
+  /** 单选菜单选中后立即收起；默认维持筛选器的多选行为 */
+  selectionMode = 'multiple',
 }: {
   /** 未选中时的文案（如「所有類型」）；选中多项时自动取「類型 · 3 項」 */
   placeholder: string;
@@ -52,6 +54,7 @@ export function FilterDropdown({
   selected: string[];
   onChange: (next: string[]) => void;
   label: string;
+  selectionMode?: 'multiple' | 'single';
 }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number; width: number; maxH: number } | null>(
@@ -148,6 +151,11 @@ export function FilterDropdown({
   }, [open, place]);
 
   const toggle = (v: string) => {
+    if (selectionMode === 'single') {
+      onChange([v]);
+      setOpen(false);
+      return;
+    }
     onChange(has && selected.includes(v) ? selected.filter((x) => x !== v) : [...selected, v]);
   };
 
@@ -199,6 +207,9 @@ export function FilterDropdown({
             <div className="fixed inset-0 z-[45]" onClick={() => setOpen(false)} aria-hidden />
             <div
               ref={menuRef}
+              role="listbox"
+              aria-label={label}
+              aria-multiselectable={selectionMode === 'multiple' ? true : undefined}
               style={{ top: pos.top, left: pos.left, width: pos.width, maxHeight: pos.maxH }}
               className="jp-glass-pop fixed z-[60] overflow-y-auto overscroll-contain rounded-xl p-1.5"
             >
@@ -222,47 +233,71 @@ export function FilterDropdown({
                     )}
                     <button
                       type="button"
+                      role="option"
+                      aria-selected={on}
                       onClick={() => toggle(o.value)}
-                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition hover:bg-veil-strong"
+                      className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition hover:bg-veil-strong ${
+                        selectionMode === 'single' && on ? 'bg-veil-strong' : ''
+                      }`}
                     >
-                      <span
-                        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
-                          on ? 'border-accent bg-accent' : 'border-hairline-strong'
-                        }`}
-                      >
-                        {on && (
-                          /*
-                           * 勾选标记维持纯白：它是「图形物件」（WCAG 1.4.11 要求 3:1），
-                           * 而三套主题的强调色都达标 ——
-                           *   暗色 #8B7CFF 上的白 3.4:1、浅色 #6B46E5 上的白 5.6:1。
-                           */
-                          <svg
-                            className="h-3 w-3 text-white"
-                            viewBox="0 0 10 10"
-                            fill="none"
-                            aria-hidden
-                          >
-                            <path
-                              d="M2 5L4 7L8 3"
-                              stroke="currentColor"
-                              strokeWidth="1.8"
-                              strokeLinecap="round"
-                            />
-                          </svg>
-                        )}
-                      </span>
+                      {selectionMode === 'multiple' && (
+                        <span
+                          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                            on ? 'border-accent bg-accent' : 'border-hairline-strong'
+                          }`}
+                        >
+                          {on && (
+                            /*
+                             * 勾选标记维持纯白：它是「图形物件」（WCAG 1.4.11 要求 3:1），
+                             * 而三套主题的强调色都达标 ——
+                             *   暗色 #8B7CFF 上的白 3.4:1、浅色 #6B46E5 上的白 5.6:1。
+                             */
+                            <svg
+                              className="h-3 w-3 text-white"
+                              viewBox="0 0 10 10"
+                              fill="none"
+                              aria-hidden
+                            >
+                              <path
+                                d="M2 5L4 7L8 3"
+                                stroke="currentColor"
+                                strokeWidth="1.8"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                          )}
+                        </span>
+                      )}
                       <span
                         className={`flex-1 truncate ${on ? 'font-medium text-fg' : 'text-fg-soft'}`}
                       >
                         {o.label}
                       </span>
-                      <span className="shrink-0 tabular-nums text-xs text-fg-muted">{o.count}</span>
+                      {selectionMode === 'multiple' && o.count !== undefined && (
+                        <span className="shrink-0 tabular-nums text-xs text-fg-muted">{o.count}</span>
+                      )}
+                      {selectionMode === 'single' && on && (
+                        <svg
+                          className="h-3.5 w-3.5 shrink-0 text-accent"
+                          viewBox="0 0 12 12"
+                          fill="none"
+                          aria-hidden
+                        >
+                          <path
+                            d="M2.5 6L5 8.5L9.5 3.5"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      )}
                     </button>
                   </div>
                 );
               })}
 
-              {has && (
+              {has && selectionMode === 'multiple' && (
                 <button
                   type="button"
                   onClick={() => onChange([])}

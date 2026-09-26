@@ -415,6 +415,19 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
             ))}
           </div>
         </div>
+        {show.summarySources?.length ? (
+          <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-fg-dim">
+            <span className="i18n-zh">簡介依公開資料整理：</span>
+            <span className="i18n-ja">紹介文の参考資料：</span>
+            {show.summarySources.map((url, index) => (
+              <a key={url} href={url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4 hover:text-fg">
+                <span className="i18n-zh">來源 {index + 1}</span>
+                <span className="i18n-ja">資料 {index + 1}</span>
+                <span aria-hidden> ↗</span>
+              </a>
+            ))}
+          </p>
+        ) : null}
         </section>
       )}
 

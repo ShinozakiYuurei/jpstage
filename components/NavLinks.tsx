@@ -40,6 +40,7 @@ import { usePathname } from 'next/navigation';
 const LINKS = [
   { href: '/now', label: '上演中', labelJa: '上演中', nav: 'now' },
   { href: '/upcoming', label: '即將開演', labelJa: '開幕予定', nav: 'upcoming' },
+  { href: '/calendar', label: '日曆', labelJa: 'カレンダー', nav: 'calendar' },
   { href: '/venue', label: '會場', labelJa: '会場', nav: 'venue' },
   { href: '/series', label: '系列', labelJa: 'シリーズ', nav: 'series' },
 ] as const;
@@ -89,7 +90,7 @@ export function NavLinks() {
        * ★ 手机上这一行必须能横向滚动，不能换行
        *
        *   顶栏是 flex-nowrap，390px 下要同时容纳
-       *   logo + 四个导航项 + 语言切换 + 主题切换。若允许换行，
+       *   logo + 五个导航项 + 语言切换 + 主题切换。若允许换行，
        *   导航自身高度会从 32px 涨到 52px —— 而顶栏高度是**写死的 56px**
        *   （var(--jp-header-h)），于是内容被压住、又没地方溢出，
        *   看上去就是挤成一团。

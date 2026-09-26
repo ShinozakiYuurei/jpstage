@@ -73,6 +73,20 @@ export interface Run {
   performances: number | null;
 }
 
+/** 月历上显示的单个会场档期（已结束的档期不包含在内） */
+export interface CalendarEntry {
+  slug: string;
+  title: LocalizedText;
+  venue: LocalizedText;
+  /** 会场所属城市，用于日历筛选 */
+  city: string;
+  startDate: string;
+  endDate: string;
+  /** 此档期相对构建时日本日期的状态 */
+  status: Extract<ShowStatus, 'now' | 'upcoming'>;
+  performances: number | null;
+}
+
 export interface StaffMember {
   /** 職掌，例如「脚本」「演出」「音楽」 */
   role: LocalizedText;
@@ -118,6 +132,8 @@ export interface Show {
   staff: StaffMember[];
   /** 作品紹介。允許純文字，換行用 \n（渲染時轉 <br>） */
   summary: LocalizedText;
+  /** 人工补充简介的可核对资料来源（不改变档期的抓取来源） */
+  summarySources?: string[];
   /** 抓取來源標識，footer 會列出全部來源 */
   source: string;
 }

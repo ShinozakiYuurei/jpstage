@@ -34,7 +34,7 @@ export const dynamic = 'force-static';
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = process.env.NEXT_PUBLIC_SITE_URL || 'https://jpstage.example';
 
-  const staticPages = ['', '/now', '/upcoming', '/venue', '/series'].map((p) => ({
+  const staticPages = ['', '/now', '/upcoming', '/calendar', '/venue', '/series'].map((p) => ({
     url: `${base}${p}/`,
     changeFrequency: 'daily' as const,
     priority: p === '' ? 1 : 0.8,

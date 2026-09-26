@@ -175,6 +175,10 @@ export const CITY_ZH: Record<string, string> = {
   北海道: '北海道',
   北海: '北海道',
   さいたま: '埼玉市',
+  三重: '三重',
+  山形: '山形',
+  山梨: '山梨',
+  茨城: '茨城',
 };
 
 export function cityLabel(city: string, lang: Lang): string {

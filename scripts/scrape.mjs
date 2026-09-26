@@ -80,6 +80,7 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { applySummarySupplements } from './summary-supplements.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -1523,6 +1524,9 @@ async function main() {
 
   console.log('\n[8/8] 校验并写入 …');
   for (const s of shows) delete s.posterSrc;
+  const supplements = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'summary-supplements.json'), 'utf8'));
+  const supplemented = applySummarySupplements(shows, supplements);
+  if (supplemented) console.log(`  已补充 ${supplemented} 部经来源核实的双语简介`);
 
   const series = [...seriesMap.values()];
   const venues = [...venueMap.values()];

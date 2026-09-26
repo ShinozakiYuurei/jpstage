@@ -34,6 +34,8 @@ node probe/serve.mjs out 4321   # 自帶的零依賴預覽伺服器
 
 ## 專案結構
 
+字體使用 Noto Sans TC / Noto Sans JP，按頁面語言選擇對應字形，並提供系統字體回退。
+
 ```
 app/
   globals.css          視覺體系（液態玻璃令牌 + 三套主題 + 雙語機制）
@@ -41,6 +43,7 @@ app/
   page.tsx             首頁（上演中 / 即將開演 / 系列 / 收錄範圍）
   now/                 上演中的公演（搜尋 + 篩選）
   upcoming/            即將開演的公演（搜尋 + 篩選）
+  calendar/            公演日曆（按月瀏覽上演中與即將開演的檔期）
   show/[slug]/         公演詳情（檔期、出演、工作人員、同系列）
   venue/               會場一覽（按城市分組）
   venue/[id]/          會場詳情（檔期時間軸）
@@ -54,12 +57,14 @@ components/
   FilterDropdown.tsx   多選下拉（Portal + 實測定位）
   ThemeToggle.tsx      兩檔主題切換（深色 ⇄ 櫻粉）
   LangToggle.tsx       中日切換
+  ShowCalendar.tsx     月曆網格與選日公演列表
   T.tsx                雙語文字（服務端組件）
 lib/
   types.ts             資料型別（雙語二元組、狀態、會場…）
   data.ts              資料存取層（全站唯一讀 JSON 的地方）
   i18n.ts              語言標籤、地名對照
   format.ts            日期 / 期間格式化（時區安全）
+
   color.ts             主色 → CSS 通道、對比度計算
 scripts/
   scrape.mjs           CoRich 抓取 + 譯名/翻譯 + 海報 + 資料校驗

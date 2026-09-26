@@ -132,6 +132,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
         {/*
          * 主题启动脚本：必须尽早同步执行，不帶 defer / async。
          * 前面的 theme-color meta 会由它立刻更新，避免地址栏颜色不匹配。
@@ -165,7 +171,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
          *   内层用 h-full + items-center 垂直居中，不靠 padding 撑。
          */}
         <header className="jp-glass-bar sticky top-0 z-50 h-[var(--jp-header-h)]">
-          <div className="mx-auto flex h-full max-w-6xl flex-nowrap items-center gap-2 px-3 sm:gap-4 sm:px-4">
+          <div className="mx-auto flex h-full max-w-7xl flex-nowrap items-center gap-2 px-3 sm:gap-4 sm:px-4">
             <Link
               href="/"
               className="shrink-0 text-base font-bold tracking-tight sm:text-lg"
@@ -196,8 +202,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
              * 语言 / 主题切换
              *
              * ★ 放在 NavLinks **之後**、ml-auto 推到最右：
-             *   它們不屬於「上演中 / 即將開演 / 會場 / 系列」這一組頁面歸屬，
-             *   跟在導航項後面會被當成第五、六個分頁；推到最右端才看得出
+             *   它們不屬於「上演中 / 即將開演 / 日曆 / 會場 / 系列」這一組頁面歸屬，
+             *   跟在導航項後面會被當成第六、七個分頁；推到最右端才看得出
              *   它們是「工具」而不是「目的地」。
              *
              * ★ ml-auto 不能寫在導航自己身上：那樣導航會被推成右對齊，
@@ -218,7 +224,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
          *   所以内容区的 py-6 是它与顶栏之间的正常视觉间距。
          *   真正需要对齐顶栏的是**锚点跳转**（见 scroll-mt 相关注释）。
          */}
-        <main className="mx-auto max-w-6xl px-4 py-6">
+        <main className="mx-auto max-w-7xl px-4 py-6">
           {/* 演示数据提示条：只在数据里还有 source==='sample' 的条目时出现。
               接入真实抓取后自动消失 —— 不需要有人记得回来删这个组件。 */}
           {meta.demo && <DemoNotice />}

@@ -2,6 +2,7 @@ import seriesJson from '@/data/series.json';
 import venuesJson from '@/data/venues.json';
 import showsJson from '@/data/shows.json';
 import type {
+  CalendarEntry,
   LocalizedText,
   Meta,
   Run,
@@ -54,6 +55,10 @@ const SHOWS = showsJson as unknown as Omit<Show, 'status'>[];
  */
 const TODAY_JST = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
 
+export function getTodayJst(): string {
+  return TODAY_JST;
+}
+
 /** 日期字串比較：'YYYY-MM-DD' 是字典序 = 時間序，直接用 < > 即可，無需 parse */
 function computeStatus(startDate: string, endDate: string): ShowStatus {
   if (endDate < TODAY_JST) return 'ended';
@@ -75,6 +80,22 @@ function spanOf(runs: Run[]): { startDate: string; endDate: string } {
 // ── 索引（模組層建一次，避免每個頁面各自 filter 一遍） ────────────────
 const SERIES_BY_ID = new Map(SERIES.map((s) => [s.id, s]));
 const VENUE_BY_ID = new Map(VENUES.map((v) => [v.id, v]));
+const CALENDAR_CITY_ALIASES: Record<string, string> = {
+  'AiiA 2.5 Theater Kobe': '神戸',
+  'Kanadevia Hall': '東京',
+  'シアターH': '東京',
+  'シアターサンモール': '東京',
+  '天王洲 銀河劇場': '東京',
+  '新国立劇場 中劇場': '東京',
+  '日本青年館ホール': '東京',
+  '草月ホール': '東京',
+  '近鉄アート館': '大阪',
+  'さいたま': '埼玉',
+};
+
+function calendarCity(city: string): string {
+  return CALENDAR_CITY_ALIASES[city] ?? (city === '（会場未記載）' ? '' : city);
+}
 
 const ALL_SHOWS: Show[] = SHOWS.map((s) => {
   const span = spanOf(s.runs);
@@ -99,6 +120,27 @@ export function getAllVenues(): Venue[] {
 
 export function getAllShows(): Show[] {
   return ALL_SHOWS;
+}
+
+/**
+ * 月历档期：以单个会场 run 为单位，保留巡演各站自己的日期和会场。
+ * 已结束的场次不显示；当前档期与未来档期分别标为 now / upcoming。
+ */
+export function getCalendarEntries(): CalendarEntry[] {
+  return ALL_SHOWS.flatMap((show): CalendarEntry[] =>
+    show.runs
+      .filter((run) => run.endDate >= TODAY_JST)
+      .map((run): CalendarEntry => ({
+        slug: show.slug,
+        title: show.title,
+        venue: VENUE_BY_ID.get(run.venueId)?.name ?? { zh: run.venueId, ja: run.venueId },
+        city: calendarCity(VENUE_BY_ID.get(run.venueId)?.city ?? ''),
+        startDate: run.startDate,
+        endDate: run.endDate,
+        status: run.startDate > TODAY_JST ? 'upcoming' : 'now',
+        performances: run.performances,
+      })),
+  ).sort((a, b) => a.startDate.localeCompare(b.startDate) || a.title.ja.localeCompare(b.title.ja));
 }
 
 export function getShow(slug: string): Show | undefined {

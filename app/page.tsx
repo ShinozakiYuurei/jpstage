@@ -142,6 +142,33 @@ export default function HomePage() {
         )}
       </section>
 
+      {/* ── 日历入口 ── */}
+      <section>
+        <Link
+          href="/calendar"
+          className="jp-glass group flex items-center gap-4 rounded-2xl p-4 transition sm:p-5"
+        >
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-veil-strong text-accent">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3.5" y="5" width="17" height="16" rx="2.5" />
+              <path d="M7.5 3v4M16.5 3v4M3.5 9.5h17" />
+              <path d="M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01" />
+            </svg>
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-semibold text-fg group-hover:text-accent">
+              <span className="i18n-zh">按日期瀏覽<span className="jp-grad-text">演出日曆</span></span>
+              <span className="i18n-ja">日付から探す<span className="jp-grad-text">公演カレンダー</span></span>
+            </span>
+            <span className="mt-1 block text-sm text-fg-muted">
+              <span className="i18n-zh">查看每天正在演出和即將演出的舞台劇</span>
+              <span className="i18n-ja">日ごとの上演中・開幕予定の公演をチェック</span>
+            </span>
+          </span>
+          <span aria-hidden className="shrink-0 text-lg text-fg-dim transition group-hover:translate-x-1 group-hover:text-accent">→</span>
+        </Link>
+      </section>
+
       {/* ── 系列 ──
        *
        * ★ 为什么首页要放这一块（而不是只在导航里留一个入口）：

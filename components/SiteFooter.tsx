@@ -18,7 +18,7 @@ export function SiteFooter({ updated }: { updated: string }) {
 
   return (
     <footer className="mt-16 border-t border-hairline px-4 py-8 text-xs leading-relaxed text-fg-dim">
-      <div className="mx-auto max-w-6xl space-y-2">
+      <div className="mx-auto max-w-7xl space-y-2">
         <p>
           <span className="i18n-zh">
             本站為日本 2.5 次元舞台劇、音樂劇公演資訊的聚合服務。所有日程、會場及出演者資訊
