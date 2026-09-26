@@ -53,6 +53,89 @@ function groupByShow(entries: CalendarEntry[]) {
   return [...groups.values()];
 }
 
+function escapeIcsText(value: string): string {
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/\r?\n/g, '\\n')
+    .replace(/,/g, '\\,')
+    .replace(/;/g, '\\;');
+}
+
+/** RFC 5545 limits content lines to 75 UTF-8 octets; fold without splitting a character. */
+function foldIcsLine(line: string): string {
+  const encoder = new TextEncoder();
+  let folded = '';
+  let byteLength = 0;
+  for (const character of line) {
+    const characterBytes = encoder.encode(character).length;
+    if (byteLength + characterBytes > 75) {
+      folded += '\r\n ';
+      byteLength = 1;
+    }
+    folded += character;
+    byteLength += characterBytes;
+  }
+  return folded;
+}
+
+function downloadCalendarEvent(show: { slug: string; title: CalendarEntry['title'] }, entry: CalendarEntry) {
+  const lang = document.documentElement.dataset.lang === 'ja' ? 'ja' : 'zh';
+  const title = show.title[lang];
+  const venue = entry.venue[lang];
+  const city = entry.city ? (lang === 'ja' ? entry.city : cityLabel(entry.city, 'zh')) : '';
+  const location = [city, venue].filter(Boolean).join(' · ');
+  const endDate = new Date(`${entry.endDate}T00:00:00.000Z`);
+  endDate.setUTCDate(endDate.getUTCDate() + 1);
+  const exclusiveEndDate = toIsoDate(endDate).replaceAll('-', '');
+  const startDate = entry.startDate.replaceAll('-', '');
+  const showUrl = new URL(`/show/${encodeURIComponent(show.slug)}/`, window.location.origin).href;
+  const description = [
+    lang === 'ja'
+      ? `公演期間: ${entry.startDate}〜${entry.endDate}`
+      : `演出期間：${entry.startDate} 至 ${entry.endDate}`,
+    lang === 'ja' ? `会場: ${location}` : `會場：${location}`,
+    entry.performances == null
+      ? ''
+      : lang === 'ja'
+        ? `公演数: 全${entry.performances}公演`
+        : `場次：共 ${entry.performances} 場`,
+    showUrl,
+  ]
+    .filter(Boolean)
+    .join('\n');
+  const uid = `${encodeURIComponent(show.slug).replaceAll('%', '_')}-${startDate}-${exclusiveEndDate}-${encodeURIComponent(entry.venue.ja).replaceAll('%', '_')}@jpstage.local`;
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//jpstage//Show Calendar//ZH-JA',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${stamp}`,
+    `DTSTART;VALUE=DATE:${startDate}`,
+    `DTEND;VALUE=DATE:${exclusiveEndDate}`,
+    `SUMMARY:${escapeIcsText(title)}`,
+    `LOCATION:${escapeIcsText(location)}`,
+    `DESCRIPTION:${escapeIcsText(description)}`,
+    `URL:${showUrl}`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ];
+  const blob = new Blob([`${lines.map(foldIcsLine).join('\r\n')}\r\n`], {
+    type: 'text/calendar;charset=utf-8',
+  });
+  const downloadUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = downloadUrl;
+  anchor.download = `jpstage-${entry.startDate}-${encodeURIComponent(show.slug).replaceAll('%', '_')}.ics`;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+}
+
 const ALL_CITIES = '__all__';
 
 export function ShowCalendar({
@@ -376,12 +459,22 @@ export function ShowCalendar({
                           </span>
                         </span>
                       </span>
-                      {entry.performances != null && (
-                        <span className="shrink-0 text-xs text-fg-dim sm:text-right">
-                          <span className="i18n-zh">共 {entry.performances} 場</span>
-                          <span className="i18n-ja">全{entry.performances}公演</span>
-                        </span>
-                      )}
+                      <div className="flex items-center justify-between gap-3 sm:shrink-0 sm:justify-end">
+                        {entry.performances != null && (
+                          <span className="text-xs text-fg-dim sm:text-right">
+                            <span className="i18n-zh">共 {entry.performances} 場</span>
+                            <span className="i18n-ja">全{entry.performances}公演</span>
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          className="shrink-0 rounded-lg border border-hairline px-2 py-1 text-xs font-medium text-fg-soft transition hover:border-hairline-strong hover:bg-veil hover:text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                          onClick={() => downloadCalendarEvent(show, entry)}
+                        >
+                          <span className="i18n-zh">加入日曆</span>
+                          <span className="i18n-ja">カレンダーに追加</span>
+                        </button>
+                      </div>
                     </li>
                   ))}
                 </ul>

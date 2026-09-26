@@ -6,10 +6,10 @@
  * ════════════════════════════════════════════════════════════════════
  *
  *  CoRich 舞台芸術！是日本演劇／ミュージカル的公演数据库（用户共建），
- *  它有一个专门的 **「2.5次元舞台」分类**（category_id=7）。
- *  这是本站目前唯一的数据源，理由与取舍见下。
+ *  它有一个专门的 **「2.5次元舞台」分类**（category_id=7），用于补充历史档案。
+ *  当前公演则优先抓取日本2.5次元ミュージカル協会（J25）的官方日程与详情。
  *
- *  ★ 为什么选它而不是「各公演官网」：
+ *  ★ 为什么保留 CoRich，而不只抓「各公演官网」：
  *    2.5 次元没有单一权威源 —— 每个企划各有官网，结构各不相同，
  *    要接就得给每个站写一个解析器（几十个），且任一官网改版就断。
  *    CoRich 把它们的档期、会場、海报统一成了一个结构 ——
@@ -17,7 +17,7 @@
  *
  *  ★ 代价必须说清楚：CoRich 是**用户共建**数据库，条目由剧团/观众登记。
  *    所以：
- *      · 官方站链接（officialUrl）以它为准，购票前务必点去核对；
+ *      · CoRich 是用户共建数据，officialUrl 仅作核对入口，购票前务必确认；
  *      · 出演者、场次数字段经常是空的（很多条目只登记了档期与会場）；
  *      · 数据可能滞后于官方公告。
  *    因此本站每条数据都带 officialUrl，页脚也明写「以官方公布为准」——
@@ -786,57 +786,49 @@ function parseJ25Detail(html, j25Id) {
       s
         .replace(/^【[^】]*】\s*/, '') // 【東京公演】
         .replace(/^[(（][^)）]*[)）]\s*/, '') // (日)
+        .replace(/^[～〜]\s*/, '') // 只有開演日的公演：2026年4月4日(土)～ 会場
         .split('※')[0]
         .trim();
 
-    const m = t.match(/(\d{4})年(\d{1,2})月(\d{1,2})日\s*[（(].?[）)]?\s*～\s*(?:(\d{4})年)?\s*(\d{1,2})月(\d{1,2})日/);
-    if (m) {
-      const y = m[1];
-      const pad = (v) => String(v).padStart(2, '0');
-      const start = `${y}-${pad(m[2])}-${pad(m[3])}`;
-      // ★ 结束日可能跨年（12月开演、1月结束）：写了年份就用写的，
-      //   没写就沿用开始年；若结束月 < 开始月，说明跨年了，年份 +1
-      let ey = m[4] ? m[4] : y;
-      if (!m[4] && +m[5] < +m[2]) ey = String(+y + 1);
-      const end = `${ey}-${pad(m[5])}-${pad(m[6])}`;
-      // 会場名：整行去掉日期段之后剩下的部分
-      const venueName = cleanVenue(t.replace(m[0], ''));
+    const pad = (v) => String(v).padStart(2, '0');
+    const datePattern = /(\d{4})年(\d{1,2})月(\d{1,2})日(?:\s*[（(][^）)]*[）)])?/;
+    const range = t.match(
+      /(\d{4})年(\d{1,2})月(\d{1,2})日(?:\s*[（(][^）)]*[）)])?\s*～\s*(?:(\d{4})年)?\s*(\d{1,2})月(\d{1,2})日(?:\s*[（(][^）)]*[）)])?/,
+    );
+
+    if (range) {
+      const y = range[1];
+      const start = `${y}-${pad(range[2])}-${pad(range[3])}`;
+      // 終了日可能跨年；省略年份時，結束月份小於開始月份即視為次年。
+      let endYear = range[4] || y;
+      if (!range[4] && +range[5] < +range[2]) endYear = String(+y + 1);
+      const end = `${endYear}-${pad(range[5])}-${pad(range[6])}`;
+      const venueName = cleanVenue(t.replace(range[0], ''));
       if (venueName) runs.push({ venueName, start, end });
     } else {
-      /*
-       * 只有开始日的长期公演，形如「2026-04-04 ～」（美少女戦士セーラームーン）。
-       *
-       * ★ 为什么 end 取「开始日 + 90 天」而不是等于 start：
-       *   这类公演是长期驻演，源站没给结束日。若 end = start，
-       *   status 判定会把它当成「只在当天演一天」，而它其实
-       *   从 4 月一直演到现在（首页能看到它，说明还在演）。
-       *   给一个保守的窗口让它落到「上演中」，比标成「已结束」更接近事实。
-       *   同时在 summary 里注明「長期公演」，不假装知道确切结束日。
-       */
-      /*
-       * 两种「只有开始日」的写法，源站都出现过，必须都覆盖：
-       *   ① 【東京公演】2026年4月4日(土)～ 品川プリンスホテル クラブ eX
-       *      （年月日写法，结束日整个缺失 —— 美少女戦士セーラームーン）
-       *   ② 2026-04-04 ～
-       *      （ISO 写法，日程页上显示的就是这种）
-       *   只处理 ② 的话，① 这一类会被整部跳过 —— 实测 9 部里就有 1 部中招。
-       */
-      const m2 =
-        t.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/) ??
-        t.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
-      if (m2) {
-        const pad = (v) => String(v).padStart(2, '0');
-        const start = `${m2[1]}-${pad(m2[2])}-${pad(m2[3])}`;
-        const endDate = new Date(Date.UTC(+m2[1], +m2[2] - 1, +m2[3]) + 90 * 86400_000)
-          .toISOString()
-          .slice(0, 10);
-        /*
-         * ★ 字符类里不能写 [年-/]：中间的 `-` 会被当成范围运算符，
-         *   而「年」(U+5E74) 到「/」(U+002F) 是**逆序** → Range out of order，
-         *   整个脚本在解析阶段就崩了。必须把 `-` 转义或放到两端。
-         */
-        const venueName = cleanVenue(t.replace(/\d{4}[年\-/]\d{1,2}[月\-/]\d{1,2}日?.*$/, ''));
-        runs.push({ venueName: venueName || '（会場未記載）', start, end: endDate, openEnded: true });
+      const date = t.match(datePattern);
+      if (date) {
+        const start = `${date[1]}-${pad(date[2])}-${pad(date[3])}`;
+        const tail = t.slice(date.index + date[0].length);
+        const openEnded = /^\s*～/.test(tail);
+        // 未公布结束日时，不人为加 90 天；只有明确的其他来源档期才能扩展这个日期。
+        const end = start;
+        const venueName = cleanVenue(t.replace(date[0], '').replace(/^\s*～\s*/, ''));
+        if (venueName) {
+          runs.push({ venueName, start, end, ...(openEnded ? { openEnded: true } : {}) });
+        } else {
+          // 未標會場的單日活動沿用前一檔會場（例如同一場館的追加活動）。
+          const previous = runs.at(-1);
+          if (previous) runs.push({ venueName: previous.venueName, start, end });
+        }
+      } else {
+        // ISO 日期只出現在未標結束日的長期公演資料。
+        const iso = t.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+        if (iso) {
+          const start = `${iso[1]}-${pad(iso[2])}-${pad(iso[3])}`;
+          const venueName = cleanVenue(t.replace(iso[0], '').replace(/^\s*[～〜]\s*/, ''));
+          runs.push({ venueName: venueName || '（会場未記載）', start, end: start, openEnded: true });
+        }
       }
     }
   }
@@ -1206,23 +1198,47 @@ async function main() {
       .replace(/\s+/g, '')
       .toLowerCase();
 
+  const titleKeys = (work) =>
+    [work.title, work.subtitle ? `${work.title}${work.subtitle}` : '']
+      .filter(Boolean)
+      .map(normTitle);
   const corichByTitle = new Map();
-  for (const [k, w] of works) corichByTitle.set(normTitle(w.title), k);
+  for (const [k, w] of works) {
+    for (const key of titleKeys(w)) corichByTitle.set(key, k);
+  }
 
+  const normVenue = (name) =>
+    name.replace(/品川プリンスホテル/g, '').replace(/[\s　]+/g, '').replace(/eX/g, 'ex').toLowerCase();
   let j25Added = 0;
   let j25Overrode = 0;
   for (const j of j25Works) {
     const key = normTitle(j.title);
     const existingKey = corichByTitle.get(key);
     if (existingKey !== undefined) {
+      const existing = works.get(existingKey);
+      const runs = j.runs.map((run) => {
+        if (!run.openEnded) return run;
+        // 協會未列結束日的長期公演，保留 CoRich 同一場館、同一起日記錄的已登記檔期。
+        const previous = existing.runs.find(
+          (candidate) =>
+            candidate.start === run.start && normVenue(candidate.venueName) === normVenue(run.venueName),
+        );
+        return previous && previous.end > run.end ? { ...run, end: previous.end } : run;
+      });
+      const titleIsSubtitleCombined =
+        Boolean(existing.subtitle) && normTitle(`${existing.title}${existing.subtitle}`) === key;
       works.set(existingKey, {
-        ...works.get(existingKey),
+        ...existing,
         ...j,
-        // CoRich 有而协会站没有的字段要保住（如 kind 的细分类别）
+        // CoRich 有些作品把副標題獨立存放；J25 合併標題時保留原有主標題結構。
+        title: titleIsSubtitleCombined ? existing.title : j.title,
+        subtitle: existing.subtitle ?? j.subtitle,
+        runs,
+        // CoRich 有而協會站沒有的欄位要保住（如 kind 的細分類別）
         kind: j.kind,
         _fromJ25: true,
       });
-      j25Overrode++;;
+      j25Overrode++;
     } else {
       works.set('j25-' + j.j25Id, { ...j, _fromJ25: true });
       j25Added++;
@@ -1330,7 +1346,9 @@ async function main() {
        *   且**跨次抓取稳定** —— 这一点很关键：若 id 每次都变，
        *   /venue/<id>/ 的旧链接会全部失效，而它们可能已被收录。
        */
-      const vid = r.theaterId ? 'v' + r.theaterId : slugifyVenue(r.venueName, r.venueName);
+      // 協会站用酒店全名，CoRich 会場目录则用正式名和 theaterId；统一后复用同一会場。
+      if (r.venueName === '品川プリンスホテル クラブ eX') r.venueName = 'クラブeX';
+      const vid = r.theaterId ? 'v' + r.theaterId : r.venueName === 'クラブeX' ? 'v66' : slugifyVenue(r.venueName, r.venueName);
       /*
        * ★ 协会站的会場**没有 pref**（它的「公演期間/劇場」一栏只有会場名）。
        *   而本站的筛选与显示是按 pref / city 走的 —— 缺了它会場页的
@@ -1380,7 +1398,7 @@ async function main() {
       title: { zh: zhTitle, ja: jaTitle },
       subtitle: w.subtitle ? { zh: zhSubtitle ?? w.subtitle, ja: w.subtitle } : undefined,
       seriesId,
-      company: w.group || '',
+      company: w._fromJ25 ? w.company || w.group || '' : w.group || w.company || '',
       kind: w.kind,
       startDate: start,
       endDate: end,

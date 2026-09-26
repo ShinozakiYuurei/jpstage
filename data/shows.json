@@ -4399,7 +4399,7 @@
       "ja": "-Shining Theater Shinagawa Tokyo-"
     },
     "seriesId": "sailor-moon",
-    "company": "ネルケプランニング",
+    "company": "「美少女戦士セーラームーン -Shining Theater Shinagawa Tokyo-」project",
     "kind": "stage",
     "startDate": "2026-04-04",
     "endDate": "2026-11-30",
@@ -4723,8 +4723,8 @@
       "zh": "〈Introduction〉\n原作　武内直子（講談社刊）\n『美少女戦士セーラームーン』とは\n\n月刊誌「なかよし」（講談社刊）にて、1991年から連載を開始した武内直子原作の少女漫画。原作単行本は17か国語に翻訳され、アニメーションシリーズは40か国以上で展開し、国内外で社会現象を起こしました。\n\n2012年には新たなプロジェクトが始動。電子書籍化をはじめ、ミュージカルやファンクラブ、公式ストア、展覧会など30周年プロジェクトとして現在に至るまで幅広い展開を行っています。\n\n2024年には待望の画集「美少女戦士セーラームーン レゾネ ART WORKS 1991～2023」を発売。そして、2025年にはパフォーマンスショー“Pretty Guardian Sailor Moon”The Super Live のロンドン公演、北米ツアー、日本凱旋公演を実施し、さらなる盛り上がりを見せています。\n\n〈Story〉\n都内に新しくできたテーマパーク内で、何もかも完璧に作り出すAIに大喜びするうさぎと仲間たち。\nしかし、そんなうさぎたちの前に、謎の敵が現れる。\n\n謎の敵“クイーン・ヴァルシア”は完璧な世界を作るためAI技術を利用し、うさぎの心を奪っていき、さらには衛、亜美、レイ、まこと、美奈子の体に異変が……！\n危機を察知したちびうさや、はるか、みちる、せつな、ほたるは仲間を助けるために立ち上がるが、完全無欠なAIを操るクイーン・ヴァルシアの力の前になすすべがなく倒れていく。\n\n「うさぎ…！目を覚ましてようさぎ……!!」\n\n心を奪われたうさぎに、仲間たちの思いは届くのか……!?\n\n人間か……AIか……\n本物の愛を求め、セーラー戦士たちの戦いが始まる!!",
       "ja": "〈Introduction〉\n原作　武内直子（講談社刊）\n『美少女戦士セーラームーン』とは\n\n月刊誌「なかよし」（講談社刊）にて、1991年から連載を開始した武内直子原作の少女漫画。原作単行本は17か国語に翻訳され、アニメーションシリーズは40か国以上で展開し、国内外で社会現象を起こしました。\n\n2012年には新たなプロジェクトが始動。電子書籍化をはじめ、ミュージカルやファンクラブ、公式ストア、展覧会など30周年プロジェクトとして現在に至るまで幅広い展開を行っています。\n\n2024年には待望の画集「美少女戦士セーラームーン レゾネ ART WORKS 1991～2023」を発売。そして、2025年にはパフォーマンスショー“Pretty Guardian Sailor Moon”The Super Live のロンドン公演、北米ツアー、日本凱旋公演を実施し、さらなる盛り上がりを見せています。\n\n〈Story〉\n都内に新しくできたテーマパーク内で、何もかも完璧に作り出すAIに大喜びするうさぎと仲間たち。\nしかし、そんなうさぎたちの前に、謎の敵が現れる。\n\n謎の敵“クイーン・ヴァルシア”は完璧な世界を作るためAI技術を利用し、うさぎの心を奪っていき、さらには衛、亜美、レイ、まこと、美奈子の体に異変が……！\n危機を察知したちびうさや、はるか、みちる、せつな、ほたるは仲間を助けるために立ち上がるが、完全無欠なAIを操るクイーン・ヴァルシアの力の前になすすべがなく倒れていく。\n\n「うさぎ…！目を覚ましてようさぎ……!!」\n\n心を奪われたうさぎに、仲間たちの思いは届くのか……!?\n\n人間か……AIか……\n本物の愛を求め、セーラー戦士たちの戦いが始まる!!"
     },
-    "source": "corich",
-    "sourceUrl": "https://stage.corich.jp/stage_main/420462"
+    "source": "j25",
+    "sourceUrl": "https://www.j25musical.jp/stage/1109"
   },
   {
     "slug": "nintama-rantaro-472800",
@@ -5385,20 +5385,20 @@
       "ja": "「多聞くん今どっち︕︖」THE STAGE"
     },
     "seriesId": "多聞くん今どっち-the-stage",
-    "company": "",
+    "company": "「多聞くん今どっち！？」THE STAGE製作委員会",
     "kind": "stage",
     "startDate": "2026-09-11",
-    "endDate": "2026-12-22",
+    "endDate": "2026-09-23",
     "runs": [
       {
-        "venueId": "v-f2f1c02b",
+        "venueId": "v161",
         "startDate": "2026-09-11",
         "endDate": "2026-09-22"
       },
       {
-        "venueId": "v-5486aef1",
+        "venueId": "v161",
         "startDate": "2026-09-23",
-        "endDate": "2026-12-22"
+        "endDate": "2026-09-23"
       }
     ],
     "poster": "/posters/多聞くん今どっち-the-stage-1144.webp",
@@ -5425,7 +5425,7 @@
       "ja": "新サクラ大戦 the Stage ～誠伝 TSURUGI～"
     },
     "seriesId": "新サクラ大戦-the-stage-誠伝-tsurugi",
-    "company": "",
+    "company": "「新サクラ大戦 the Stage ～誠伝 TSURUGI～」製作委員会2026",
     "kind": "stage",
     "startDate": "2026-09-18",
     "endDate": "2026-09-27",
@@ -5460,7 +5460,7 @@
       "ja": "劇団「忍たま乱太郎」長屋物語 再演"
     },
     "seriesId": "nintama-rantaro",
-    "company": "",
+    "company": "劇団「忍たま乱太郎」製作委員会",
     "kind": "stage",
     "startDate": "2026-08-26",
     "endDate": "2026-09-28",
@@ -5494,48 +5494,13 @@
     ]
   },
   {
-    "slug": "sailor-moon-1109",
-    "title": {
-      "zh": "美少女戰士 -Shining Theater Shinagawa Tokyo-",
-      "ja": "美少女戦士セーラームーン -Shining Theater Shinagawa Tokyo-"
-    },
-    "seriesId": "sailor-moon",
-    "company": "",
-    "kind": "stage",
-    "startDate": "2026-04-04",
-    "endDate": "2026-07-03",
-    "runs": [
-      {
-        "venueId": "v-5486aef1",
-        "startDate": "2026-04-04",
-        "endDate": "2026-07-03"
-      }
-    ],
-    "poster": "/posters/sailor-moon-1109.webp",
-    "accent": "#d836a3",
-    "officialUrl": "https://prettyguardiansailormoon-stst.com/",
-    "ticketUrl": null,
-    "cast": [],
-    "staff": [],
-    "summary": {
-      "zh": "『美少女戰士 -Shining Theater Shinagawa Tokyo-』。原作是武内直子在 1991 年起連載的少女漫畫，連載期間及之後改編成電視動畫、劇場版、舞台劇等多種形態。本作是常設劇場型長期公演，於品川王子酒店 cluster 內的 eX 廳作為專屬劇場上演，以劇場原創的「美少女戰士」故事軸線為主軸，配合現場演出與特效、觀眾近距離參與感的舞台體驗為賣點。",
-      "ja": "美少女戦士セーラームーン -Shining Theater Shinagawa Tokyo-。原作は武内直子が 1991 年から連載を開始した少女漫画で、テレビアニメ・劇場版・舞台化など多メディア展開されてきた。本公演は長期常設型の劇場型舞台で、品川プリンスホテル cluster 内 eX ホールを専用劇場として、劇場オリジナル軸の「セーラームーン」物語と、ライブパフォーマンス・演出装置・観客参加要素を融合した没入型舞台。"
-    },
-    "source": "j25",
-    "sourceUrl": "https://www.j25musical.jp/stage/1109",
-    "summarySources": [
-      "https://prettyguardiansailormoon-stst.com/",
-      "https://sailormoon-official.com"
-    ]
-  },
-  {
     "slug": "スクールアイドルミュージカル-1128",
     "title": {
       "zh": "『スクールアイドルミュージカル』",
       "ja": "『スクールアイドルミュージカル』"
     },
     "seriesId": "スクールアイドルミュージカル",
-    "company": "",
+    "company": "バンダイナムコフィルムワークス バンダイナムコミュージックライブ アークスインターナショナル",
     "kind": "musical",
     "startDate": "2026-09-19",
     "endDate": "2026-09-26",
@@ -5570,7 +5535,7 @@
       "ja": "舞台「怪物事変」-東京編-"
     },
     "seriesId": "舞台-怪物事変-東京編",
-    "company": "",
+    "company": "ムービック サンライズプロモーション",
     "kind": "stage",
     "startDate": "2026-09-17",
     "endDate": "2026-09-27",
@@ -5605,7 +5570,7 @@
       "ja": "ミュージカル『刀剣乱舞』 〜月夜一縷〜"
     },
     "seriesId": "touken-ranbu",
-    "company": "",
+    "company": "ミュージカル『刀剣乱舞』製作委員会 (ネルケプランニング ニトロプラス DMM GAMES ユークリッド・エージェンシー)",
     "kind": "musical",
     "startDate": "2026-09-07",
     "endDate": "2026-10-25",
@@ -5655,7 +5620,7 @@
       "ja": "ペコポン侵略ミュージカル『ケロロ軍曹』"
     },
     "seriesId": "ペコポン侵略ミュージカル-ケロロ軍曹",
-    "company": "",
+    "company": "ペコポン侵略ミュージカル『ケロロ軍曹』であります。 (マーベラス ムービック アニマックスブロードキャスト・ジャパン)",
     "kind": "musical",
     "startDate": "2026-09-18",
     "endDate": "2026-09-27",

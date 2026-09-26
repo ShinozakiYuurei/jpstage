@@ -943,7 +943,7 @@
     },
     "pref": "東京都",
     "city": "東京",
-    "address": "東京都港区高輪4-10-30品川プリンスホテルエグゼクティブタワー3F",
+    "address": "東京都港区高輪4-10-30 品川プリンスホテル アネックスタワー3F",
     "seats": 600,
     "theaterId": "66"
   },
@@ -982,30 +982,6 @@
     "address": "東京都文京区後楽1丁目3-53 IMM THEATER",
     "seats": 705,
     "theaterId": "8681"
-  },
-  {
-    "id": "v-f2f1c02b",
-    "name": {
-      "zh": "天王洲 銀河劇場",
-      "ja": "天王洲 銀河劇場"
-    },
-    "pref": "",
-    "city": "天王洲 銀河劇場",
-    "address": "",
-    "seats": null,
-    "theaterId": null
-  },
-  {
-    "id": "v-5486aef1",
-    "name": {
-      "zh": "（会場未記載）",
-      "ja": "（会場未記載）"
-    },
-    "pref": "",
-    "city": "（会場未記載）",
-    "address": "",
-    "seats": null,
-    "theaterId": null
   },
   {
     "id": "v-3ddb7eb5",
