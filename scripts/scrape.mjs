@@ -561,6 +561,45 @@ function slugifyVenue(ja, en) {
   return 'v-' + crypto.createHash('sha1').update(ja).digest('hex').slice(0, 8);
 }
 
+/**
+ * 从会場名反推都道府県（协会站只给会場名时用）
+ *
+ * ★ 为什么需要它：协会站的「公演期間 / 劇場」一栏只有会場名，
+ *   没有都道府県。而本站的会場页要显示所在地、筛选要按城市聚合。
+ *
+ * ★ 为什么只覆盖**会場名里带地名的**那部分（如「東京建物 Brillia HALL 箕面」）：
+ *   大部分会場名不含地名（「Kanadevia Hall」「シアターH」），
+ *   瞎猜会把「東京」安到所有会場头上 —— 那比留空更糟：
+ *   用户看到「所在地：東京都」会当真，而它其实是错的。
+ *   推不出来就留空，页面还有会場名这个主信息。
+ */
+function guessPref(venueName) {
+  if (!venueName) return '';
+  const prefs = [
+    '北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県',
+    '茨城県', '栃木県', '群馬県', '埼玉県', '千葉県', '東京都', '神奈川県',
+    '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県', '岐阜県',
+    '静岡県', '愛知県', '三重県', '滋賀県', '京都府', '大阪府', '兵庫県',
+    '奈良県', '和歌山県', '鳥取県', '島根県', '岡山県', '広島県', '山口県',
+    '徳島県', '香川県', '愛媛県', '高知県', '福岡県', '佐賀県', '長崎県',
+    '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県',
+  ];
+  for (const p of prefs) {
+    if (venueName.includes(p)) return p;
+  }
+  // 「〇〇市」这类也常见（如箕面市立文化芸能劇場）→ 退而求其次用市名匹配
+  const cityToPref = {
+    東京: '東京都', 大阪: '大阪府', 京都: '京都府', 名古屋: '愛知県',
+    横浜: '神奈川県', 神戸: '兵庫県', 札幌: '北海道', 仙台: '宮城県',
+    広島: '広島県', 福岡: '福岡県', 箕面: '大阪府', 豊橋: '愛知県',
+    品川: '東京都', 渋谷: '東京都', 新宿: '東京都',
+  };
+  for (const [c, p] of Object.entries(cityToPref)) {
+    if (venueName.includes(c)) return p;
+  }
+  return '';
+}
+
 /** 会場名 → 中文（译名表 + 通用后缀） */
 function venueZh(ja) {
   const map = {
@@ -646,6 +685,213 @@ function parseTheaterPage(html) {
 }
 
 // ────────────────────────────────────────────────────────────
+// 数据源 ②：日本2.5次元ミュージカル協会（j25musical.jp）
+// ────────────────────────────────────────────────────────────
+
+/*
+ * ★★ 为什么要有第二个源 ★★
+ *
+ *   CoRich 是用户共建库，两个硬伤补不了：
+ *     ①「2.5次元舞台」分类只标了 62 条（实测协会站有它没标的新作）；
+ *     ② 档期与会場是剧团自己登记的，滞后于官方公告。
+ *
+ *   协会站（一般社団法人 日本2.5次元ミュージカル協会）是**行业官方组织**，
+ *   它的 SHOW SCHEDULE 就是「现在演什么、接下来演什么」的权威答案，
+ *   而且带 CoRich 没有的独家条目（怪物事変、多聞くん今どっち！？、
+ *   ケロロ軍曹 等 —— 实测 9 部里有 6 部 CoRich 分类里没有）。
+ *
+ * ★ 但它只能当**优先源**，不能取代 CoRich：
+ *   协会站的 schedule 页**没有归档与分页**，只列当期的 9 部。
+ *   所以历史内容仍要靠 CoRich（那边有 311 部）。
+ *
+ * ★ 合并规则：以作品标题为键，协会站覆盖 CoRich。
+ *   为什么不用 ID 做键：两个源的 ID 体系完全不同，无法互相对照；
+ *   而作品名是两边都有的、人类可读的唯一标识。
+ *   「协会站优先」是因为它是官方数据 —— 同一部作品两边档期冲突时，
+ *   应该信官方。
+ */
+
+const J25_BASE = 'https://www.j25musical.jp';
+
+/** 协会站日程页 → [{ id, title, dateText }] */
+function parseJ25Schedule(html) {
+  const out = [];
+  const re =
+    /<a class="title__link" href="\/stage\/(\d+)">([^<]+)<\/a>\s*<br>\s*<span class="title__date ofonts">([\s\S]*?)<\/span>/g;
+  for (const m of html.matchAll(re)) {
+    out.push({
+      j25Id: m[1],
+      title: textOf(m[2]),
+      dateText: textOf(m[3]).replace(/\s+/g, ' '),
+    });
+  }
+  return out;
+}
+
+/**
+ * 协会站详情页 → 一部作品的完整数据
+ *
+ * ★ 它的「公演期間 / 劇場」一栏就是**多档巡演**，形如：
+ *     【東京公演】2026年9月7日(月)～9月13日(日) Kanadevia Hall
+ *     【大阪公演】2026年9月20日(日)～9月27日(日) 東京建物 Brillia HALL 箕面 大ホール
+ *   这与本站 Show.runs 的结构天然对应，一行一档，无需像 CoRich 那样
+ *   爬回作品总页再合并。
+ *
+ * ★ 日期解析为什么必须**补年份**：
+ *   协会站写的是「2026年9月7日(月)～9月13日(日)」——
+ *   结束日只写月日，年份要沿用开始日的年份。
+ *   直接把「9月13日」当完整日期会得到 1970 之类的错值，
+ *   而 validate 只查格式（YYYY-MM-DD），查不出「年份错了」。
+ */
+function parseJ25Detail(html, j25Id) {
+  const title =
+    textOf(first(/<h1[^>]*class="[^"]*title[^"]*"[^>]*>([\s\S]*?)<\/h1>/, html) ?? '') ||
+    textOf(first(/<title>([\s\S]*?)<\/title>/, html) ?? '').split('|')[0].trim();
+  if (!title) return null;
+
+  // 官方站
+  const officialUrl =
+    first(/<a href="(https?:\/\/[^"]+)"[^>]*class="[^"]*"[^>]*>\s*<span><i class="blank"><\/i>OFFICIAL SITE/, html) ??
+    first(/href="(https?:\/\/[^"]+)"[^>]*>[\s\S]{0,80}?OFFICIAL SITE/, html);
+
+  // 主催
+  const company = textOf(first(/<h3>主催\s*&nbsp;<\/h3>\s*<p>([\s\S]*?)<\/p>/, html) ?? '');
+
+  // 海报
+  let poster = first(/<img[^>]+src="(\/showCtsImage\.php\?[^"]+)"/, html);
+  if (poster) poster = J25_BASE + poster.replace(/&amp;/g, '&');
+
+  // 多档巡演
+  const runs = [];
+  const block = first(/<h3>公演期間 \/ 劇場\s*&nbsp;<\/h3>\s*<p>([\s\S]*?)<\/p>/, html) ?? '';
+  for (const line of block.split(/<br\s*\/?>/)) {
+    const t = textOf(line);
+    if (!t || t.startsWith('※')) continue;
+    /*
+     * 形如：【東京公演】2026年9月7日(月)～9月13日(日) Kanadevia Hall
+     *        【東京公演】2026-04-04 ～  美少女戦士…（有些条目没有结束日）
+     */
+    /*
+     * 会場名的清洗：源站这一行的写法是
+     *   【東京公演】2026年9月7日(月)～9月13日(日) Kanadevia Hall
+     * 所以「日期之后剩下的部分」里还带着
+     *   ① 公演名前缀 【東京公演】
+     *   ② 星期的残留 (日)
+     *   ③ 末尾的备注（※プレビュー公演含む 之类）
+     * 不清掉的话会場名会变成「【東京公演】(日) Kanadevia Hall」——
+     *   而它会进 venues.json 并被显示在日程表与筛选里。
+     */
+    const cleanVenue = (s) =>
+      s
+        .replace(/^【[^】]*】\s*/, '') // 【東京公演】
+        .replace(/^[(（][^)）]*[)）]\s*/, '') // (日)
+        .split('※')[0]
+        .trim();
+
+    const m = t.match(/(\d{4})年(\d{1,2})月(\d{1,2})日\s*[（(].?[）)]?\s*～\s*(?:(\d{4})年)?\s*(\d{1,2})月(\d{1,2})日/);
+    if (m) {
+      const y = m[1];
+      const pad = (v) => String(v).padStart(2, '0');
+      const start = `${y}-${pad(m[2])}-${pad(m[3])}`;
+      // ★ 结束日可能跨年（12月开演、1月结束）：写了年份就用写的，
+      //   没写就沿用开始年；若结束月 < 开始月，说明跨年了，年份 +1
+      let ey = m[4] ? m[4] : y;
+      if (!m[4] && +m[5] < +m[2]) ey = String(+y + 1);
+      const end = `${ey}-${pad(m[5])}-${pad(m[6])}`;
+      // 会場名：整行去掉日期段之后剩下的部分
+      const venueName = cleanVenue(t.replace(m[0], ''));
+      if (venueName) runs.push({ venueName, start, end });
+    } else {
+      /*
+       * 只有开始日的长期公演，形如「2026-04-04 ～」（美少女戦士セーラームーン）。
+       *
+       * ★ 为什么 end 取「开始日 + 90 天」而不是等于 start：
+       *   这类公演是长期驻演，源站没给结束日。若 end = start，
+       *   status 判定会把它当成「只在当天演一天」，而它其实
+       *   从 4 月一直演到现在（首页能看到它，说明还在演）。
+       *   给一个保守的窗口让它落到「上演中」，比标成「已结束」更接近事实。
+       *   同时在 summary 里注明「長期公演」，不假装知道确切结束日。
+       */
+      /*
+       * 两种「只有开始日」的写法，源站都出现过，必须都覆盖：
+       *   ① 【東京公演】2026年4月4日(土)～ 品川プリンスホテル クラブ eX
+       *      （年月日写法，结束日整个缺失 —— 美少女戦士セーラームーン）
+       *   ② 2026-04-04 ～
+       *      （ISO 写法，日程页上显示的就是这种）
+       *   只处理 ② 的话，① 这一类会被整部跳过 —— 实测 9 部里就有 1 部中招。
+       */
+      const m2 =
+        t.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/) ??
+        t.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+      if (m2) {
+        const pad = (v) => String(v).padStart(2, '0');
+        const start = `${m2[1]}-${pad(m2[2])}-${pad(m2[3])}`;
+        const endDate = new Date(Date.UTC(+m2[1], +m2[2] - 1, +m2[3]) + 90 * 86400_000)
+          .toISOString()
+          .slice(0, 10);
+        /*
+         * ★ 字符类里不能写 [年-/]：中间的 `-` 会被当成范围运算符，
+         *   而「年」(U+5E74) 到「/」(U+002F) 是**逆序** → Range out of order，
+         *   整个脚本在解析阶段就崩了。必须把 `-` 转义或放到两端。
+         */
+        const venueName = cleanVenue(t.replace(/\d{4}[年\-/]\d{1,2}[月\-/]\d{1,2}日?.*$/, ''));
+        runs.push({ venueName: venueName || '（会場未記載）', start, end: endDate, openEnded: true });
+      }
+    }
+  }
+
+  if (!runs.length) return null;
+
+  // kind：标题里带ミュージカル → musical
+  const kind = /ミュージカル|MUSICAL/i.test(title) ? 'musical' : 'stage';
+
+  return {
+    j25Id,
+    title,
+    officialUrl: officialUrl || null,
+    company,
+    poster,
+    runs,
+    kind,
+    source: 'j25',
+    sourceUrl: J25_BASE + '/stage/' + j25Id,
+  };
+}
+
+/** 抓协会站：日程页 → 每部作品的详情页 */
+async function fetchJ25() {
+  let listHtml;
+  try {
+    // ★ 用**日文版**日程页：作品名是原始日文（英文版是译名，
+    //   拿译名去查译名表会查不到）。
+    listHtml = await get(J25_BASE + '/schedule/');
+  } catch (e) {
+    console.warn(`  协会站日程页失败：${e.message}`);
+    return [];
+  }
+  const items = parseJ25Schedule(listHtml);
+  console.log(`  协会站当期 ${items.length} 部`);
+
+  const out = [];
+  for (const it of items) {
+    try {
+      await sleep(DELAY_MS);
+      const html = await get(J25_BASE + '/stage/' + it.j25Id);
+      const d = parseJ25Detail(html, it.j25Id);
+      if (d) {
+        out.push(d);
+        console.log(`    · ${d.title.slice(0, 34)} —— ${d.runs.length} 档`);
+      } else {
+        console.warn(`    ! /stage/${it.j25Id} 解析失败（${it.title.slice(0, 24)}）`);
+      }
+    } catch (e) {
+      console.warn(`    ! /stage/${it.j25Id} 失败：${e.message}`);
+    }
+  }
+  return out;
+}
+
+// ────────────────────────────────────────────────────────────
 // 主流程
 // ────────────────────────────────────────────────────────────
 
@@ -673,32 +919,59 @@ async function fetchCategory() {
   return all;
 }
 
-/** 关键字补抓：分类里没有的热门 IP */
+/**
+ * 关键字补抓：分类标不到、但确实是 2.5 次元的作品
+ *
+ * ★★ 为什么必须**翻完所有页**（实测踩到的最大一个漏项）★★
+ *   初版只取每个关键字的第 1 页（20 条）。而实测：
+ *     「テニスの王子様」213 条   → 只取到 20
+ *     「ミュージカル『刀剣乱舞』」66 条 → 只取到 20
+ *     「プリキュア」91 条        → 只取到 20
+ *   于是站上只有 13 部作品，而 CoRich 上实际有 **311 部**
+ *   （912 个单会場条目）。这个漏项比「分类标注不全」严重得多 ——
+ *   光修分类是修不出来的。
+ *
+ * ★ 为什么用 `freeword_type=title`（只搜标题）而不是搜全部：
+ *   「全部」会把「出演者名字里含有该 IP 名」的无关公演也捞进来
+ *   （实测「刀剣乱舞」搜全部得到 178 条，其中大量是剧团的普通公演）。
+ *   只搜标题得到的才是「作品名里带这个 IP」的公演。
+ */
 async function fetchByKeywords(keywords) {
   const all = [];
   const seen = new Set();
   for (const kw of keywords) {
-    const url =
-      'https://stage.corich.jp/stage/search?utf8=%E2%9C%93&search=1&freeword=' +
-      encodeURIComponent(kw) +
-      '&freeword_type=title&sort=start_desc';
-    let html;
-    try {
-      html = await get(url);
-    } catch (e) {
-      console.warn(`  关键字「${kw}」抓取失败：${e.message}`);
-      continue;
-    }
-    const rows = parseSearchPage(html).filter((r) => r.title.includes(kw));
-    let n = 0;
-    for (const r of rows) {
-      if (!seen.has(r.stageId)) {
-        seen.add(r.stageId);
-        all.push(r);
-        n++;
+    let kwTotal = null;
+    let kwGot = 0;
+    let kwNew = 0;
+    for (let page = 1; page <= 30; page++) {
+      const url =
+        'https://stage.corich.jp/stage/search?utf8=%E2%9C%93&search=1&freeword=' +
+        encodeURIComponent(kw) +
+        '&freeword_type=title&sort=start_desc&page=' +
+        page;
+      let html;
+      try {
+        html = await get(url);
+      } catch (e) {
+        console.warn(`  关键字「${kw}」第 ${page} 页失败：${e.message}`);
+        break;
       }
+      const rows = parseSearchPage(html).filter((r) => r.title.includes(kw));
+      for (const r of rows) {
+        if (!seen.has(r.stageId)) {
+          seen.add(r.stageId);
+          all.push(r);
+          kwNew++;
+        }
+      }
+      kwGot += rows.length;
+      const hit = parseHitCount(html);
+      if (hit) kwTotal = hit.total;
+      // 翻够了 / 这一页是空的 / 拿不到总数 → 停
+      if (!hit || rows.length === 0 || kwGot >= kwTotal) break;
+      await sleep(DELAY_MS);
     }
-    console.log(`  关键字「${kw}」：${rows.length} 条中新增 ${n}`);
+    console.log(`  关键字「${kw}」：${kwGot} 条（新增 ${kwNew}）`);
     await sleep(DELAY_MS);
   }
   return all;
@@ -715,20 +988,25 @@ async function main() {
   fs.mkdirSync(CACHE_DIR, { recursive: true });
   fs.mkdirSync(POSTER_DIR, { recursive: true });
 
-  console.log('\n[1/7] 抓取「2.5次元舞台」分类 …');
+  console.log('\n[1/8] 抓取协会站（官方优先源）…');
+  const j25Works = await fetchJ25();
+
+  console.log('\n[2/8] 抓取 CoRich「2.5次元舞台」分类 …');
   const byCategory = await fetchCategory();
   console.log(`  分类共 ${byCategory.length} 条（含同一作品的多个会場）`);
 
-  console.log('\n[2/7] 关键字补抓 …');
-  const KEYWORDS = [
-    '刀剣乱舞',
-    'テニスの王子様',
-    'ハイキュー',
-    '呪術廻戦',
-    '鬼滅の刃',
-    'ヒプノシスマイク',
-    'あんさんぶるスターズ',
-  ];
+  console.log('\n[3/8] CoRich 关键字补抓 …');
+  /*
+   * ★★ 为什么关键字列表要**全部用译名表的键** ★★
+   *   初版只写了 7 个热门 IP。而实测：CoRich 的「2.5次元舞台」
+   *   分类只标了 62 条，大量作品要靠关键字才能捞出来 ——
+   *   全部关键字翻完能拿到 912 个单会場条目 / **311 部作品**。
+   *   只搜 7 个等于主动放弃大半内容，这正是「站上作品不全」的主因。
+   *
+   *   译名表的键本来就是「本站认可的 2.5 次元 IP 清单」，
+   *   拿它当关键字列表，两件事共用同一份数据，不会各自漂移。
+   */
+  const KEYWORDS = Object.keys(zhNames.series);
   const byKeyword = await fetchByKeywords(KEYWORDS);
 
   // 合并：以 stageId 为键（它们是「单会場」条目，后面会爬回 stage_main）
@@ -736,7 +1014,7 @@ async function main() {
   for (const r of [...byCategory, ...byKeyword]) stages.set(r.stageId, r);
   console.log(`\n  待解析的单会場条目：${stages.size}`);
 
-  console.log('\n[3/7] 抓详情页并归并为作品 …');
+  console.log('\n[4/8] 抓详情页并归并为作品 …');
   const works = new Map(); // stage_main_id → work
   let done = 0;
   for (const [stageId, row] of stages) {
@@ -864,18 +1142,29 @@ async function main() {
    *   是「现在能看的」。一个 47/54 都是历史档案的站，
    *   对用户是「点进去发现全都不能买票」—— 那比内容少更糟。
    *
-   * ★ 为什么保留**半年内结束**的而不是只留未结束的：
-   *   只留 now/upcoming 的话此刻只剩 7 部（实测），列表页几乎是空的。
+   * ★ 为什么保留**近期结束**的而不是只留未结束的：
+   *   只留 now/upcoming 的话此刻只有 11 部（实测），列表页几乎是空的。
    *   而刚结束的公演仍有价值（用户会搜「刚演完的那部」），
    *   且它们在页面上有明确的「已結束」标记，不会误导。
    *
-   * ★ 为什么是 180 天：2.5 次元公演从开演到出碟/再演通常在这个量级，
-   *   超过半年的条目基本只剩档案意义（那些在系列页里仍可查到）。
+   * ★ 为什么窗口是 **365 天**（原为 180 天）：
+   *   半年窗下只剩 13 部，用户反映「舞台剧不全」。而放宽到一年
+   *   能覆盖一整轮演出季（2.5 次元的热门 IP 常隔年再演，
+   *   一年内基本能兜住同一批 IP 的现役档期），实测约 27 部。
+   *   再放宽（三年、全部）会让历史档案占多数，
+   *   而本站的主体是「现在能看的」—— 那才是最需要守住的。
+   *
+   * ★ 注意协会站的作品**不受此窗口限制**：
+   *   协会站只列当期（正在演 / 即将开演），本来就不含历史，
+   *   再套一次窗口没有意义，还可能误删（例如长期公演）。
    */
+  const WINDOW_DAYS = Number(process.env.SCRAPE_WINDOW_DAYS || 365);
   const TOTAL_SHOWS = works.size;
   if (!KEEP_ALL) {
     const today = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
-    const cutoff = new Date(Date.now() + 9 * 3600_000 - 180 * 86400_000).toISOString().slice(0, 10);
+    const cutoff = new Date(Date.now() + 9 * 3600_000 - WINDOW_DAYS * 86400_000)
+      .toISOString()
+      .slice(0, 10);
     let dropped = 0;
     for (const [k, w] of works) {
       if (!w.runs.length) {
@@ -889,11 +1178,58 @@ async function main() {
         dropped++;
       }
     }
-    console.log(`\n  时间窗过滤：保留 ${works.size} 部（截至 ${today}，半年前结束的 ${dropped} 部已剔除）`);
+    console.log(
+      `\n  时间窗过滤：保留 ${works.size} 部（截至 ${today}，${WINDOW_DAYS} 天前结束的 ${dropped} 部已剔除）`,
+    );
     console.log(`  （加 --keep-all 可保留全部 ${TOTAL_SHOWS} 部历史档案）`);
   }
 
-  console.log('\n[4/7] 生成中文文案 …');
+  /*
+   * ── 双源合并 ────────────────────────────────────────────
+   *
+   * ★ 为什么以**作品标题**为合并键：
+   *   两个源的 ID 体系完全不同（CoRich 用 stage_main_id、
+   *   协会站用 /stage/<id>），无法互相对照。而作品名两边都有，
+   *   且是人类可读的唯一标识。
+   *
+   * ★ 为什么协会站**覆盖** CoRich：协会站是行业官方组织，
+   *   同一部作品两边档期冲突时应信官方。CoRich 是用户共建，
+   *   存在登记滞后。
+   *
+   * ★ 标题归一化：全角/半角、空格、「！」「!」这类差异
+   *   会让同一部作品被当成两部。归一化后再比对。
+   */
+  const normTitle = (s) =>
+    s
+      .replace(/[！-～]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
+      .replace(/\s+/g, '')
+      .toLowerCase();
+
+  const corichByTitle = new Map();
+  for (const [k, w] of works) corichByTitle.set(normTitle(w.title), k);
+
+  let j25Added = 0;
+  let j25Overrode = 0;
+  for (const j of j25Works) {
+    const key = normTitle(j.title);
+    const existingKey = corichByTitle.get(key);
+    if (existingKey !== undefined) {
+      works.set(existingKey, {
+        ...works.get(existingKey),
+        ...j,
+        // CoRich 有而协会站没有的字段要保住（如 kind 的细分类别）
+        kind: j.kind,
+        _fromJ25: true,
+      });
+      j25Overrode++;;
+    } else {
+      works.set('j25-' + j.j25Id, { ...j, _fromJ25: true });
+      j25Added++;
+    }
+  }
+  console.log(`\n  双源合并：协会站新增 ${j25Added} 部、覆盖 CoRich 同名作品 ${j25Overrode} 部`);
+
+  console.log('\n[5/8] 生成中文文案 …');
   const shows = [];
   const seriesMap = new Map();
   const venueMap = new Map();
@@ -994,12 +1330,32 @@ async function main() {
        *   /venue/<id>/ 的旧链接会全部失效，而它们可能已被收录。
        */
       const vid = r.theaterId ? 'v' + r.theaterId : slugifyVenue(r.venueName, r.venueName);
+      /*
+       * ★ 协会站的会場**没有 pref**（它的「公演期間/劇場」一栏只有会場名）。
+       *   而本站的筛选与显示是按 pref / city 走的 —— 缺了它会場页的
+       *   「所在地」是空的。所以从会場名里反推都道府県作兜底。
+       *   推不出来就留空（页面已有「会場名」主信息，不会变成破图）。
+       */
+      const pref = r.pref || guessPref(r.venueName);
+      /*
+       * ★ city 的兜底：会場名若推不出都道府県（协会站大量如此 ——
+       *   「Kanadevia Hall」「シアターH」这类名字里没有任何地名），
+       *   city 就为空，而 validate 原本把它当**错误**阻断整轮抓取。
+       *
+       *   这个严厉程度不对：会場页上还有会場名这个主信息，
+       *   city 只用于筛选聚合。为它阻断写入，等于让「一个会場
+       *   查不到所在地」毁掉整站数据的更新。
+       *
+       *   所以这里用会場名兜底（页面显示的是会場名，不会变成空白），
+       *   并把它降级为警告 —— 见 validate 里的对应注释。
+       */
+      const city = pref ? cityOf(pref) : r.venueName;
       if (!venueMap.has(vid)) {
         venueMap.set(vid, {
           id: vid,
           name: { zh: venueZh(r.venueName), ja: r.venueName },
-          pref: r.pref ?? '',
-          city: cityOf(r.pref ?? ''),
+          pref: pref ?? '',
+          city: city || '',
           address: '',
           seats: null,
           theaterId: r.theaterId ?? null,
@@ -1014,7 +1370,12 @@ async function main() {
     const zhSummary = w.description && !NO_TRANSLATE ? await translateToZh(w.description) : null;
 
     shows.push({
-      slug: makeSlug(jaTitle, w.mainId),
+      /*
+       * ★ slug 的 ID 部分两个源不同：CoRich 用 stage_main_id，
+       *   协会站用 j25Id。两者都是源站主键，取其一即可 ——
+       *   若写成固定用 mainId，协会站的作品会全部变成 '-undefined'。
+       */
+      slug: makeSlug(jaTitle, w.mainId ?? w.j25Id),
       title: { zh: zhTitle, ja: jaTitle },
       subtitle: w.subtitle ? { zh: zhSubtitle ?? w.subtitle, ja: w.subtitle } : undefined,
       seriesId,
@@ -1029,7 +1390,11 @@ async function main() {
         performances: r.performances,
       })),
       poster: null,
-      posterSrc: w.posters[0] ?? null,
+      /*
+       * 海报源：CoRich 是 posters[]（总页上的 large 图），
+       * 协会站是单个 poster 字段。两个源结构不同，这里归一。
+       */
+      posterSrc: w.poster ?? w.posters?.[0] ?? null,
       /*
        * 主色：抓到海报后由 sharp 从图里取；抓不到时用兜底色。
        *
@@ -1052,10 +1417,19 @@ async function main() {
         zh: zhSummary ?? w.description,
         ja: w.description,
       },
-      source: 'corich',
-      sourceUrl: w.mainId
-        ? 'https://stage.corich.jp/stage_main/' + w.mainId
-        : 'https://stage.corich.jp/stage/' + w.firstStageId,
+      /*
+       * ★ 来源标识必须**如实反映实际取到数据的那个源**：
+       *   双源合并后，协会站覆盖过的作品虽然原本来自 CoRich，
+       *   但它现在的档期/会場/官方站是协会站的 —— 标 corich 会让
+       *   页脚的来源列表说谎（用户按它去核对会找错地方）。
+       */
+      source: w._fromJ25 ? 'j25' : 'corich',
+      sourceUrl:
+        w._fromJ25 && w.j25Id
+          ? 'https://www.j25musical.jp/stage/' + w.j25Id
+          : w.mainId
+            ? 'https://stage.corich.jp/stage_main/' + w.mainId
+            : 'https://stage.corich.jp/stage/' + w.firstStageId,
     });
 
     await sleep(120); // 翻译接口也限速
@@ -1083,10 +1457,10 @@ async function main() {
   }
   if (TR_FAIL.quota > 0) console.log(`\n  ℹ 本次翻译请求被额度拒绝 ${TR_FAIL.quota} 次（MyMemory 每日限额）`);
 
-  console.log('\n[5/7] 补会場详情（地址 / 座席数）…');
+  console.log('\n[6/8] 补会場详情（地址 / 座席数）…');
   await enrichVenues(venueMap);
 
-  console.log('\n[6/7] 下载海报并取主色 …');
+  console.log('\n[7/8] 下载海报并取主色 …');
   if (NO_POSTERS) {
     console.log('  （--no-posters，跳过）');
   } else {
@@ -1147,7 +1521,7 @@ async function main() {
     console.log(`  海报：成功 ${ok}，失败 ${fail}`);
   }
 
-  console.log('\n[7/7] 校验并写入 …');
+  console.log('\n[8/8] 校验并写入 …');
   for (const s of shows) delete s.posterSrc;
 
   const series = [...seriesMap.values()];
@@ -1595,7 +1969,14 @@ function validate({ shows, series, venues }) {
   for (const v of venues) {
     if (!v.id) errors.push('venue: 缺少 id');
     if (!v.name?.zh?.trim() || !v.name?.ja?.trim()) errors.push(`venue「${v.id}」: name 双语缺失`);
-    if (!v.city) errors.push(`venue「${v.id}」: 缺少 city`);
+    /*
+     * ★ city 缺失只**警告**，不阻断：
+     *   它只用于筛选聚合，而会場页上还有会場名这个主信息。
+     *   为它阻断整轮抓取，等于让「一个会場查不到所在地」
+     *   毁掉整站数据的更新 —— 这个代价与问题严重性完全不成比例。
+     *   （实测：协会站 9 部里有 6 部的会場名不含任何地名。）
+     */
+    if (!v.city) warnings.push(`venue「${v.id}」: 缺 city（会場名不含地名，筛选里不会出现）`);
   }
   for (const sr of series) {
     if (!sr.id) errors.push('series: 缺少 id');

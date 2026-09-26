@@ -142,5 +142,161 @@
       "ja": "『あんさんぶるスターズ』"
     },
     "sourceKind": "game"
+  },
+  {
+    "id": "spy-family",
+    "name": {
+      "zh": "SPY×FAMILY 間諜家家酒",
+      "ja": "SPY×FAMILY"
+    },
+    "original": {
+      "zh": "《SPY×FAMILY 間諜家家酒》",
+      "ja": "『SPY×FAMILY』"
+    },
+    "sourceKind": "manga"
+  },
+  {
+    "id": "kingdom",
+    "name": {
+      "zh": "王者天下",
+      "ja": "キングダム"
+    },
+    "original": {
+      "zh": "《王者天下》",
+      "ja": "『キングダム』"
+    },
+    "sourceKind": "other"
+  },
+  {
+    "id": "bocchi-the-rock",
+    "name": {
+      "zh": "孤獨搖滾",
+      "ja": "ぼっち・ざ・ろっく!"
+    },
+    "original": {
+      "zh": "《孤獨搖滾》",
+      "ja": "『ぼっち・ざ・ろっく!』"
+    },
+    "sourceKind": "manga"
+  },
+  {
+    "id": "転生したらスライムだった件",
+    "name": {
+      "zh": "關於我轉生變成史萊姆這檔事",
+      "ja": "転生したらスライムだった件"
+    },
+    "original": {
+      "zh": "《關於我轉生變成史萊姆這檔事》",
+      "ja": "『転生したらスライムだった件』"
+    },
+    "sourceKind": "other"
+  },
+  {
+    "id": "sailor-moon",
+    "name": {
+      "zh": "美少女戰士",
+      "ja": "美少女戦士セーラームーン"
+    },
+    "original": {
+      "zh": "《美少女戰士》",
+      "ja": "『美少女戦士セーラームーン』"
+    },
+    "sourceKind": "manga"
+  },
+  {
+    "id": "nintama-rantaro",
+    "name": {
+      "zh": "忍者亂太郎",
+      "ja": "忍たま乱太郎"
+    },
+    "original": {
+      "zh": "《忍者亂太郎》",
+      "ja": "『忍たま乱太郎』"
+    },
+    "sourceKind": "manga"
+  },
+  {
+    "id": "けものフレンズ",
+    "name": {
+      "zh": "動物朋友",
+      "ja": "けものフレンズ"
+    },
+    "original": {
+      "zh": "《動物朋友》",
+      "ja": "『けものフレンズ』"
+    },
+    "sourceKind": "other"
+  },
+  {
+    "id": "kuroshitsuji",
+    "name": {
+      "zh": "黑執事",
+      "ja": "黒執事"
+    },
+    "original": {
+      "zh": "《黑執事》",
+      "ja": "『黒執事』"
+    },
+    "sourceKind": "manga"
+  },
+  {
+    "id": "多聞くん今どっち-the-stage",
+    "name": {
+      "zh": "「多聞くん今どっち︕︖」THE STAGE",
+      "ja": "「多聞くん今どっち︕︖」THE STAGE"
+    },
+    "original": {
+      "zh": "《「多聞くん今どっち︕︖」THE STAGE》",
+      "ja": "『「多聞くん今どっち︕︖」THE STAGE』"
+    },
+    "sourceKind": "other"
+  },
+  {
+    "id": "新サクラ大戦-the-stage-誠伝-tsurugi",
+    "name": {
+      "zh": "新サクラ大戦 the Stage ～誠伝 TSURUGI～",
+      "ja": "新サクラ大戦 the Stage ～誠伝 TSURUGI～"
+    },
+    "original": {
+      "zh": "《新サクラ大戦 the Stage ～誠伝 TSURUGI～》",
+      "ja": "『新サクラ大戦 the Stage ～誠伝 TSURUGI～』"
+    },
+    "sourceKind": "other"
+  },
+  {
+    "id": "スクールアイドルミュージカル",
+    "name": {
+      "zh": "『スクールアイドルミュージカル』",
+      "ja": "『スクールアイドルミュージカル』"
+    },
+    "original": {
+      "zh": "《『スクールアイドルミュージカル』》",
+      "ja": "『『スクールアイドルミュージカル』』"
+    },
+    "sourceKind": "other"
+  },
+  {
+    "id": "舞台-怪物事変-東京編",
+    "name": {
+      "zh": "舞台「怪物事変」-東京編-",
+      "ja": "舞台「怪物事変」-東京編-"
+    },
+    "original": {
+      "zh": "《舞台「怪物事変」-東京編-》",
+      "ja": "『舞台「怪物事変」-東京編-』"
+    },
+    "sourceKind": "other"
+  },
+  {
+    "id": "ペコポン侵略ミュージカル-ケロロ軍曹",
+    "name": {
+      "zh": "ペコポン侵略ミュージカル『ケロロ軍曹』",
+      "ja": "ペコポン侵略ミュージカル『ケロロ軍曹』"
+    },
+    "original": {
+      "zh": "《ペコポン侵略ミュージカル『ケロロ軍曹』》",
+      "ja": "『ペコポン侵略ミュージカル『ケロロ軍曹』』"
+    },
+    "sourceKind": "other"
   }
 ]

@@ -612,6 +612,18 @@
     "theaterId": "8747"
   },
   {
+    "id": "aiia-2-5-theater-kobe",
+    "name": {
+      "zh": "AiiA 2.5 Theater Kobe",
+      "ja": "AiiA 2.5 Theater Kobe"
+    },
+    "pref": "",
+    "city": "AiiA 2.5 Theater Kobe",
+    "address": "",
+    "seats": null,
+    "theaterId": null
+  },
+  {
     "id": "v3226",
     "name": {
       "zh": "COOL JAPAN PARK OSAKA・TT音樂廳",
@@ -708,6 +720,18 @@
     "theaterId": null
   },
   {
+    "id": "v736",
+    "name": {
+      "zh": "福岡サンパレス",
+      "ja": "福岡サンパレス"
+    },
+    "pref": "福岡県",
+    "city": "福岡",
+    "address": "福岡県福岡市博多区築港本町2-1",
+    "seats": 2316,
+    "theaterId": "736"
+  },
+  {
     "id": "v3214",
     "name": {
       "zh": "日本青年館音樂廳",
@@ -780,6 +804,18 @@
     "theaterId": "3404"
   },
   {
+    "id": "v4424",
+    "name": {
+      "zh": "パルテノン多摩・大音樂廳",
+      "ja": "パルテノン多摩・大ホール"
+    },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "東京都多摩市落合",
+    "seats": 1154,
+    "theaterId": "4424"
+  },
+  {
     "id": "v7163",
     "name": {
       "zh": "THEATER MILANO-Za",
@@ -790,5 +826,293 @@
     "address": "東京都新宿区歌舞伎町一丁目29番1号 東急歌舞伎町タワー6階",
     "seats": 900,
     "theaterId": "7163"
+  },
+  {
+    "id": "v422",
+    "name": {
+      "zh": "博多座",
+      "ja": "博多座"
+    },
+    "pref": "福岡県",
+    "city": "福岡",
+    "address": "福岡県福岡市博多区下川端町2-1",
+    "seats": 1495,
+    "theaterId": "422"
+  },
+  {
+    "id": "v699",
+    "name": {
+      "zh": "兵庫県立藝術文化中心 大音樂廳",
+      "ja": "兵庫県立芸術文化センター 大ホール"
+    },
+    "pref": "兵庫県",
+    "city": "神戸",
+    "address": "兵庫県西宮市高松町2−22",
+    "seats": 2001,
+    "theaterId": "699"
+  },
+  {
+    "id": "v565",
+    "name": {
+      "zh": "御園座",
+      "ja": "御園座"
+    },
+    "pref": "愛知県",
+    "city": "名古屋",
+    "address": "愛知県名古屋市中区栄一丁目６番１４号",
+    "seats": 1659,
+    "theaterId": "565"
+  },
+  {
+    "id": "v4919",
+    "name": {
+      "zh": "やまぎん縣民音樂廳（山形県総合文化芸術館）",
+      "ja": "やまぎん県民ホール（山形県総合文化芸術館）"
+    },
+    "pref": "山形県",
+    "city": "山形",
+    "address": "山形県山形市双葉町1-2-38",
+    "seats": 2001,
+    "theaterId": "4919"
+  },
+  {
+    "id": "v184",
+    "name": {
+      "zh": "日生劇場",
+      "ja": "日生劇場"
+    },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "東京都千代田区有楽町1-1-1",
+    "seats": 1330,
+    "theaterId": "184"
+  },
+  {
+    "id": "v331",
+    "name": {
+      "zh": "梅田藝術劇場メイン音樂廳",
+      "ja": "梅田芸術劇場メインホール"
+    },
+    "pref": "大阪府",
+    "city": "大阪",
+    "address": "大阪府大阪市北区茶屋町19-1",
+    "seats": 1913,
+    "theaterId": "331"
+  },
+  {
+    "id": "v3225",
+    "name": {
+      "zh": "COOL JAPAN PARK OSAKA・WW音樂廳",
+      "ja": "COOL JAPAN PARK OSAKA・WWホール"
+    },
+    "pref": "大阪府",
+    "city": "大阪",
+    "address": "大阪府大阪市中央区大阪城3-6",
+    "seats": 1138,
+    "theaterId": "3225"
+  },
+  {
+    "id": "v161",
+    "name": {
+      "zh": "天王洲 銀河劇場",
+      "ja": "天王洲 銀河劇場"
+    },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "東京都品川区東品川2-3-16シーフォートスクエア内2階",
+    "seats": 746,
+    "theaterId": "161"
+  },
+  {
+    "id": "v105",
+    "name": {
+      "zh": "THEATRE1010",
+      "ja": "THEATRE1010"
+    },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "東京都足立区千住3-92 千住ミルディスI番館11F",
+    "seats": 701,
+    "theaterId": "105"
+  },
+  {
+    "id": "v66",
+    "name": {
+      "zh": "クラブeX",
+      "ja": "クラブeX"
+    },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "東京都港区高輪4-10-30品川プリンスホテルエグゼクティブタワー3F",
+    "seats": 600,
+    "theaterId": "66"
+  },
+  {
+    "id": "v1807",
+    "name": {
+      "zh": "劇場Gロッソ",
+      "ja": "シアターGロッソ"
+    },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "東京都文京区後楽1-3-61",
+    "seats": 765,
+    "theaterId": "1807"
+  },
+  {
+    "id": "v423",
+    "name": {
+      "zh": "キャナルシティ劇場",
+      "ja": "キャナルシティ劇場"
+    },
+    "pref": "福岡県",
+    "city": "福岡",
+    "address": "福岡県福岡市博多区住吉1-2-1キャナルシティ博多ノースビル4F",
+    "seats": 1144,
+    "theaterId": "423"
+  },
+  {
+    "id": "v8681",
+    "name": {
+      "zh": "IMM THEATER",
+      "ja": "IMM THEATER"
+    },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "東京都文京区後楽1丁目3-53 IMM THEATER",
+    "seats": 705,
+    "theaterId": "8681"
+  },
+  {
+    "id": "v-f2f1c02b",
+    "name": {
+      "zh": "天王洲 銀河劇場",
+      "ja": "天王洲 銀河劇場"
+    },
+    "pref": "",
+    "city": "天王洲 銀河劇場",
+    "address": "",
+    "seats": null,
+    "theaterId": null
+  },
+  {
+    "id": "v-5486aef1",
+    "name": {
+      "zh": "（会場未記載）",
+      "ja": "（会場未記載）"
+    },
+    "pref": "",
+    "city": "（会場未記載）",
+    "address": "",
+    "seats": null,
+    "theaterId": null
+  },
+  {
+    "id": "v-3ddb7eb5",
+    "name": {
+      "zh": "劇場サンモール",
+      "ja": "シアターサンモール"
+    },
+    "pref": "",
+    "city": "シアターサンモール",
+    "address": "",
+    "seats": null,
+    "theaterId": null
+  },
+  {
+    "id": "v-77f594e9",
+    "name": {
+      "zh": "近鉄アート館",
+      "ja": "近鉄アート館"
+    },
+    "pref": "",
+    "city": "近鉄アート館",
+    "address": "",
+    "seats": null,
+    "theaterId": null
+  },
+  {
+    "id": "v-86563300",
+    "name": {
+      "zh": "草月音樂廳",
+      "ja": "草月ホール"
+    },
+    "pref": "",
+    "city": "草月ホール",
+    "address": "",
+    "seats": null,
+    "theaterId": null
+  },
+  {
+    "id": "v-2c7d06dc",
+    "name": {
+      "zh": "新國立劇場 中劇場",
+      "ja": "新国立劇場 中劇場"
+    },
+    "pref": "",
+    "city": "新国立劇場 中劇場",
+    "address": "",
+    "seats": null,
+    "theaterId": null
+  },
+  {
+    "id": "h",
+    "name": {
+      "zh": "劇場H",
+      "ja": "シアターH"
+    },
+    "pref": "",
+    "city": "シアターH",
+    "address": "",
+    "seats": null,
+    "theaterId": null
+  },
+  {
+    "id": "kanadevia-hall",
+    "name": {
+      "zh": "Kanadevia Hall",
+      "ja": "Kanadevia Hall"
+    },
+    "pref": "",
+    "city": "Kanadevia Hall",
+    "address": "",
+    "seats": null,
+    "theaterId": null
+  },
+  {
+    "id": "brillia-hall",
+    "name": {
+      "zh": "東京建物 Brillia HALL 箕面　大音樂廳（箕面市立文化芸能劇場）",
+      "ja": "東京建物 Brillia HALL 箕面　大ホール（箕面市立文化芸能劇場）"
+    },
+    "pref": "東京都",
+    "city": "東京",
+    "address": "",
+    "seats": null,
+    "theaterId": null
+  },
+  {
+    "id": "v-ec936ef6",
+    "name": {
+      "zh": "アイプラザ豊橋",
+      "ja": "アイプラザ豊橋"
+    },
+    "pref": "愛知県",
+    "city": "名古屋",
+    "address": "",
+    "seats": null,
+    "theaterId": null
+  },
+  {
+    "id": "v-fd58fa92",
+    "name": {
+      "zh": "日本青年館音樂廳",
+      "ja": "日本青年館ホール"
+    },
+    "pref": "",
+    "city": "日本青年館ホール",
+    "address": "",
+    "seats": null,
+    "theaterId": null
   }
 ]
