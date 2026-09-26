@@ -1,7 +1,16 @@
 import Link from 'next/link';
-import { getNowShows, getUpcomingShows, getMeta, toCardData, getAllSeries } from '@/lib/data';
+import {
+  getNowShows,
+  getUpcomingShows,
+  getMeta,
+  toCardData,
+  getAllSeries,
+  getCalendarEntries,
+  getTodayJst,
+} from '@/lib/data';
 import type { Show } from '@/lib/types';
 import { ShowCard } from '@/components/ShowCard';
+import { ShowCalendar } from '@/components/ShowCalendar';
 
 /**
  * 首页
@@ -167,6 +176,9 @@ export default function HomePage() {
           </span>
           <span aria-hidden className="shrink-0 text-lg text-fg-dim transition group-hover:translate-x-1 group-hover:text-accent">→</span>
         </Link>
+        <div className="mt-4">
+          <ShowCalendar entries={getCalendarEntries()} today={getTodayJst()} />
+        </div>
       </section>
 
       {/* ── 系列 ──
