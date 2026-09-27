@@ -471,6 +471,95 @@ async function main() {
     check('点「日本語」切换生效', langBtn.jaVisible > 0 && langBtn.zhVisible === 0, `ja=${langBtn.jaVisible} zh=${langBtn.zhVisible}`);
     check('切换后 <html lang> 变 ja', langBtn.lang === 'ja', `lang=${langBtn.lang}`);
 
+    // ── 首页日历：点日期显示当天剧目（桌面 + 手机实际触控）──
+    console.log('\n⑦ 首页日历日期交互（桌面 + 手机）');
+    async function testHomeCalendarDate(device) {
+      await send('Page.navigate', { url: BASE + '/' });
+      await sleep(1300);
+      const point = await evaluate(`(() => {
+        const button = document.querySelector('.jp-calendar-day.has-shows:not(.is-today)')
+          || document.querySelector('.jp-calendar-day.has-shows');
+        if (!button) return null;
+        button.scrollIntoView({ block: 'center', inline: 'center' });
+        const rect = button.getBoundingClientRect();
+        const label = button.querySelector('.sr-only .i18n-zh')?.textContent || '';
+        const match = label.match(/([0-9]{4})年([0-9]+)月([0-9]+)日/);
+        if (!match) return null;
+        return {
+          x: rect.x + rect.width / 2,
+          y: rect.y + rect.height / 2,
+          width: rect.width,
+          height: rect.height,
+          date: [match[1], match[2].padStart(2, '0'), match[3].padStart(2, '0')].join('/'),
+        };
+      })()`);
+      if (!point) return { ok: false, reason: '首页没有带公演的日期' };
+
+      if (device === 'mobile') {
+        await send('Input.dispatchTouchEvent', {
+          type: 'touchStart',
+          touchPoints: [{ x: point.x, y: point.y }],
+        });
+        await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      } else {
+        await send('Input.dispatchMouseEvent', {
+          type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1,
+        });
+        await send('Input.dispatchMouseEvent', {
+          type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1,
+        });
+      }
+      await sleep(1000);
+      const result = await evaluate(`(() => {
+        const details = document.querySelector('.jp-calendar-details');
+        const rect = details.getBoundingClientRect();
+        return {
+          heading: details.querySelector('h3')?.textContent || '',
+          showCount: details.querySelectorAll('ul.divide-y > li').length,
+          visibleTitles: [...details.querySelectorAll('.jp-calendar-event')].map(a => a.textContent.trim()).slice(0, 3),
+          detailsTop: rect.top,
+          detailsBottom: rect.bottom,
+          viewportHeight: innerHeight,
+          viewportWidth: innerWidth,
+          documentWidth: document.documentElement.scrollWidth,
+        };
+      })()`);
+      const correctDate = result.heading.includes(point.date);
+      const hasShows = result.showCount > 0;
+      const mobileUsable = device !== 'mobile' || (
+        point.width >= 40 && point.height >= 40 &&
+        result.detailsTop >= 56 && result.detailsTop < result.viewportHeight &&
+        result.documentWidth <= result.viewportWidth
+      );
+      return {
+        ok: correctDate && hasShows && mobileUsable,
+        date: point.date,
+        ...result,
+        touchTarget: `${Math.round(point.width)}×${Math.round(point.height)}`,
+        mobileUsable,
+      };
+    }
+
+    await send('Emulation.setDeviceMetricsOverride', {
+      width: 1280, height: 1000, deviceScaleFactor: 1, mobile: false,
+    });
+    const desktopCalendar = await testHomeCalendarDate('desktop');
+    check(
+      '首页桌面端点日期显示当天剧目',
+      desktopCalendar.ok,
+      `${desktopCalendar.date ?? desktopCalendar.reason} · ${desktopCalendar.showCount ?? 0} 部`,
+    );
+
+    await send('Emulation.setDeviceMetricsOverride', {
+      width: 390, height: 844, deviceScaleFactor: 1, mobile: true,
+    });
+    const mobileCalendar = await testHomeCalendarDate('mobile');
+    check(
+      '首页手机端触控日期显示剧目并滚动到结果',
+      mobileCalendar.ok,
+      `${mobileCalendar.date ?? mobileCalendar.reason} · ${mobileCalendar.showCount ?? 0} 部 · ${mobileCalendar.touchTarget ?? ''} · 结果区 y=${Math.round(mobileCalendar.detailsTop ?? 0)}px`,
+    );
+
     const failed = results.filter((r) => !r.ok);
     console.log(`\n${failed.length === 0 ? '✓ 全部通过' : `✗ ${failed.length} 项失败`}（共 ${results.length} 项）\n`);
     process.exitCode = failed.length ? 1 : 0;
