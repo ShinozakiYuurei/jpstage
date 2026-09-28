@@ -45,16 +45,26 @@ tar -tf "$NEW" >/dev/null 2>&1 || { echo "✖ tar 已损坏（传输中断？）
 #   而在服务器上手工跑同样的命令却返回匹配（手工跑时没有 pipefail）。
 #
 #   改成一次性读取清单，同时也更快（一次 tar 读取代替三次）。
-LISTING=$(tar -tf "$NEW")
+#
+# ★★ 但「读进变量」还不够 —— 后面不能再把它**管进** `grep -q` ★★
+#   2026-09-29 实测踩到：`printf '%s\n' "$LISTING" | grep -q ...` 里
+#   grep -q 命中后立刻退出，还在写的 printf 收到 SIGPIPE（退出码 141）；
+#   脚本开头有 set -o pipefail，于是整条管道返回失败 ——
+#   文件明明存在，却被判成「包内缺 index.html」，整次发布中止。
+#   （与上面 tar -tf | grep -q 是同一个坑，只是换了个位置。）
+#   所以清单改成写进临时文件，后面用**参数**读：没有管道就没有 SIGPIPE。
+LISTING_FILE=/tmp/jpstage-listing.txt
+tar -tf "$NEW" > "$LISTING_FILE"
 
-N=$(printf '%s\n' "$LISTING" | grep -c '\.html$' || true)
+N=$(grep -c '\.html$' "$LISTING_FILE" || true)
 echo "  包内 HTML：$N 页"
 [ "$N" -ge "$MIN_HTML" ] || { echo "✖ 包内只有 $N 页，低于阈值 $MIN_HTML，拒绝切换"; exit 1; }
 
 # 条目名带 `./` 前缀（打包时用的是 `tar -cf ... -C out .`），
 # 所以是 `^\./index\.html$` 而不是 `^index\.html$`。
-printf '%s\n' "$LISTING" | grep -qx '\./index\.html' || { echo "✖ 包内缺 index.html"; exit 1; }
-printf '%s\n' "$LISTING" | grep -q '\./_next/static/' || { echo "✖ 包内缺 _next/static"; exit 1; }
+grep -qx '\./index\.html' "$LISTING_FILE" || { echo "✖ 包内缺 index.html"; exit 1; }
+grep -q '\./_next/static/' "$LISTING_FILE" || { echo "✖ 包内缺 _next/static"; exit 1; }
+rm -f "$LISTING_FILE"
 
 # ---------- 留存当前版本（供 --rollback）----------
 if [ -f "$SITE_ROOT/index.html" ]; then
