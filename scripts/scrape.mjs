@@ -71,6 +71,8 @@
  *    node scripts/scrape.mjs --validate-only    只校验现有数据（不联网）
  *    node scripts/scrape.mjs --no-posters      跳过海报下载
  *    node scripts/scrape.mjs --no-translate    跳过机器翻译（只用译名表）
+ *    node scripts/scrape.mjs --refresh-posters 强制重评全部海报（默认只重评「糊」的）
+ *    node scripts/scrape.mjs --posters-only    只重跑海报（从现有 data/shows.json 出发）
  *
  *  ★ 抓取是**幂等**的：结果只取决于源站当前数据，重复跑不会累积。
  *    海报按 slug 命名，已存在且大小合理就跳过（可断点续跑）。
@@ -94,6 +96,40 @@ const NO_POSTERS = args.has('--no-posters');
 const NO_TRANSLATE = args.has('--no-translate');
 /** 强制对已缓存的海报重新取主色（改了取色算法后用） */
 const REBUILD_ACCENT = args.has('--rebuild-accent');
+/** 忽略清晰度判定，强制重新评估每一张海报（改了选图逻辑后用） */
+const REFRESH_POSTERS = args.has('--refresh-posters');
+/** 只重跑海报（不重抓公演数据），用于单独修「糊图」而不动 dataset */
+const POSTERS_ONLY = args.has('--posters-only');
+
+/**
+ * 海报「糊」的判定阈值（拉普拉斯方差，越大越清晰）
+ *
+ * ★ 为什么需要它：海报是按 slug 缓存的，早先抓到的糊图会一直留着，
+ *   表现为「改了代码、线上还是糊的」。有了阈值才能判定
+ *   「这张要不要重新选图」（见 sharpnessOf 的注释）。
+ *
+ * ★ 为什么是 900：实测本站 43 张海报里，肉眼可见偏糊的集中在
+ *   270~600（低清放大），清楚的在 1000 以上，中间空档明显。
+ *   阈值只用于**触发重新选图**，不是最终判决 —— 最终换不换图
+ *   由候选之间的清晰度比较决定，所以定得略宽松无妨。
+ *   可用环境变量 POSTER_MIN_LAP 覆盖。
+ */
+const POSTER_MIN_LAP = Number(process.env.POSTER_MIN_LAP || 900);
+
+/**
+ * 海报「有效」的下限（拉普拉斯方差）
+ *
+ * ★ 为什么要比 POSTER_MIN_LAP 再低一条线：
+ *   新作海报尚未公开时，源站会返回「NOW PRINTING」占位图
+ *   （实测 death-note-1168 是一张 280×400、lap≈3 的空白图）。
+ *   这种图比「没有海报」更糟 —— 页面上会显示一张「印刷中」的假图，
+ *   而本站本来就能生成一张像样的示意海报（PosterArt）。
+ *   低于这条线就判定为占位/空白，宁可置空。
+ */
+const POSTER_MIN_ACCEPT_LAP = 100;
+
+/** 海报取色失败时的兜底主色（见 Show.accent 的注释） */
+const DEFAULT_ACCENT = '#6b46e5';
 /** 保留全部历史条目（不做半年时间窗过滤） */
 const KEEP_ALL = args.has('--keep-all');
 
@@ -141,7 +177,7 @@ const cachePath = (url) =>
  *   偶发 502/超时（实测出现过）。不重试的话一次抖动就丢一部作品，
  *   而丢的那部**不会报错** —— 只是站上少一部，几天后才发现。
  */
-async function get(url, { timeout = 20000, retries = 2 } = {}) {
+async function get(url, { timeout = 8000, retries = 2 } = {}) {
   if (HTML_CACHE.has(url)) return HTML_CACHE.get(url);
   const file = cachePath(url);
   if (fs.existsSync(file)) {
@@ -286,6 +322,52 @@ const TR_CACHE = new Map();
 const TR_FAIL = { quota: 0, other: 0 };
 
 /**
+ * 两次翻译请求之间的最小间隔
+ *
+ * ★ 为什么要限速：连发时 MyMemory 会开始返回 429 / WARNING 文案，
+ *   而 translateToZh 对「额度用完」是**不再重试**的 ——
+ *   结果就是一轮抓取只翻成个位数条，其余全部回退成日文。
+ *   实测加 350ms 间隔后 10/10 成功。
+ */
+const TR_DELAY_MS = 350;
+
+/**
+ * 单次翻译请求
+ *
+ * ★ 超额的三重识别，缺一不可：
+ *   ① HTTP 429 —— 最明确的信号
+ *   ② responseStatus 非 200
+ *   ③ 译文里出现 WARNING 文案 —— 有些情况下 HTTP 仍是 200，
+ *      但 translatedText 是一段英文提示。不识别就会把
+ *      「MYMEMORY WARNING: YOU USED ALL…」当成译文写进数据。
+ */
+async function translateOnce(key) {
+  const u =
+    'https://api.mymemory.translated.net/get?q=' +
+    encodeURIComponent(key) +
+    '&langpair=ja%7Czh-CN';
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const res = await fetch(u, { signal: ctrl.signal });
+    const j = await res.json();
+    const raw = j?.responseData?.translatedText;
+    if (!res.ok || j.responseStatus !== 200 || !raw) {
+      return {
+        out: null,
+        quota: res.status === 429 || /USAGE LIMIT|ALL AVAILABLE FREE/i.test(raw ?? ''),
+      };
+    }
+    if (/MYMEMORY WARNING|QUERY LENGTH LIMIT|USAGE LIMIT/i.test(raw)) return { out: null, quota: true };
+    return { out: trad(raw), quota: false };
+  } catch {
+    return { out: null, quota: false };
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+/**
  * 机器翻译（MyMemory，免费额度）
  *
  * ★ 为什么它是**兜底**而不是主路径：见 lookupZh 的注释。
@@ -309,42 +391,64 @@ async function translateToZh(ja) {
   if (TR_CACHE.has(key)) return TR_CACHE.get(key);
 
   let out = null;
-  try {
-    const u =
-      'https://api.mymemory.translated.net/get?q=' +
-      encodeURIComponent(key) +
-      '&langpair=ja%7Czh-CN';
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 12000);
-    const res = await fetch(u, { signal: ctrl.signal });
-    clearTimeout(t);
-    const j = await res.json();
-    const raw = j?.responseData?.translatedText;
-    /*
-     * ★ 超额的三重识别，缺一不可：
-     *   ① HTTP 429 —— 最明确的信号
-     *   ② responseStatus 非 200
-     *   ③ 译文里出现 WARNING 文案 —— 有些情况下 HTTP 仍是 200，
-     *      但 translatedText 是一段英文提示。不识别就会把
-     *      「MYMEMORY WARNING: YOU USED ALL…」当成译文写进数据。
-     */
-    if (!res.ok || j.responseStatus !== 200 || !raw) {
-      if (res.status === 429 || /USAGE LIMIT|ALL AVAILABLE FREE/i.test(raw ?? '')) TR_FAIL.quota++;
-      else TR_FAIL.other++;
-      out = null;
-    } else if (/MYMEMORY WARNING|QUERY LENGTH LIMIT|USAGE LIMIT/i.test(raw)) {
-      TR_FAIL.quota++;
-      out = null;
-    } else {
-      out = trad(raw);
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (attempt > 0) await sleep(1500);
+    await sleep(TR_DELAY_MS);
+    const r = await translateOnce(key);
+    if (r.out) {
+      out = r.out;
+      break;
     }
-  } catch {
+    if (r.quota) {
+      TR_FAIL.quota++;
+      break;
+    }
     TR_FAIL.other++;
-    out = null;
   }
 
   TR_CACHE.set(key, out);
   return out;
+}
+
+/**
+ * 翻译记忆预热：用上一版 data/shows.json 填 TR_CACHE
+ *
+ * ★★ 为什么必须预热，而不能每次重抓都从零翻 ★★
+ *   MyMemory 免费额度是**每日** 5000 字量级，而全部简介有 1.7 万字 ——
+ *   一轮抓取不可能翻完。若不预热：
+ *     ① 额度会被「上一轮已经翻过的旧作品」重新吃掉，新作品永远轮不到；
+ *     ② 更糟的是 translateToZh 失败时 summary.zh 会回退成日文，
+ *        于是「补翻」反而把上一轮的成果洗掉 —— 越补越少。
+ *   预热后：旧作品 0 消耗（命中缓存直接返回），额度全留给新作品；
+ *   且中文永不回退 —— 每跑一轮就多补几部，直到补全。
+ *
+ * ★ 为什么拿 shows.json 当记忆库而不是另建文件：
+ *   上一版产物里已经有完整的 ja→zh 对照（简介/标题/副标题），
+ *   它本来就是「翻译过的那些条」的权威列表，再存一份只会两处漂移。
+ */
+function seedTranslationMemory() {
+  const file = path.join(DATA_DIR, 'shows.json');
+  if (!fs.existsSync(file)) return 0;
+  let previous;
+  try {
+    previous = JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch {
+    return 0;
+  }
+  let seeded = 0;
+  const seed = (ja, zh) => {
+    if (!ja || !zh || ja === zh) return;
+    const key = ja.slice(0, 480);
+    if (TR_CACHE.has(key)) return;
+    TR_CACHE.set(key, zh);
+    seeded++;
+  };
+  for (const show of previous) {
+    seed(show.summary?.ja, show.summary?.zh);
+    seed(show.title?.ja, show.title?.zh);
+    if (show.subtitle) seed(show.subtitle.ja, show.subtitle.zh);
+  }
+  return seeded;
 }
 
 // ────────────────────────────────────────────────────────────
@@ -489,11 +593,20 @@ function parseMainPage(html, mainId) {
     if (th) data.venues.push({ stageId: null, pref: textOf(th[3]), name: textOf(th[2]), theaterId: th[1] });
   }
 
-  // 海报（large 尺寸优先；列表页的 m/460 只有 161px 宽，太糊）
-  data.posterMain =
-    first(/<img[^>]*src="(https:\/\/stage-image\.corich\.jp\/img_stage\/l\/\d+\/[^"]+?)"/, html) ??
-    first(/<img[^>]*src="(https:\/\/stage-image\.corich\.jp\/img_stage\/m\/\d+\/[^"]+?)"/, html);
-  if (data.posterMain && /nophoto/.test(data.posterMain)) data.posterMain = null;
+  /*
+   * 海报候选（按尺寸从大到小）。
+   *
+   * ★ 为什么保留**全部**尺寸而不是只留最大的一张：
+   *   CoRich 的 l 并不总是最合适的一张 —— 有的作品 l 是一张横版
+   *   舞台照（实测 640×452），裁成 2:3 竖版会切掉大半画面；
+   *   把 l/m 都留给第 7 步，由「清晰度 + 构图损失」评分选出最好的一张，
+   *   比在这里写死「优先 l」更稳。
+   *
+   * ★ 为什么过滤 nophoto：占位图（nophoto_stage.png）不是真海报，
+   *   它会让「没有海报」的作品看起来有图，掩盖缺图问题。
+   */
+  data.posterAll = corichPosterAll(html);
+  data.posterMain = data.posterAll[0] ?? null;
 
   return data;
 }
@@ -702,8 +815,16 @@ function parseTheaterPage(html) {
  *   ケロロ軍曹 等 —— 实测 9 部里有 6 部 CoRich 分类里没有）。
  *
  * ★ 但它只能当**优先源**，不能取代 CoRich：
- *   协会站的 schedule 页**没有归档与分页**，只列当期的 9 部。
+ *   协会站没有归档与分页，只列当期与未来已公布的作品。
  *   所以历史内容仍要靠 CoRich（那边有 311 部）。
+ *
+ * ★★ 两个列表页，都要抓（实测差一倍）★★
+ *   /schedule/         SHOW SCHEDULE —— 只列**近期**的 12 部；
+ *   /stage/            公演ラインアップ —— 列**当期 + 未来已公布**的 33 部。
+ *   初版只抓了 /schedule/，于是「已公布但还没开演」的作品
+ *   （薄桜鬼 真改、真剣乱舞祭2026、DEATH NOTE 等 17 部）全部漏掉 ——
+ *   而本站的「即將開演」页恰恰最需要它们。
+ *   两个页面的 /stage/<id> 是同一套 ID，按 ID 去重即可。
  *
  * ★ 合并规则：以作品标题为键，协会站覆盖 CoRich。
  *   为什么不用 ID 做键：两个源的 ID 体系完全不同，无法互相对照；
@@ -714,11 +835,36 @@ function parseTheaterPage(html) {
 
 const J25_BASE = 'https://www.j25musical.jp';
 
-/** 协会站日程页 → [{ id, title, dateText }] */
+/** 协会站日程页（/schedule/）→ [{ id, title, dateText }] */
 function parseJ25Schedule(html) {
   const out = [];
   const re =
     /<a class="title__link" href="\/stage\/(\d+)">([^<]+)<\/a>\s*<br>\s*<span class="title__date ofonts">([\s\S]*?)<\/span>/g;
+  for (const m of html.matchAll(re)) {
+    out.push({
+      j25Id: m[1],
+      title: textOf(m[2]),
+      dateText: textOf(m[3]).replace(/\s+/g, ' '),
+    });
+  }
+  return out;
+}
+
+/**
+ * 协会站「公演ラインアップ」页（/stage/）→ [{ id, title, dateText }]
+ *
+ * ★ 它的结构与 /schedule/ 不同（这里是卡片列表，不是表格）：
+ *     <a href="/stage/1148"> … <h3 class="show-title">作品名</h3> …
+ *     <p class="show-date ofonts">2026-09-07 - 2026-10-25</p>
+ *   日期是 ISO 形式，未定结束日的写成「2026-04-04 ～」。
+ *
+ * ★ 这里抓到的日期**只用于显示与粗筛**，真正的档期仍以详情页
+ *   「公演期間 / 劇場」那一栏为准（它才是逐会場的）。
+ */
+function parseJ25Lineup(html) {
+  const out = [];
+  const re =
+    /<a href="\/stage\/(\d+)"[\s\S]{0,1200}?<h3 class="show-title">([\s\S]*?)<\/h3>[\s\S]{0,400}?<p class="show-date ofonts">([\s\S]*?)<\/p>/g;
   for (const m of html.matchAll(re)) {
     out.push({
       j25Id: m[1],
@@ -851,19 +997,40 @@ function parseJ25Detail(html, j25Id) {
   };
 }
 
-/** 抓协会站：日程页 → 每部作品的详情页 */
+/**
+ * 抓协会站：两个列表页 → 每部作品的详情页
+ *
+ * ★ 两个列表页都要抓，按 j25Id 去重：
+ *   /schedule/ 只列近期（12 部），/stage/ 列当期 + 未来已公布（33 部）。
+ *   只抓前者会把「已公布但还没开演」的作品整批漏掉。
+ *   任一页失败时另一页照常跑 —— 少一页只是少一部分作品，
+ *   总比整源返回空要好。
+ */
 async function fetchJ25() {
-  let listHtml;
-  try {
-    // ★ 用**日文版**日程页：作品名是原始日文（英文版是译名，
-    //   拿译名去查译名表会查不到）。
-    listHtml = await get(J25_BASE + '/schedule/');
-  } catch (e) {
-    console.warn(`  协会站日程页失败：${e.message}`);
-    return [];
+  const lists = [];
+  for (const [path, parse, label] of [
+    ['/schedule/', parseJ25Schedule, '日程页'],
+    ['/stage/', parseJ25Lineup, '公演ラインアップ'],
+  ]) {
+    try {
+      // ★ 用**日文版**页面：作品名是原始日文（英文版是译名，
+      //   拿译名去查译名表会查不到）。
+      const html = await get(J25_BASE + path);
+      const parsed = parse(html);
+      console.log(`  协会站${label} ${parsed.length} 部`);
+      lists.push(...parsed);
+    } catch (e) {
+      console.warn(`  协会站${label}失败：${e.message}`);
+    }
+    await sleep(DELAY_MS);
   }
-  const items = parseJ25Schedule(listHtml);
-  console.log(`  协会站当期 ${items.length} 部`);
+
+  // 按 j25Id 去重：两个页重叠的部分以先抓到的为准（/schedule/ 在前）
+  const byId = new Map();
+  for (const item of lists) if (!byId.has(item.j25Id)) byId.set(item.j25Id, item);
+  const items = [...byId.values()];
+  console.log(`  协会站合计 ${items.length} 部（去重后）`);
+  if (!items.length) return [];
 
   const out = [];
   for (const it of items) {
@@ -978,8 +1145,33 @@ async function main() {
     return;
   }
 
+  /*
+   * --posters-only：只重跑海报，不重抓公演数据。
+   *
+   * ★ 为什么需要它：全量抓取会重建整份 dataset（时间窗一变，
+   *   新增/剔除一批作品，还带上翻译与归并）—— 只想修几张糊图时，
+   *   那是不必要的副作用。这条路径从现有 shows.json 出发，
+   *   只动 public/posters/ 与 shows.json 里的 poster / accent 字段。
+   */
+  if (POSTERS_ONLY) {
+    fs.mkdirSync(CACHE_DIR, { recursive: true });
+    fs.mkdirSync(POSTER_DIR, { recursive: true });
+    const data = readData();
+    const sharp = (await import('sharp')).default;
+    console.log('\n[海报] 从现有 data/shows.json 重建图源候选 …');
+    for (const s of data.shows) s.posterCandidates = await candidatesFromSource(s);
+    await refreshPosters(data.shows, sharp);
+    for (const s of data.shows) delete s.posterCandidates;
+    writeJson('shows.json', data.shows);
+    const { errors, warnings } = validate(data);
+    report(data, errors, warnings);
+    return;
+  }
+
   fs.mkdirSync(CACHE_DIR, { recursive: true });
   fs.mkdirSync(POSTER_DIR, { recursive: true });
+
+  const WINDOW_DAYS = Number(process.env.SCRAPE_WINDOW_DAYS || 365);
 
   console.log('\n[1/8] 抓取协会站（官方优先源）…');
   const j25Works = await fetchJ25();
@@ -1006,6 +1198,42 @@ async function main() {
   const stages = new Map();
   for (const r of [...byCategory, ...byKeyword]) stages.set(r.stageId, r);
   console.log(`\n  待解析的单会場条目：${stages.size}`);
+
+  /*
+   * ── 详情页抓取前的粗筛 ─────────────────────────────────
+   *
+   * ★ 为什么要在这一步先筛：
+   *   关键字补抓会捞出**大量历史条目**（实测 813 个单会場），
+   *   而其中九成以上在时间窗之外。全抓一遍要几百次请求，
+   *   而且每次网络抖动都要重试三次（每次 10s 连接超时）——
+   *   实测能把一轮抓取拖到一个多小时，且失败率随时间升高。
+   *
+   * ★ 为什么留 180 天余量：
+   *   搜索页的档期是「这一个会場」的，而时间窗判定用的是
+   *   「这部作品最晚的一场」。长期公演里较早的会場会先被误筛掉。
+   *   留余量后，只有「结束日比时间窗还早半年」的会場才会被跳过 ——
+   *   这种会場所属的作品必然也整部在窗外。
+   *
+   * ★ 这不是判定，只是省请求：
+   *   精确的时间窗过滤仍在第 5 步照常执行，判定规则没变。
+   */
+  if (!KEEP_ALL) {
+    const roughCutoff = new Date(Date.now() + 9 * 3600_000 - (WINDOW_DAYS + 180) * 86400_000)
+      .toISOString()
+      .slice(0, 10);
+    let skipped = 0;
+    for (const [stageId, row] of stages) {
+      if (row.end && row.end < roughCutoff) {
+        stages.delete(stageId);
+        skipped++;
+      }
+    }
+    if (skipped) {
+      console.log(
+        `  粗筛：${skipped} 个单会場早于 ${roughCutoff}（时间窗 ${WINDOW_DAYS} 天 + 180 天余量），跳过详情页抓取`,
+      );
+    }
+  }
 
   console.log('\n[4/8] 抓详情页并归并为作品 …');
   const works = new Map(); // stage_main_id → work
@@ -1038,7 +1266,7 @@ async function main() {
       if (!parsed) continue;
       work = { ...parsed, runs: [], posters: [], firstStageId: stageId };
       works.set(mainId ?? 'single-' + stageId, work);
-      if (parsed.posterMain) work.posters.push(parsed.posterMain);
+      if (parsed.posterAll) work.posters.push(...parsed.posterAll);
       await sleep(DELAY_MS);
     }
 
@@ -1148,10 +1376,10 @@ async function main() {
    *   而本站的主体是「现在能看的」—— 那才是最需要守住的。
    *
    * ★ 注意协会站的作品**不受此窗口限制**：
-   *   协会站只列当期（正在演 / 即将开演），本来就不含历史，
+   *   协会站只列当期与未来已公布（正在演 / 即将开演），本来就不含历史，
    *   再套一次窗口没有意义，还可能误删（例如长期公演）。
+   *   实现上它们是在本过滤**之后**才合并进来的。
    */
-  const WINDOW_DAYS = Number(process.env.SCRAPE_WINDOW_DAYS || 365);
   const TOTAL_SHOWS = works.size;
   if (!KEEP_ALL) {
     const today = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
@@ -1194,7 +1422,44 @@ async function main() {
    */
   const normTitle = (s) =>
     s
+      /*
+       * ★ 为什么要在全角转半角**之前**单独折叠 ︕﹗︖﹖：
+       *   协会站部分标题用的是 U+FE15/FE16 这类直排标点，
+       *   而 CoRich 用 U+FF01/U+FF1F。两者渲染出来一模一样，
+       *   但码位不同 —— 不折叠的话「多聞くん今どっち︕︖」与
+       *   「多聞くん今どっち！？」会被当成两部作品：
+       *   协会站那条覆盖不掉 CoRich 的，站上出现重复，
+       *   而且协会站那部永远没有出演者（它本来就不提供）。
+       *   全角区间 ！-～（U+FF01–U+FF5E）不含这几个码位，所以必须单列。
+       *
+       * ★ 为什么还要去掉「ミュージカル / 舞台」前缀与引号、分隔符：
+       *   同一个作品两边写法差很多 —— 协会站写
+       *   「ミュージカル『PandoraHearts』RetraceⅡ-madness of lost memory-」，
+       *   CoRich 写「『PandoraHearts』Retrace Ⅱ」+ 副标题「madness of lost memory」。
+       *   不去掉这些差异，同一部作品就会在站上出现两次：
+       *   协会站那条（没有出演者）和 CoRich 那条（有）并存。
+       *   归一化后两者都是 pandoraheartsretraceⅱmadnessoflostmemory。
+       *
+       * ★ 注意这里只影响「协会站作品能否对上 CoRich 同名作品」，
+       *   不会把 CoRich 内部两部作品合并（它们以 mainId 为键，天然分开）。
+       */
+      .replace(/[︕﹗]/g, '!')
+      .replace(/[︖﹖]/g, '?')
       .replace(/[！-～]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
+      /*
+       * ★ 为什么去掉第一个引号之前的那段：
+       *   协会站会在作品名前挂「企划名」，CoRich 不会 ——
+       *     协会站：十周年記念特別公演 舞台『刀剣乱舞』陽伝 …
+       *     CoRich：舞台『刀剣乱舞』陽伝 …
+       *     协会站：HAPPEY MUSICAL「えぶりでいホスト」
+       *     CoRich：えぶりでいホスト
+       *   不去掉的话同一部作品会收录两次：协会站那条（没有出演者）
+       *   和 CoRich 那条（有）并存，档期还完全一样。
+       *   限定 24 字以内且中间不能有引号，避免把真正的作品名切掉。
+       */
+      .replace(/^[^『「“"]{1,24}[『「“"]/, '')
+      .replace(/^(?:ミュージカル|舞台|劇団)/, '')
+      .replace(/[『』「」（）()\[\]・·\-–—～〜]/g, '')
       .replace(/\s+/g, '')
       .toLowerCase();
 
@@ -1247,6 +1512,8 @@ async function main() {
   console.log(`\n  双源合并：协会站新增 ${j25Added} 部、覆盖 CoRich 同名作品 ${j25Overrode} 部`);
 
   console.log('\n[5/8] 生成中文文案 …');
+  const seeded = seedTranslationMemory();
+  if (seeded) console.log(`  翻译记忆：从上一版数据预热 ${seeded} 条（不消耗额度）`);
   const shows = [];
   const seriesMap = new Map();
   const venueMap = new Map();
@@ -1410,10 +1677,20 @@ async function main() {
       })),
       poster: null,
       /*
-       * 海报源：CoRich 是 posters[]（总页上的 large 图），
-       * 协会站是单个 poster 字段。两个源结构不同，这里归一。
+       * 海报候选（第 7 步按清晰度择优下载）。
+       *
+       * ★ 候选来自两个源：协会站（w.poster，单张）与 CoRich
+       *   （w.posters，l/m）。合并后的作品两者都有 —— 谁清楚用谁，
+       *   不再固定「协会站优先」：实测协会站上传的图有时本身就是糊的，
+       *   而 CoRich 的 l 反而更清楚；固定优先级会把这种情况判死。
+       *
+       * ★ 协会站的图默认被缩过（w=&h= 返回 600×857），
+       *   而显式要 2000×2000 会拿到原图（840×1200 / 1200×851）——
+       *   清晰度实测提升 1.4~3 倍。所以协会站候选直接升级成大图 URL。
        */
-      posterSrc: w.poster ?? w.posters?.[0] ?? null,
+      posterCandidates: [
+        ...new Set([...(w.poster ? [j25PosterLarge(w.poster)] : []), ...(w.posters ?? [])]),
+      ],
       /*
        * 主色：抓到海报后由 sharp 从图里取；抓不到时用兜底色。
        *
@@ -1427,7 +1704,7 @@ async function main() {
        *   这里先放兜底色，第 6 步算出来后覆盖 —— 保证任何情况下
        *   accent 都是合法的 #RRGGBB（validate 会查格式）。
        */
-      accent: '#6b46e5',
+      accent: DEFAULT_ACCENT,
       officialUrl: w.officialUrl || null,
       ticketUrl: null,
       cast: splitNames(w.castRaw),
@@ -1484,64 +1761,11 @@ async function main() {
     console.log('  （--no-posters，跳过）');
   } else {
     const sharp = (await import('sharp')).default;
-    let ok = 0;
-    let fail = 0;
-    for (const s of shows) {
-      if (!s.posterSrc) continue;
-      const outName = s.slug + '.webp';
-      const outPath = path.join(POSTER_DIR, outName);
-      // 幂等：已存在且非空就跳过（可断点续跑）
-      if (fs.existsSync(outPath) && fs.statSync(outPath).size > 2000) {
-        s.poster = '/posters/' + outName;
-        /*
-         * 已有图也要取色。
-         *
-         * ★ 为什么不能只在「新下载」时取：取色算法会改（例如这次
-         *   加了亮度上限），而海报文件是缓存的、不会重下 ——
-         *   若跳过已存在的图，改了算法也永远不会生效，
-         *   表现为「明明改了代码，线上主色没变」。
-         *
-         * ★ 为什么只在 accent 仍是兜底色、或显式要求时重算：
-         *   取色要读盘 + 解码 51 张图，每次全跑是白花的几秒。
-         */
-        if (REBUILD_ACCENT || s.accent === '#6b46e5') {
-          const c = await dominantColor(sharp, outPath);
-          if (c) s.accent = c;
-        }
-        continue;
-      }
-      try {
-        const buf = await getBinary(s.posterSrc);
-        /*
-         * 裁成 2:3（海报的标准比例）后压成 WebP。
-         *
-         * ★ 为什么必须在构建期压好：本站是静态导出
-         *   （next.config.ts 的 images.unoptimized = true），没有运行时
-         *   图片优化器。原图有 400KB+ 的 JPEG，54 张就是 20MB+，
-         *   首屏会直接卡在下载上。压到 460×613 / q78 后单张约 20~40KB。
-         *
-         * ★ fit: 'cover' + position: 'top'：海报的上半部是标题与角色脸，
-         *   居中被裁会把主视觉切掉一半（实测过几张纵长图）。
-         */
-        await sharp(buf)
-          .resize(460, 613, { fit: 'cover', position: 'top' })
-          .webp({ quality: 78 })
-          .toFile(outPath);
-        s.poster = '/posters/' + outName;
-        const c = await dominantColor(sharp, outPath);
-        if (c) s.accent = c;
-        ok++;
-      } catch (e) {
-        fail++;
-        console.warn(`    ! ${s.slug} 海报失败：${e.message}`);
-      }
-      await sleep(300);
-    }
-    console.log(`  海报：成功 ${ok}，失败 ${fail}`);
+    await refreshPosters(shows, sharp);
   }
 
   console.log('\n[8/8] 校验并写入 …');
-  for (const s of shows) delete s.posterSrc;
+  for (const s of shows) delete s.posterCandidates;
   const supplements = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'summary-supplements.json'), 'utf8'));
   const supplemented = applySummarySupplements(shows, supplements);
   if (supplemented) console.log(`  已补充 ${supplemented} 部经来源核实的双语简介`);
@@ -1803,6 +2027,445 @@ async function enrichVenues(venueMap) {
 }
 
 /**
+ * 海报清晰度：拉普拉斯方差
+ *
+ * ★ 为什么先把图缩/裁到卡片实际显示的 460×613 再算：
+ *   本站卡片上就是这么显示海报的（见第 7 步的 resize）。
+ *   在**显示尺寸**上测清晰度，等于直接回答「用户看到的这张糊不糊」；
+ *   若在原图尺寸上测，一张 2000px 的糊图会因为像素多而得分虚高。
+ *
+ * ★ 为什么用拉普拉斯方差：它度量的是高频能量 —— 糊图（低清放大、
+ *   高斯模糊）的高频被削掉，方差就低。实测同一张图 600px 版 2069、
+ *   840px 版 2983；而低清放大的图只有 300 上下，区分度足够。
+ *
+ * ★ 已知局限：大面积平涂的极简海报本身高频就少，得分也会偏低。
+ *   所以它只用来**触发重新选图**，最终换不换图还要看候选之间谁更
+ *   清楚（evaluatePoster），不会仅凭阈值误杀。
+ */
+async function sharpnessOf(sharp, input) {
+  const { data, info } = await sharp(input)
+    .resize(460, 613, { fit: 'cover', position: 'top' })
+    .greyscale()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const { width: w, height: h } = info;
+  let sum = 0;
+  let sum2 = 0;
+  let n = 0;
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const i = y * w + x;
+      const v = -4 * data[i] + data[i - 1] + data[i + 1] + data[i - w] + data[i + w];
+      sum += v;
+      sum2 += v * v;
+      n++;
+    }
+  }
+  const mean = sum / n;
+  return Math.round(sum2 / n - mean * mean);
+}
+
+/**
+ * 评估一张候选海报：清晰度 + 构图损失
+ *
+ * ★ 为什么要惩罚横版源图：卡片是 2:3 竖版。横版图 cover 裁成竖版时，
+ *   左右会被切掉大半（实测 1.41 比例的横图只剩 53% 的画面）——
+ *   即使像素更多、laplacian 更高，裁出来的往往只是「主角的鼻子」。
+ *   所以按「保留画面比例」给清晰度打折，让竖版源图优先。
+ */
+async function evaluatePoster(sharp, url) {
+  const buf = await getBinary(url);
+  const meta = await sharp(buf).metadata();
+  if (!meta.width || !meta.height) throw new Error('无法读取图片尺寸');
+  /*
+   * 先按尺寸刷掉明显的小图/占位图：协会站对「尚未公开」的海报
+   * 会返回 2×2 或 280×400 的占位图（实测）。它们像素就那么多，
+   * 再算 lap 也没意义，而且绝不能赢过真海报。
+   */
+  if (meta.width < 200 || meta.height < 200) {
+    throw new Error(`尺寸过小（${meta.width}×${meta.height}，疑似占位图）`);
+  }
+  const lap = await sharpnessOf(sharp, buf);
+  // 尺寸够大但近乎空白（「NOW PRINTING」类占位图）也拒掉
+  if (lap < POSTER_MIN_ACCEPT_LAP) {
+    throw new Error(`近乎空白（清晰度 ${lap}，疑似占位图）`);
+  }
+  const target = 460 / 613;
+  const aspect = meta.width / meta.height;
+  const kept = aspect >= target ? target / aspect : aspect / target;
+  return {
+    url,
+    buf,
+    lap,
+    width: meta.width,
+    height: meta.height,
+    score: lap * (0.6 + 0.4 * kept),
+  };
+}
+
+/**
+ * 从 CoRich 总页 HTML 取出全部海报候选（按尺寸从大到小）
+ *
+ * ★ 为什么单独抽成函数：总页解析（parseMainPage）与
+ *   --posters-only 的源页重建（candidatesFromSource）都要用它。
+ *   两处各写一份正则，改了一处忘了另一处就会让两条路径选出不同的图。
+ */
+function corichPosterAll(html) {
+  const rank = (u) => (u.includes('/l/') ? 2 : u.includes('/m/') ? 1 : 0);
+  return [
+    ...new Set(
+      [
+        ...html.matchAll(
+          /src="(https:\/\/stage-image\.corich\.jp\/img_stage\/[a-z]+\/\d+\/stage_[^"?]+)"/g,
+        ),
+      ].map((m) => m[1]),
+    ),
+  ]
+    .filter((u) => !/nophoto/.test(u))
+    .sort((a, b) => rank(b) - rank(a));
+}
+
+/**
+ * 协会站海报：显式要 2000×2000 拿原图
+ *
+ * ★ 实测：`w=&h=&t=max` 返回的是缩过的 600×857（竖版）或 600×425（横版），
+ *   而 `w=2000&h=2000&t=max` 会返回 840×1200 / 1200×851 的原图 ——
+ *   清晰度（laplacian）提升 1.4~3 倍。默认参数就是糊的主因。
+ */
+function j25PosterLarge(url) {
+  try {
+    const u = new URL(url);
+    u.searchParams.set('w', '2000');
+    u.searchParams.set('h', '2000');
+    return u.href;
+  } catch {
+    return url;
+  }
+}
+
+/**
+ * 官方站的主视觉候选（og:image + 页面内的大图）
+ *
+ * ★ 为什么不能只看 og:image：官方站的 og:image 是社交分享图，
+ *   实测大多是 1200×630 的横版，裁成 2:3 竖版会切掉大半画面。
+ *   而页面里往往藏着真正的竖版主视觉 —— 例：忍たま長屋的
+ *   `img/gonen02.jpg`（960×1358）、魔法使いの約束的
+ *   `bg_top_sp.png`（749×1092）—— 它们才是该用的海报。
+ *   所以把 og:image 与页面内的候选图都收进来，交给
+ *   evaluatePoster 按「清晰度 × 构图保留率」择优。
+ *
+ * ★ 为什么敢把整页的 <img> 都收进来：这段只在海报被判定为糊时
+ *   才执行（见 refreshPosters），一次抓取里通常只有几张命中；
+ *   而且 evaluatePoster 会把 logo/图标/小图/横版低清图刷掉。
+ *   为控制请求量，候选数上限 20。
+ *
+ * ★ 失败一律返回空数组：官方站改版/防抓是常态，
+ *   不能让它拖垮整轮海报处理。
+ */
+async function officialPosterCandidates(officialUrl) {
+  try {
+    const html = await get(officialUrl);
+    const raw = [];
+    // og:image / twitter:image 优先
+    for (const m of html.matchAll(
+      /<meta[^>]+(?:property|name)=["'](?:og:image|twitter:image)["'][^>]*>/gi,
+    )) {
+      const c = m[0].match(/content=["']([^"']+)["']/i);
+      if (c) raw.push(c[1]);
+    }
+    // 页面内的 <img>：src / data-src / data-lazy-src / data-original / srcset
+    for (const m of html.matchAll(/<img\b[^>]*>/gi)) {
+      const tag = m[0];
+      for (const attr of ['src', 'data-src', 'data-lazy-src', 'data-original']) {
+        const v = tag.match(new RegExp(`\\b${attr}=["']([^"']+)["']`, 'i'));
+        if (v) raw.push(v[1]);
+      }
+      const ss = tag.match(/\bsrcset=["']([^"']+)["']/i);
+      if (ss) {
+        // srcset 里最后一项通常分辨率最高
+        const last = ss[1]
+          .split(',')
+          .map((s) => s.trim().split(/\s+/)[0])
+          .filter(Boolean)
+          .pop();
+        if (last) raw.push(last);
+      }
+    }
+    // 内联背景图（有些站把主视觉做成 CSS 背景）
+    for (const m of html.matchAll(/background(?:-image)?\s*:\s*url\(["']?([^"')]+)["']?\)/gi)) {
+      raw.push(m[1]);
+    }
+    return [
+      ...new Set(
+        raw
+          .map((u) => {
+            try {
+              return new URL(u.replace(/&amp;/g, '&'), officialUrl).href;
+            } catch {
+              return null;
+            }
+          })
+          .filter(Boolean),
+      ),
+    ]
+      .filter((u) => /\.(jpe?g|png|webp)(\?|$)/i.test(u))
+      // 明显不是主视觉的：logo/图标/按钮/横幅/日程/装饰/加载图
+      .filter(
+        (u) =>
+          !/(logo|icon|btn|button|banner|bnr|sprite|spacer|pixel|schedule|header|footer|movie|loading|placeholder|favicon)/i.test(
+            u,
+          ),
+      )
+      .slice(0, 20);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * 从作品来源页重建海报候选（供 --posters-only 使用）
+ *
+ * ★ 为什么 shows.json 里不存图源 URL：它只是抓取过程中的中间量，
+ *   存进数据文件会让每部作品多出几条长 URL，而页面一个都不用。
+ *   需要时从 sourceUrl 现取即可（HTML 有缓存，很便宜）。
+ */
+async function candidatesFromSource(s) {
+  const url = s.sourceUrl;
+  if (!url) return [];
+  try {
+    if (/j25musical\.jp/.test(url)) {
+      const html = await get(url);
+      const cid = first(/showCtsImage\.php\?cid=(\d+)/, html);
+      return cid
+        ? [`https://www.j25musical.jp/showCtsImage.php?cid=${cid}&no=1&w=2000&h=2000&t=max`]
+        : [];
+    }
+    if (/stage\.corich\.jp\/stage_main\//.test(url)) {
+      return corichPosterAll(await get(url));
+    }
+  } catch {
+    /* 源站页取不到就返回空候选，走「无更好来源」分支 */
+  }
+  return [];
+}
+
+/**
+ * 把候选图压成卡片用的 WebP 并落到 outPath
+ *
+ * ★ 为什么先写 .tmp 再 rename，而不是直接 toFile(outPath)：
+ *   Windows 上 libvips 对「刚读过同一路径、又写回该路径」会报
+ *   `unable to open for write / Invalid argument`（实测稳定复现）——
+ *   因为它在文件缓存里还持有那个路径。写临时文件再原子替换绕开了它，
+ *   顺便保证不会留下写坏的半张图。
+ */
+async function writePosterWebp(sharp, buf, outPath) {
+  const tmp = outPath + '.tmp';
+  await sharp(buf)
+    .resize(460, 613, { fit: 'cover', position: 'top' })
+    .webp({ quality: 78 })
+    .toFile(tmp);
+  for (let i = 0; ; i++) {
+    try {
+      fs.renameSync(tmp, outPath);
+      return;
+    } catch (e) {
+      if (i >= 3) {
+        try {
+          fs.unlinkSync(tmp);
+        } catch {
+          /* 临时文件清理失败不影响主流程 */
+        }
+        throw e;
+      }
+      await sleep(300);
+    }
+  }
+}
+
+/**
+ * 下载 / 升级海报，并回填主色
+ *
+ * 全量抓取（main 第 7 步）与 --posters-only 共用这一份逻辑。
+ *
+ * ★ 核心规则：海报按 slug 缓存，但「已存在」不等于「够清楚」——
+ *   先量清晰度，糊的才去比对候选重新选图；候选明显更清楚才换。
+ */
+async function refreshPosters(shows, sharp) {
+  let ok = 0; // 新下载
+  let upgraded = 0; // 旧的糊 → 换成更清楚的
+  let kept = 0; // 已存在且够清楚，沿用
+  let noBetter = 0; // 现图够清楚，只是候选没能明显更好
+  let manual = 0; // 人工确认的海报（跳过清晰度判定）
+  let fail = 0;
+  const fallbackToArt = []; // 源站只有低清 → 改用示意海报
+
+  /*
+   * ★ 人工确认过的海报：直接采用，不参与清晰度判定。
+   *
+   *   为什么需要这份名单：
+   *     ① 有些作品的官方主视觉是大面积渐变的（例如 DEATH NOTE 那张
+   *        蓝底苹果），Laplacian 方差天然就低，会被 POSTER_MIN_LAP
+   *        判成「糊图」而删掉 —— 但它其实是一张好海报；
+   *     ② 而它的官方站又可能被 Cloudflare 挡住，脚本自己抓不到替代图。
+   *   此时只能由人把图放进 public/posters/<slug>.webp 并在
+   *   data/poster-supplements.json 里登记 —— 人工确认过的东西
+   *   不该再让启发式推翻。
+   */
+  const manualFile = path.join(DATA_DIR, 'poster-supplements.json');
+  const manualSlugs = new Set(
+    fs.existsSync(manualFile)
+      ? JSON.parse(fs.readFileSync(manualFile, 'utf8')).slugs ?? []
+      : [],
+  );
+
+  for (const s of shows) {
+    const outName = s.slug + '.webp';
+    const outPath = path.join(POSTER_DIR, outName);
+    const hasStored = fs.existsSync(outPath) && fs.statSync(outPath).size > 2000;
+
+    if (manualSlugs.has(s.slug)) {
+      if (!hasStored) {
+        console.warn(`    ! ${s.slug}：在人工海报名单里，但 public/posters/${outName} 不存在`);
+      } else {
+        s.poster = '/posters/' + outName;
+        const c = await dominantColor(sharp, outPath);
+        if (c) s.accent = c;
+        manual++;
+        continue;
+      }
+    }
+    /*
+     * ★ 用 Buffer 而不是路径喂给 sharp：Windows 上 libvips 会按路径缓存文件，
+     *   紧接着再写回同一路径就会报 `unable to open for write`（实测稳定复现）。
+     *   先自己读进内存就避开了这个路径缓存。
+     */
+    const storedLap = hasStored ? await sharpnessOf(sharp, fs.readFileSync(outPath)) : 0;
+    /*
+     * storedUsable：现图是一张「真图」而不是占位/空白图。
+     * 占位图（如「NOW PRINTING」）虽然文件存在，但不能当海报用 ——
+     * 它不能挡住候选的重新选择，也不能在没候选时继续挂着。
+     */
+    const storedUsable = hasStored && storedLap >= POSTER_MIN_ACCEPT_LAP;
+
+    /*
+     * 够清楚就沿用（幂等 / 断点续跑）。
+     *
+     * ★ 为什么「已存在就跳过」不够：海报是按 slug 命名的缓存，
+     *   而选图逻辑与源站图都会变 —— 早先抓到的糊图会一直留着，
+     *   表现为「代码改了、线上还是糊的」。所以改成按**清晰度**判定：
+     *   够清楚才跳过，糊的走下面的重新选图。
+     *
+     * ★ 已有图也要取色：取色算法会改，而海报文件是缓存的、不会重下 ——
+     *   若跳过已存在的图，改了算法也永远不会生效。只在 accent 仍是
+     *   兜底色、或显式要求时重算，避免每次全量解码 40+ 张图。
+     */
+    if (storedUsable && storedLap >= POSTER_MIN_LAP && !REFRESH_POSTERS) {
+      s.poster = '/posters/' + outName;
+      if (REBUILD_ACCENT || s.accent === DEFAULT_ACCENT) {
+        const c = await dominantColor(sharp, outPath);
+        if (c) s.accent = c;
+      }
+      kept++;
+      continue;
+    }
+
+    // 候选：协会站原图 / CoRich l、m
+    const cands = [...(s.posterCandidates ?? [])];
+    /*
+     * 还糊的话，再去找官方站的主视觉兜底（og:image + 页面内的大图）。
+     *
+     * ★ 为什么放到最后才找：抓官方站是额外请求；而且它的主视觉往往
+     *   是横版，只有协会站/CoRich 都给不出清楚图时才值得一试。
+     */
+    if (s.officialUrl) cands.push(...(await officialPosterCandidates(s.officialUrl)));
+
+    let best = null;
+    const why = [];
+    for (const url of [...new Set(cands)]) {
+      try {
+        const r = await evaluatePoster(sharp, url);
+        if (!best || r.score > best.score) best = r;
+      } catch (e) {
+        why.push(`${url.replace(/^https?:\/\/[^/]+/, '')}: ${e.message}`);
+      }
+      await sleep(200);
+    }
+
+    /*
+     * 换图条件（两个都要满足）：
+     *   ① 候选本身达到「清楚」标准（best.lap >= POSTER_MIN_LAP）——
+     *      否则宁可不用真海报（见下面的示意海报分支）；
+     *   ② 候选明显优于现图（留 10% 余量）——
+     *      候选是 JPEG 源、现图是 q78 WebP，同一张图也会差几个百分点，
+     *      不设余量会每次重跑都白重写一遍。
+     */
+    if (best && best.lap >= POSTER_MIN_LAP && (!storedUsable || best.score > storedLap * 1.1)) {
+      try {
+        /*
+         * 裁成 2:3（海报的标准比例）后压成 WebP。
+         *
+         * ★ 为什么必须在构建期压好：本站是静态导出
+         *   （next.config.ts 的 images.unoptimized = true），没有运行时
+         *   图片优化器。原图有 400KB+ 的 JPEG，40+ 张就是 20MB+，
+         *   首屏会直接卡在下载上。压到 460×613 / q78 后单张约 20~40KB。
+         *
+         * ★ fit: 'cover' + position: 'top'：海报的上半部是标题与角色脸，
+         *   居中被裁会把主视觉切掉一半（实测过几张纵长图）。
+         */
+        await writePosterWebp(sharp, best.buf, outPath);
+        s.poster = '/posters/' + outName;
+        const c = await dominantColor(sharp, outPath);
+        if (c) s.accent = c;
+        if (hasStored) {
+          upgraded++;
+          const host = best.url.replace(/^https?:\/\//, '').split(/[/?]/)[0];
+          console.log(
+            `    ↑ ${s.slug}：清晰度 ${storedLap} → ${best.lap}（${best.width}×${best.height}，${host}）`,
+          );
+        } else {
+          ok++;
+        }
+      } catch (e) {
+        fail++;
+        console.warn(`    ! ${s.slug} 海报失败：${e.message}`);
+      }
+    } else if (storedUsable && storedLap >= POSTER_MIN_LAP) {
+      // 现图本身够清楚，只是候选没能明显更好 → 沿用
+      s.poster = '/posters/' + outName;
+      noBetter++;
+    } else {
+      /*
+       * 源站只有低清图（协会站/CoRich/官方站都没有更清楚的）→
+       * 改用本站生成的示意海报，并把磁盘上的糊图删掉。
+       *
+       * ★ 为什么宁可没有真海报：一张糊海报在网格里比示意海报更糟 ——
+       *   用户看到的是「一张看不清的图」，而不是「本站暂时没有这张图」。
+       *   poster=null 会走 PosterArt 的已知降级路径，视觉上是一致的。
+       */
+      s.poster = null;
+      try {
+        // 不管 hasStored（小文件会被 2000B 阈值判为「不存在」，但仍需清掉）
+        if (fs.existsSync(outPath)) fs.unlinkSync(outPath);
+      } catch {
+        /* 删不掉也不影响（只是部署里多一个没人引用的文件） */
+      }
+      fallbackToArt.push(
+        `${s.slug}（原图清晰度 ${storedLap || 0}，最高候选 ${best ? best.lap : 0}）` +
+          (!best && why.length ? `；候选均不可用：${why.slice(0, 3).join('；')}` : ''),
+      );
+    }
+    await sleep(300);
+  }
+  console.log(
+    `  海报：新下载 ${ok}，糊图升级 ${upgraded}，沿用 ${kept}，无更好来源 ${noBetter}，人工确认 ${manual}，改用示意海报 ${fallbackToArt.length}，失败 ${fail}`,
+  );
+  if (fallbackToArt.length) {
+    console.log(`  ⚠ ${fallbackToArt.length} 张源站只有低清图，已改用示意海报：`);
+    for (const b of fallbackToArt.slice(0, 20)) console.log(`    · ${b}`);
+  }
+}
+
+/**
  * 从海报取主色（返回 #RRGGBB）
  *
  * ★★ 为什么不能用 stats().dominant（实测踩到的坑）★★
@@ -2007,8 +2670,13 @@ function validate({ shows, series, venues }) {
   }
 
   // 中文 == 日文（说明翻译没接上，中文模式下等于没翻译）
+  //
+  // ★ 纯英文/数字标题不算问题：「Paradox Live on Stage -Road to Legend- "RAGE"」
+  //   这类作品本来就没有中文名，中文模式下显示原文才是对的。
+  //   所以允许的字符集要包含双引号、冒号这些英文标题常见符号，
+  //   否则会报一堆假警告（真警告混在里面就没人看了）。
   for (const s of shows) {
-    if (s.title.zh === s.title.ja && !/^[A-Za-z0-9 !&'()+\-.,/]+$/.test(s.title.ja)) {
+    if (s.title.zh === s.title.ja && !/^[A-Za-z0-9 !&'()\-.,/:;"“”]+$/.test(s.title.ja)) {
       warnings.push(`show「${s.slug}」: 中文标题与日文相同（译名表未覆盖 / 翻译失败）`);
     }
   }

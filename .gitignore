@@ -32,5 +32,8 @@ yarn-error.log*
 # 抓取脚本的 HTML 缓存（会话内加速用，见 scripts/scrape.mjs）
 .cache/
 
+# 临时草稿文件（调试/比对用，随手建随手删）
+.tmp-*
+
 # TypeScript 增量编译缓存
 *.tsbuildinfo

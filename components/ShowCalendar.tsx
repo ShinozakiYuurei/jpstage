@@ -206,12 +206,7 @@ export function ShowCalendar({
         date,
         date < today
           ? []
-          : filteredEntries
-              .filter((entry) => entry.startDate <= date && entry.endDate >= date)
-              .map((entry): CalendarEntry => ({
-                ...entry,
-                status: entry.startDate > today ? 'upcoming' : 'now',
-              })),
+          : filteredEntries.filter((entry) => entry.startDate <= date && entry.endDate >= date),
       );
     }
     return byDay;
@@ -341,12 +336,6 @@ export function ShowCalendar({
 
             const dayEntries = entriesByDay.get(date) ?? [];
             const dayShows = groupByShow(dayEntries);
-            const nowCount = dayShows.filter((show) =>
-              show.entries.some((entry) => entry.status === 'now'),
-            ).length;
-            const upcomingCount = dayShows.filter((show) =>
-              show.entries.some((entry) => entry.status === 'upcoming'),
-            ).length;
             const selected = date === selectedDate;
             const isToday = date === today;
             const dayNumber = Number(date.slice(-2));
@@ -354,7 +343,7 @@ export function ShowCalendar({
             const weekday = new Date(Date.UTC(dayYear, dayMonth - 1, dayNumber)).getUTCDay();
 
             return (
-              <div key={date}>
+              <div key={date} className="min-w-0">
                 <button
                   type="button"
                   className={`jp-calendar-day${selected ? ' is-selected' : ''}${isToday ? ' is-today' : ''}${dayEntries.length ? ' has-shows' : ''}`}
@@ -371,34 +360,31 @@ export function ShowCalendar({
                   )}
                   <span className="sr-only">
                     <span className="i18n-zh">
-                      {dayYear}年{dayMonth}月{dayNumber}日，週{WEEKDAYS.zh[weekday]}，{nowCount} 部上演中劇目，{upcomingCount} 部即將開演劇目
+                      {dayYear}年{dayMonth}月{dayNumber}日，週{WEEKDAYS.zh[weekday]}
+                      {dayShows.length ? `，${dayShows.length} 部劇目有演出` : '，沒有演出'}
                     </span>
                     <span className="i18n-ja">
-                      {dayYear}年{dayMonth}月{dayNumber}日（{WEEKDAYS.ja[weekday]}曜日）、上演中 {nowCount} 作品、開幕予定 {upcomingCount} 作品
+                      {dayYear}年{dayMonth}月{dayNumber}日（{WEEKDAYS.ja[weekday]}曜日）
+                      {dayShows.length ? `、${dayShows.length} 作品が上演` : '、公演なし'}
                     </span>
                   </span>
-                  {dayEntries.length > 0 && (
-                    <span className="jp-calendar-dots" aria-hidden>
-                      {nowCount > 0 && <i className="is-now" />}
-                      {upcomingCount > 0 && <i className="is-upcoming" />}
-                      <span>{dayShows.length}</span>
+                  {dayShows.length > 0 && (
+                    <span className="jp-calendar-day__shows" aria-hidden>
+                      {dayShows.slice(0, 3).map((show) => (
+                        <span key={show.slug} className="jp-calendar-day__show">
+                          <span className="i18n-zh">{show.title.zh}</span>
+                          <span className="i18n-ja">{show.title.ja}</span>
+                        </span>
+                      ))}
+                      {dayShows.length > 3 && (
+                        <span className="jp-calendar-day__more">+{dayShows.length - 3}</span>
+                      )}
                     </span>
                   )}
                 </button>
               </div>
             );
           })}
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 border-t border-hairline pt-3 text-xs text-fg-muted">
-          <span className="inline-flex items-center gap-2">
-            <i className="jp-calendar-legend-dot is-now" />
-            <span className="i18n-zh">正在演出</span><span className="i18n-ja">上演中</span>
-          </span>
-          <span className="inline-flex items-center gap-2">
-            <i className="jp-calendar-legend-dot is-upcoming" />
-            <span className="i18n-zh">即将演出</span><span className="i18n-ja">開幕予定</span>
-          </span>
         </div>
       </section>
 
@@ -437,15 +423,6 @@ export function ShowCalendar({
                     >
                       <span className="min-w-0">
                         <span className="mr-2 inline-flex flex-wrap items-center gap-1.5 align-middle">
-                          <span
-                            className={`jp-calendar-status${entry.status === 'now' ? ' is-now' : ' is-upcoming'}`}
-                          >
-                            {entry.status === 'now' ? (
-                              <><span className="i18n-zh">正在演出</span><span className="i18n-ja">上演中</span></>
-                            ) : (
-                              <><span className="i18n-zh">即将演出</span><span className="i18n-ja">開幕予定</span></>
-                            )}
-                          </span>
                           <span className="text-xs text-fg-dim">{formatPeriod(entry.startDate, entry.endDate)}</span>
                         </span>
                         <span className="mt-1 block truncate text-xs text-fg-muted sm:inline sm:pl-1">
@@ -483,8 +460,8 @@ export function ShowCalendar({
           </ul>
         ) : (
           <p className="py-6 text-center text-sm text-fg-muted">
-            <span className="i18n-zh">這天沒有正在演出或即將演出的舞台劇。</span>
-            <span className="i18n-ja">この日に上演中・開幕予定の公演はありません。</span>
+            <span className="i18n-zh">這天沒有舞台劇演出。</span>
+            <span className="i18n-ja">この日に公演はありません。</span>
           </p>
         )}
       </section>

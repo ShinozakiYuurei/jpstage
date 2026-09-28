@@ -2063,59 +2063,32 @@ html[data-lang='ja'] .i18n-zh {
   font-variant-numeric: tabular-nums;
 }
 
-.jp-calendar-dots {
+.jp-calendar-day__shows {
   display: flex;
-  min-height: 0.75rem;
-  align-items: center;
-  justify-content: center;
-  gap: 0.2rem;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0 0.2rem;
   color: var(--jp-fg-muted);
-  font-size: 0.625rem;
-  line-height: 0.75rem;
+  font-size: 0.5625rem;
+  line-height: 1.15;
+}
+
+.jp-calendar-day__show {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.jp-calendar-day__more {
+  color: var(--jp-fg-dim);
   font-variant-numeric: tabular-nums;
-}
-
-.jp-calendar-dots i,
-.jp-calendar-legend-dot {
-  display: inline-block;
-  width: 0.45rem;
-  height: 0.45rem;
-  flex: 0 0 auto;
-  border-radius: 9999px;
-}
-
-.jp-calendar-dots .is-now,
-.jp-calendar-legend-dot.is-now {
-  background: var(--jp-st-now-dot);
-}
-
-.jp-calendar-dots .is-upcoming,
-.jp-calendar-legend-dot.is-upcoming {
-  background: var(--jp-st-soon-dot);
 }
 
 .jp-calendar-details {
   scroll-margin-top: calc(var(--jp-header-h) + 0.75rem);
-}
-
-.jp-calendar-status {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid var(--jp-st-now-border);
-  border-radius: 9999px;
-  padding: 0.125rem 0.5rem;
-  color: var(--jp-st-now-fg);
-  background: var(--jp-st-now-tint);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  line-height: 1.4;
-  white-space: nowrap;
-}
-
-.jp-calendar-status.is-upcoming {
-  border-color: var(--jp-st-soon-border);
-  color: var(--jp-st-soon-fg);
-  background: var(--jp-st-soon-tint);
 }
 
 .jp-calendar-event {
@@ -2141,13 +2114,9 @@ html[data-lang='ja'] .i18n-zh {
     padding-top: 0.35rem;
   }
 
-  .jp-calendar-dots {
-    gap: 0.125rem;
-    font-size: 0.5625rem;
-  }
-
-  .jp-calendar-dots i {
-    width: 0.375rem;
-    height: 0.375rem;
+  .jp-calendar-day__shows {
+    gap: 0.075rem;
+    padding: 0 0.1rem;
+    font-size: 0.5rem;
   }
 }

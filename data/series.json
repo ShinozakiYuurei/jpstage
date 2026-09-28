@@ -98,11 +98,11 @@
   {
     "id": "おしゃべりなアンシーリーコート",
     "name": {
-      "zh": "おしゃべりなアンシーリーコート",
+      "zh": "喋喋不休的安希莉宮廷",
       "ja": "おしゃべりなアンシーリーコート"
     },
     "original": {
-      "zh": "《おしゃべりなアンシーリーコート》",
+      "zh": "《喋喋不休的安希莉宮廷》",
       "ja": "『おしゃべりなアンシーリーコート』"
     },
     "sourceKind": "other"
@@ -228,75 +228,279 @@
     "sourceKind": "other"
   },
   {
-    "id": "kuroshitsuji",
+    "id": "ブルーロック",
     "name": {
-      "zh": "黑執事",
-      "ja": "黒執事"
+      "zh": "藍色監獄",
+      "ja": "ブルーロック"
     },
     "original": {
-      "zh": "《黑執事》",
-      "ja": "『黒執事』"
+      "zh": "《藍色監獄》",
+      "ja": "『ブルーロック』"
     },
     "sourceKind": "manga"
   },
   {
-    "id": "多聞くん今どっち-the-stage",
+    "id": "怪物事変",
     "name": {
-      "zh": "「多聞くん今どっち︕︖」THE STAGE",
-      "ja": "「多聞くん今どっち︕︖」THE STAGE"
+      "zh": "怪物事變",
+      "ja": "怪物事変"
     },
     "original": {
-      "zh": "《「多聞くん今どっち︕︖」THE STAGE》",
-      "ja": "『「多聞くん今どっち︕︖」THE STAGE』"
+      "zh": "《怪物事變》",
+      "ja": "『怪物事変』"
     },
-    "sourceKind": "other"
+    "sourceKind": "manga"
   },
   {
-    "id": "新サクラ大戦-the-stage-誠伝-tsurugi",
+    "id": "新サクラ大戦",
     "name": {
-      "zh": "新サクラ大戦 the Stage ～誠伝 TSURUGI～",
-      "ja": "新サクラ大戦 the Stage ～誠伝 TSURUGI～"
+      "zh": "新櫻花大戰",
+      "ja": "新サクラ大戦"
     },
     "original": {
-      "zh": "《新サクラ大戦 the Stage ～誠伝 TSURUGI～》",
-      "ja": "『新サクラ大戦 the Stage ～誠伝 TSURUGI～』"
+      "zh": "《新櫻花大戰》",
+      "ja": "『新サクラ大戦』"
     },
-    "sourceKind": "other"
+    "sourceKind": "game"
+  },
+  {
+    "id": "ケロロ軍曹",
+    "name": {
+      "zh": "KERORO軍曹",
+      "ja": "ケロロ軍曹"
+    },
+    "original": {
+      "zh": "《KERORO軍曹》",
+      "ja": "『ケロロ軍曹』"
+    },
+    "sourceKind": "manga"
+  },
+  {
+    "id": "多聞くん今どっち",
+    "name": {
+      "zh": "多聞君現在哪邊",
+      "ja": "多聞くん今どっち"
+    },
+    "original": {
+      "zh": "《多聞君現在哪邊》",
+      "ja": "『多聞くん今どっち』"
+    },
+    "sourceKind": "manga"
   },
   {
     "id": "スクールアイドルミュージカル",
     "name": {
-      "zh": "『スクールアイドルミュージカル』",
+      "zh": "學園偶像音樂劇",
+      "ja": "スクールアイドルミュージカル"
+    },
+    "original": {
+      "zh": "《學園偶像音樂劇》",
       "ja": "『スクールアイドルミュージカル』"
     },
+    "sourceKind": "other"
+  },
+  {
+    "id": "薄桜鬼",
+    "name": {
+      "zh": "薄櫻鬼",
+      "ja": "薄桜鬼"
+    },
     "original": {
-      "zh": "《『スクールアイドルミュージカル』》",
-      "ja": "『『スクールアイドルミュージカル』』"
+      "zh": "《薄櫻鬼》",
+      "ja": "『薄桜鬼』"
+    },
+    "sourceKind": "game"
+  },
+  {
+    "id": "吸血鬼すぐ死ぬ",
+    "name": {
+      "zh": "吸血鬼馬上死",
+      "ja": "吸血鬼すぐ死ぬ"
+    },
+    "original": {
+      "zh": "《吸血鬼馬上死》",
+      "ja": "『吸血鬼すぐ死ぬ』"
+    },
+    "sourceKind": "manga"
+  },
+  {
+    "id": "魔法使いの約束",
+    "name": {
+      "zh": "魔法使的約定",
+      "ja": "魔法使いの約束"
+    },
+    "original": {
+      "zh": "《魔法使的約定》",
+      "ja": "『魔法使いの約束』"
+    },
+    "sourceKind": "game"
+  },
+  {
+    "id": "文豪とアルケミスト",
+    "name": {
+      "zh": "文豪與鍊金術師",
+      "ja": "文豪とアルケミスト"
+    },
+    "original": {
+      "zh": "《文豪與鍊金術師》",
+      "ja": "『文豪とアルケミスト』"
+    },
+    "sourceKind": "game"
+  },
+  {
+    "id": "ジョーカー-ゲーム",
+    "name": {
+      "zh": "鬼牌遊戲",
+      "ja": "ジョーカー・ゲーム"
+    },
+    "original": {
+      "zh": "《鬼牌遊戲》",
+      "ja": "『ジョーカー・ゲーム』"
+    },
+    "sourceKind": "novel"
+  },
+  {
+    "id": "幻想水滸伝",
+    "name": {
+      "zh": "幻想水滸傳",
+      "ja": "幻想水滸伝"
+    },
+    "original": {
+      "zh": "《幻想水滸傳》",
+      "ja": "『幻想水滸伝』"
+    },
+    "sourceKind": "game"
+  },
+  {
+    "id": "king-of-prism",
+    "name": {
+      "zh": "KING OF PRISM",
+      "ja": "KING OF PRISM"
+    },
+    "original": {
+      "zh": "《KING OF PRISM》",
+      "ja": "『KING OF PRISM』"
+    },
+    "sourceKind": "anime"
+  },
+  {
+    "id": "18trip",
+    "name": {
+      "zh": "18TRIP",
+      "ja": "18TRIP"
+    },
+    "original": {
+      "zh": "《18TRIP》",
+      "ja": "『18TRIP』"
+    },
+    "sourceKind": "game"
+  },
+  {
+    "id": "えぶりでいホスト",
+    "name": {
+      "zh": "日常男公關",
+      "ja": "えぶりでいホスト"
+    },
+    "original": {
+      "zh": "《日常男公關》",
+      "ja": "『えぶりでいホスト』"
+    },
+    "sourceKind": "manga"
+  },
+  {
+    "id": "ヒプ-カリ",
+    "name": {
+      "zh": "催眠麥克風・カリスマ",
+      "ja": "ヒプ・カリ"
+    },
+    "original": {
+      "zh": "《催眠麥克風・カリスマ》",
+      "ja": "『ヒプ・カリ』"
     },
     "sourceKind": "other"
   },
   {
-    "id": "舞台-怪物事変-東京編",
+    "id": "paradox-live",
     "name": {
-      "zh": "舞台「怪物事変」-東京編-",
-      "ja": "舞台「怪物事変」-東京編-"
+      "zh": "Paradox Live",
+      "ja": "Paradox Live"
     },
     "original": {
-      "zh": "《舞台「怪物事変」-東京編-》",
-      "ja": "『舞台「怪物事変」-東京編-』"
+      "zh": "《Paradox Live》",
+      "ja": "『Paradox Live』"
     },
     "sourceKind": "other"
   },
   {
-    "id": "ペコポン侵略ミュージカル-ケロロ軍曹",
+    "id": "タタラの唄姫",
     "name": {
-      "zh": "ペコポン侵略ミュージカル『ケロロ軍曹』",
-      "ja": "ペコポン侵略ミュージカル『ケロロ軍曹』"
+      "zh": "踏鞴之歌姬",
+      "ja": "タタラの唄姫"
     },
     "original": {
-      "zh": "《ペコポン侵略ミュージカル『ケロロ軍曹』》",
-      "ja": "『ペコポン侵略ミュージカル『ケロロ軍曹』』"
+      "zh": "《踏鞴之歌姬》",
+      "ja": "『タタラの唄姫』"
     },
     "sourceKind": "other"
+  },
+  {
+    "id": "天体戦士サンレッド",
+    "name": {
+      "zh": "天體戰士桑雷德",
+      "ja": "天体戦士サンレッド"
+    },
+    "original": {
+      "zh": "《天體戰士桑雷德》",
+      "ja": "『天体戦士サンレッド』"
+    },
+    "sourceKind": "manga"
+  },
+  {
+    "id": "永久少年",
+    "name": {
+      "zh": "永久少年",
+      "ja": "永久少年"
+    },
+    "original": {
+      "zh": "《永久少年》",
+      "ja": "『永久少年』"
+    },
+    "sourceKind": "anime"
+  },
+  {
+    "id": "haikyuu",
+    "name": {
+      "zh": "排球少年!!",
+      "ja": "ハイキュー!!"
+    },
+    "original": {
+      "zh": "《排球少年!!》",
+      "ja": "『ハイキュー!!』"
+    },
+    "sourceKind": "other"
+  },
+  {
+    "id": "naruto",
+    "name": {
+      "zh": "火影忍者",
+      "ja": "NARUTO"
+    },
+    "original": {
+      "zh": "《火影忍者》",
+      "ja": "『NARUTO』"
+    },
+    "sourceKind": "manga"
+  },
+  {
+    "id": "death-note",
+    "name": {
+      "zh": "死亡筆記本",
+      "ja": "DEATH NOTE"
+    },
+    "original": {
+      "zh": "《死亡筆記本》",
+      "ja": "『DEATH NOTE』"
+    },
+    "sourceKind": "manga"
   }
 ]

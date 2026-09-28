@@ -1,0 +1,11 @@
+{
+  "_meta": {
+    "comment": "人工确认过的海报清单。这些作品的 public/posters/<slug>.webp 由人工放入，抓取时跳过自动选图与清晰度判定。",
+    "rule": "只登记「官方主视觉本身没问题、但脚本自动抓不到或会误判」的作品；能自动抓到的不要放进来（名单越短越好维护）。",
+    "everyEntryMust": [
+      "public/posters/<slug>.webp 已存在（460×613 WebP，由人工从官方主视觉裁切）",
+      "在 sources 里留下图片来源，方便日后复核与替换"
+    ]
+  },
+  "slugs": ["death-note-1168"]
+}
