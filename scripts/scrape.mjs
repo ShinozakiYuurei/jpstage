@@ -2314,7 +2314,7 @@ async function refreshPosters(shows, sharp) {
   const manualFile = path.join(DATA_DIR, 'poster-supplements.json');
   const manualSlugs = new Set(
     fs.existsSync(manualFile)
-      ? JSON.parse(fs.readFileSync(manualFile, 'utf8')).slugs ?? []
+      ? Object.keys(JSON.parse(fs.readFileSync(manualFile, 'utf8')).entries ?? {})
       : [],
   );
 

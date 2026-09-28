@@ -4,8 +4,16 @@
     "rule": "只登记「官方主视觉本身没问题、但脚本自动抓不到或会误判」的作品；能自动抓到的不要放进来（名单越短越好维护）。",
     "everyEntryMust": [
       "public/posters/<slug>.webp 已存在（460×613 WebP，由人工从官方主视觉裁切）",
-      "在 sources 里留下图片来源，方便日后复核与替换"
-    ]
+      "source 写清这张图是从哪来的，方便日后复核与替换"
+    ],
+    "whyNeeded": "两种典型情况：① 官方主视觉是大面积渐变（Laplacian 方差天然低），会被 POSTER_MIN_LAP 误判成糊图；② 官方站被 Cloudflare 挡住、或高清新版只放在传单 PDF 里，脚本自己抓不到。"
   },
-  "slugs": ["death-note-1168"]
+  "entries": {
+    "death-note-1168": {
+      "source": "https://deathnotethemusical.com/ 的官方竖版主视觉（Mobile-poster-image.jpg，1080×1749）。该站被 Cloudflare 挡住，用无头 Chrome 过挑战后在页面内 fetch 取得。"
+    },
+    "shin-tennis-no-oujisama-470035": {
+      "source": "https://www.tennimu.com/tennimu2_2026/assets/pdf/shintennimu6_fly_web.pdf 内嵌的原始海报（1190×1683）。协会站/CoRich 只有 600×857 与 189×267 的软图；PDF 里那张清晰得多。取法：抽出 PDF 里 /Filter /DCTDecode 的图片流，按 460×613（3:4）从底部对齐裁切。"
+    }
+  }
 }
