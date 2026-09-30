@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { ShowBrief, ShowKind, ShowStatus } from '@/lib/types';
-import { KIND_LABEL, SOURCE_LABEL, cityLabel } from '@/lib/i18n';
+import type { ShowBrief, ShowKind, ShowStatus, TicketVendor } from '@/lib/types';
+import { KIND_LABEL, SOURCE_LABEL, VENDOR_LABEL, cityLabel } from '@/lib/i18n';
 import { FilterDropdown, type FilterOption } from './FilterDropdown';
 import { ShowCard } from './ShowCard';
 
@@ -40,9 +40,10 @@ type Filters = {
   city: string[];
   source: string[];
   status: string[];
+  vendor: string[];
 };
 
-const EMPTY: Filters = { kind: [], city: [], source: [], status: [] };
+const EMPTY: Filters = { kind: [], city: [], source: [], status: [], vendor: [] };
 
 /** 排序模式 */
 type Sort = 'start' | 'end' | 'title';
@@ -84,6 +85,7 @@ export function ShowExplorer({
     const byCity = new Map<string, number>();
     const bySource = new Map<string, number>();
     const byStatus = new Map<string, number>();
+    const byVendor = new Map<string, number>();
 
     /** 按除 exclude 之外的所有条件过滤 */
     const pass = (b: ShowBrief, exclude: keyof Filters | null, q: string) => {
@@ -97,6 +99,10 @@ export function ShowExplorer({
       }
       if (exclude !== 'status' && filters.status.length && !filters.status.includes(b.status))
         return false;
+      if (exclude !== 'vendor' && filters.vendor.length) {
+        // 与城市维度同一套 OR 逻辑：命中任一所选平台即算符合
+        if (!b.ticketVendors.some((v) => filters.vendor.includes(v))) return false;
+      }
       if (q && !b.haystack.includes(q)) return false;
       return true;
     };
@@ -112,8 +118,11 @@ export function ShowExplorer({
         bySource.set(s, (bySource.get(s) ?? 0) + 1);
       }
       if (pass(b, 'status', q)) byStatus.set(b.status, (byStatus.get(b.status) ?? 0) + 1);
+      if (pass(b, 'vendor', q)) {
+        for (const v of b.ticketVendors) byVendor.set(v, (byVendor.get(v) ?? 0) + 1);
+      }
     }
-    return { byKind, byCity, bySource, byStatus };
+    return { byKind, byCity, bySource, byStatus, byVendor };
   }, [briefs, query, filters]);
 
   /** 最终结果 */
@@ -124,6 +133,9 @@ export function ShowExplorer({
       if (filters.city.length && !b.cities.some((c) => filters.city.includes(c))) return false;
       if (filters.source.length && !filters.source.includes(sourceOf(b.seriesId))) return false;
       if (filters.status.length && !filters.status.includes(b.status)) return false;
+      if (filters.vendor.length && !b.ticketVendors.some((v) => filters.vendor.includes(v))) {
+        return false;
+      }
       if (q && !b.haystack.includes(q)) return false;
       return true;
     });
@@ -173,6 +185,33 @@ export function ShowExplorer({
     count: facets.byStatus.get(s.value) ?? 0,
   }));
 
+  /**
+   * 售票平台选项
+   *
+   * ★ 为什么按「命中数」降序而不是按固定表序：
+   *   三大平台（lawson / pia / eplus）几乎每部都能买，排在前面；
+   *   而只有一两部的（小平台、场馆自有售票）沉到后面。
+   *   固定表序会让「小众平台」这种只命中 1 部却占了首屏一格。
+   *   —— 与城市维度用同一套排序，理由也相同。
+   *
+   * ★ 为什么排除 other：
+   *   那个桶里混着主办方窗口与场馆自有售票页（实测 7 部），
+   *   用户没法据此判断「去哪儿买」，所以不给它筛选入口；
+   *   详情页上仍然显示那 7 部的真实链接。
+   *
+   * ★ 为什么零命中的平台不显示：
+   *   这是「当前数据集里没有」的诚实表达；硬留着会让人以为本站
+   *   坏了。数据变了它会自动出现 —— 选项是**算出来的**，不是写死的。
+   */
+  const vendorOptions: FilterOption[] = [...facets.byVendor.entries()]
+    .filter(([v]) => v !== 'other')
+    .sort((a, b) => b[1] - a[1])
+    .map(([v, n]) => ({
+      value: v,
+      label: `${VENDOR_LABEL[v as TicketVendor].zh} / ${VENDOR_LABEL[v as TicketVendor].ja}`,
+      count: n,
+    }));
+
   const sortOptions: FilterOption[] = [
     { value: 'start', label: '開演日 ↓ / 開幕日' },
     { value: 'end', label: '結束日 ↓ / 終了日' },
@@ -184,6 +223,7 @@ export function ShowExplorer({
     filters.city.length +
     filters.source.length +
     filters.status.length +
+    filters.vendor.length +
     (query.trim() ? 1 : 0);
 
   const reset = () => {
@@ -253,8 +293,17 @@ export function ShowExplorer({
           )}
         </div>
 
-        {/* 筛选器网格：手机上 2 列，桌面 4~5 列 */}
-        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+        {/*
+         * 筛选器网格：手机上 2 列，平板 3 列，桌面 6 列
+         *
+         * ★ 为什么桌面是 6 而不是 5：
+         *   加了「售票平台」之后一共有 6 个筛选器（类型 / 会场 / 原作 /
+         *   状态 / 售票平台 / 排序）。5 列会让排序单独掉到第二行，
+         *   而排序是最高频的操作之一 —— 让它独占一行等于每次都要多滚一次。
+         *   6 列在 1280px 下每格约 200px，够放下「類型 / 種別」这类标签。
+         *   （实测窄屏仍是 2 列，不受影响。）
+         */}
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
           <FilterDropdown
             label="類型 / 種別"
             placeholder="所有類型"
@@ -286,6 +335,13 @@ export function ShowExplorer({
             />
           )}
 
+          <FilterDropdown
+            label="售票平台 / チケット"
+            placeholder="所有售票处"
+            options={vendorOptions}
+            selected={filters.vendor}
+            onChange={(v) => setFilters((f) => ({ ...f, vendor: v }))}
+          />
           <FilterDropdown
             label="排序 / 並び順"
             placeholder="開演日 ↓ / 開幕日"

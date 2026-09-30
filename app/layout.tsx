@@ -11,6 +11,43 @@ import { SiteFooter } from '@/components/SiteFooter';
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://jpstage.example';
 
 /**
+ * Google Fonts 样式表地址
+ *
+ * ★ 为什么把它抽成常量：它同时被三处引用（预连接注释、加载脚本、
+ *   noscript 兜底），写三遍迟早改漏一处。
+ */
+const FONT_CSS_URL =
+  'https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap';
+
+/**
+ * 字体加载脚本（非阻塞）
+ *
+ * ★★ 为什么不能直接写 <link rel="stylesheet">：它是**渲染阻塞**资源 ——
+ *    浏览器必须先把这份 CSS 下完才肯画第一帧。实测（本机、可达 Google）：
+ *
+ *      直接引入：      FCP 2020ms
+ *      屏蔽该域名后：  FCP  156ms      ← 相差 13 倍
+ *
+ *    更严重的是「不可达」的情形：字体域名被墙 / DNS 被污染时，
+ *    浏览器会一直等连接超时（可达数十秒）才放弃，期间页面**一片空白**。
+ *    对一个中日双语站，这个受众不是假设。
+ *
+ * ★ 为什么用「脚本动态插入」而不是 media="print" + onload 那套：
+ *   后者需要在 JSX 里写字符串形式的 onload 属性，React 不接受
+ *   （它会当成事件处理器，报「期望函数」）。而动态插入的 <link>
+ *   本来就不参与渲染阻塞，效果相同、不依赖 React 的事件系统。
+ *
+ * ★ 代价是字体后到：首屏先用系统字体画出来（PingFang TC / 微软正黑 /
+ *   Hiragino / Yu Gothic…），字体到位后替换。这是 display=swap 的既定行为，
+ *   也是这里**刻意**选择的结果 —— 字体晚到 1 秒远好过白屏 2 秒。
+ *   字体栈里的系统回退本来就排好了，替换前后的观感差距很小。
+ *
+ * ★ noscript 兜底：禁用 JS 时脚本不跑，退回原来的阻塞式引入。
+ *   此时没有「首屏计时」压力，字体完整性优先。
+ */
+const FONT_SCRIPT = `(function(){var l=document.createElement('link');l.rel='stylesheet';l.href=${JSON.stringify(FONT_CSS_URL)};document.head.appendChild(l);})();`;
+
+/**
  * 主题启动脚本（必须内联、必须阻塞）
  *
  * ===== 为什么不能写成元件或外部档 =====
@@ -132,12 +169,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <head>
+        {/*
+         * 字体：**非阻塞**加载（原因见 FONT_SCRIPT 的说明）
+         *
+         * ★ 预连接保留：它让 DNS / TLS 在脚本执行前就开始，
+         *   动态插入的请求因此能立刻发出，不额外损失时间。
+         */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
+        <script dangerouslySetInnerHTML={{ __html: FONT_SCRIPT }} />
+        <noscript>
+          <link rel="stylesheet" href={FONT_CSS_URL} />
+        </noscript>
         {/*
          * 主题启动脚本：必须尽早同步执行，不帶 defer / async。
          * 前面的 theme-color meta 会由它立刻更新，避免地址栏颜色不匹配。
@@ -146,6 +189,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: BOOT_SCRIPT }} />
       </head>
       <body className="min-h-screen">
+        {/*
+         * 跳到主内容（skip link）
+         *
+         * ★ 为什么必须有：顶栏是 sticky 的、每个页面都在，
+         *   键盘用户每进一页都要 Tab 过 logo + 5 个导航项 + 语言 + 主题
+         *   才能碰到正文 —— 8 次 Tab 才能开始读内容。
+         *   这个链接是 body 里**第一个**可聚焦元素，按一次 Tab 就能跳过。
+         *
+         * ★ 为什么默认隐藏、只有 :focus-visible 才显形：
+         *   它只对键盘用户有意义；一直显示在页面左上角
+         *   对鼠标/触摸用户是纯粹的视觉噪音。
+         *   ★ 不能用 display:none 隐藏 —— 那样它无法被聚焦，等于不存在。
+         *     这里用「移出视口 + 聚焦时移回」，元素始终可聚焦。
+         *
+         * ★ z-index 必须高于顶栏（z-50）：否则聚焦后会被顶栏盖住，
+         *   而「焦点被遮挡」本身就是 WCAG 2.2 的失败项（2.4.11）。
+         */}
+        <a href="#main" className="jp-skip-link">
+          <span className="i18n-zh">跳到主內容</span>
+          <span className="i18n-ja">メインコンテンツへ</span>
+        </a>
         {/* 环境光层：固定定位，不参与滚动。
          *
          * ★ 为什么是「三个真实元素」而不是两个伪元素：
@@ -224,7 +288,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
          *   所以内容区的 py-6 是它与顶栏之间的正常视觉间距。
          *   真正需要对齐顶栏的是**锚点跳转**（见 scroll-mt 相关注释）。
          */}
-        <main className="mx-auto max-w-7xl px-4 py-6">
+        {
+          /*
+           * 内容区：padding-top 与顶栏高度对齐。
+           *
+           * ★ 为什么不需要「顶栏高度 + 额外间距」：顶栏是 sticky 而非 fixed，
+           *   它本来就占据文档流的第一屏位置（不像 fixed 会脱离文档流），
+           *   所以内容区的 py-6 是它与顶栏之间的正常视觉间距。
+           *
+           * ★ id="main" 与 tabIndex={-1} 是给上面的 skip link 用的：
+           *   tabIndex={-1} 让「跳到主内容」能真正把焦点移到这里
+           *   （纯靠 href="#main" 时部分浏览器只滚动、不移动焦点，
+           *    于是下一次 Tab 又从顶栏开始 —— 等于没跳）。
+           *
+           * ★ scroll-mt：focus 到这里时浏览器会把它滚到视口顶端，
+           *   而 sticky 顶栏正好盖在那 —— 不留出顶栏高度就会被遮住。
+           */
+        }
+        <main
+          id="main"
+          tabIndex={-1}
+          className="mx-auto max-w-7xl scroll-mt-[var(--jp-header-h)] px-4 py-6"
+        >
           {/* 演示数据提示条：只在数据里还有 source==='sample' 的条目时出现。
               接入真实抓取后自动消失 —— 不需要有人记得回来删这个组件。 */}
           {meta.demo && <DemoNotice />}

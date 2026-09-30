@@ -321,10 +321,17 @@
   --jp-accent: #8b7cff;
   --jp-accent-soft: #a78bfa;
   --jp-accent-glow-rgb: 124 108 255;
-  /* 主按钮渐变两端。★ 粉色主题必须换深一档：按钮上是白字，
-     白字压在 #8B7CFF 上只有 3.4:1，不达 AA。 */
-  --jp-btn-primary-1: #8b7cff;
-  --jp-btn-primary-2: #6d5cf0;
+  /* 主按钮渐变两端。★ 两端都必须是**白字达标**的深色，不能只改暗端：
+     白字压在原来的亮端 #8B7CFF 上只有 3.27:1（实测中心点 3.93:1），
+     远低于 AA 的 4.5:1。
+
+     ★ 还要算上 hover 的 brightness(1.06)：它会再把底色抬亮 6%，
+       所以静止时的余量必须留够 —— 实测
+         #6554D8 → 静止 5.51:1、hover 5.02:1
+         #5B48D0 → 静止 6.40:1、hover 5.89:1
+       两端都留了 0.5 以上的余量。 */
+  --jp-btn-primary-1: #6554d8;
+  --jp-btn-primary-2: #5b48d0;
 
   /* 暗色背景保持柔和平滑；不绘制彩色光斑（见 .jp-aurora 的说明）。 */
   --jp-aurora-base: #111113;
@@ -993,8 +1000,48 @@ html:not([data-theme='sakura']) .jp-aurora > i {
     0 8px 24px -18px var(--jp-bar-outer);
 }
 
-/*
- * 系统级无障碍：用户开了「减少透明度」时，全部退回不透明底。
+/* ============================================================
+   跳到主内容（skip link）
+
+   ★ 定位：fixed + 移出视口上方。不用 display:none / visibility:hidden ——
+     那两个属性会让元素**无法聚焦**，键盘用户永远 Tab 不到它，
+     这个链接就等于没写。移出视口不影响可聚焦性。
+
+   ★ z-index 取 100：顶栏是 z-50，过滤器菜单是 z-60。
+     取 60 会在某些页面上与菜单平级（谁在上面取决于出现顺序），
+     取 100 保证任何页面聚焦时它都在最上层 —— 被顶栏或菜单盖住的
+     焦点是 WCAG 2.2 的失败项（2.4.11 焦点不被遮挡）。
+
+   ★ 配色：用「强调色底 + 画布色字」，两个主题下都实测达标
+     （深色 5.77:1 / 樱粉 5.68:1，均高于 4.5:1）。
+     不用 .jp-btn-primary —— 那套是给 CTA 用的，这里要的是
+     一条朴素的、一看就知道是「跳转」的条。
+   ============================================================ */
+.jp-skip-link {
+  position: fixed;
+  top: -4rem;
+  left: 0.5rem;
+  z-index: 100;
+  border-radius: 0.75rem;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--jp-canvas);
+  background: var(--jp-accent);
+  box-shadow: 0 8px 24px -12px rgb(0 0 0 / 0.6);
+  /* ★ 移动的是 top 而不是 transform：transform 会创建 containing block，
+       而这里只是「上下移一下」，用 top 够了；同时避免与背景滤镜打架。 */
+  transition: top 0.16s ease;
+}
+
+.jp-skip-link:focus-visible {
+  top: 0.5rem;
+  outline: 2px solid var(--jp-canvas);
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   系统级无障碍：用户开了「减少透明度」时，全部退回不透明底。
  * 为什么必须做：玻璃效果依赖背景可见，而该开关的存在正是因为
  * 部分用户（前庭功能障碍 / 低视力）会因半透明层叠而无法阅读。
  */
@@ -1628,6 +1675,56 @@ details > summary::-webkit-details-marker {
 }
 
 /* ============================================================
+   横向溢出提示（导航两侧渐隐）
+
+   ★ 它解决的是上面 .no-scrollbar 的**代价**：
+     滚动条被藏起来之后，窄屏上「还有内容在右边」这件事
+     就完全不可见了（实测 390px：會場 只剩 29% 可见、系列 0%）。
+     渐隐把「被裁掉」变成「看得出来后面还有」。
+
+   ★ 为什么用 mask 而不是盖一层渐变：
+     顶栏是半透明玻璃，身后是页面背景与环境光。盖实色渐变
+     会在玻璃上留下一道可见的色带；mask 是把内容本身渐隐，
+     透出的是顶栏自己的底 —— 两种主题、任何背景光下都自然。
+
+   ★ 属性由 JS 写（见 components/NavLinks.tsx）：
+     只在**真实溢出**且**尚未滚到端点**时存在。
+     滚到端点后对应一侧的渐隐会撤掉，让首/末项完整显示。
+
+   ★ 书写顺序：-webkit- 在前、标准在后（同文件顶部的约定，
+     lightningcss 会把两者当同一属性，写反会让标准属性被丢掉）。
+   ============================================================ */
+nav[data-edge-right='true'] {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 1.5rem), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 1.5rem), transparent);
+}
+
+nav[data-edge-left='true'] {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 1.5rem);
+  mask-image: linear-gradient(to right, transparent, #000 1.5rem);
+}
+
+/* 两侧都溢出（滚到中间）：两条渐隐叠加。
+   ★ 这条必须放在单侧规则**之后** —— 同优先级下后者胜，
+     放前面会被单侧规则覆盖掉一侧。 */
+nav[data-edge-left='true'][data-edge-right='true'] {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 1.5rem,
+    #000 calc(100% - 1.5rem),
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 1.5rem,
+    #000 calc(100% - 1.5rem),
+    transparent
+  );
+}
+
+/* ============================================================
    语义色令牌（Tailwind v4 CSS-first）
 
    ⚠️ 项目用的是 Tailwind v4，它**不读 tailwind.config.mjs**，
@@ -1806,6 +1903,21 @@ html[data-theme='sakura'] .jp-theme-moon {
   color: var(--jp-fg-muted);
   cursor: pointer;
   white-space: nowrap;
+  /*
+   * ★ 触控目标下限：实测这两个按钮是 38×23 与 49×23 ——
+   *   高度差 1px 不达 WCAG 2.2 §2.5.8 的 24×24，
+   *   而「间距例外」也不成立（两个按钮之间只有 2px，
+   *   以按钮中心为圆心、直径 24px 的圆会互相相交）。
+   *
+   *   加 min-height 是最小的修法：不动 padding（那会改变按钮的视觉密度，
+   *   顶栏是挤着排的），只把盒子补到 24px。
+   *   ★ 用 inline-flex 居中：否则文字会贴在上边，
+   *     多出来的 1px 全跑到下方。
+   */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.5rem; /* 24px */
   transition:
     background-color 0.22s ease,
     color 0.22s ease;
@@ -2007,8 +2119,10 @@ html[data-lang='ja'] .i18n-zh {
 
 .jp-calendar-day {
   display: flex;
+  /* ★ 给 .has-shows 的角标做定位上下文 */
+  position: relative;
   width: calc(100% - 4px);
-  min-height: 4.5rem;
+  min-height: 3.25rem;
   margin: 2px;
   flex-direction: column;
   align-items: center;
@@ -2028,6 +2142,34 @@ html[data-lang='ja'] .i18n-zh {
   background: var(--jp-veil);
 }
 
+/*
+ * 「这天有演出」
+ *
+ * ★ 为什么必须补：组件里写了 has-shows 类（ShowCalendar.tsx），
+ *   CSS 里却**没有任何对应规则** —— 它是个死类。
+ *   于是「有演出的日子」和「没演出的日子」在视觉上完全一样，
+ *   唯一的区别是格子里那几行 9px 的小字（手机上还会被截成「美少…」）。
+ *   实测：光看日历分不清哪天有戏，必须一天天点。
+ *
+ * ★ 为什么是右上角的圆点，不是背景色块：
+ *   is-today 用边框、is-selected 用底色的**边框+底**，
+ *   背景再被 has-shows 占掉，三种状态叠在一起就分不清了。
+ *   右上角是格子里唯一恒定空着的位置（数字居中，下方留给剧名）。
+ *
+ * ★ 它不是「只靠颜色」：圆点本身是形状，且屏幕阅读器读的是
+ *   格子里 sr-only 的「N 部劇目有演出」—— 这个圆点是纯装饰。
+ */
+.jp-calendar-day.has-shows::before {
+  content: '';
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  width: 0.3rem;
+  height: 0.3rem;
+  border-radius: 9999px;
+  background: var(--jp-accent);
+}
+
 .jp-calendar-day.is-today {
   border-color: color-mix(in srgb, var(--jp-accent) 55%, var(--jp-hairline));
 }
@@ -2040,7 +2182,19 @@ html[data-lang='ja'] .i18n-zh {
 }
 
 .jp-calendar-today-label {
-  color: var(--jp-accent);
+  /*
+   * ★ 为什么用 --jp-accent-soft 而不是 --jp-accent：
+   *   樱粉主题下 accent 是 #B42362，压在日历的粉色底上只有 **4.45:1** ——
+   *   差 0.05 就破线（10px w700 属普通文本，需 4.5:1）。
+   *   soft 档（樱粉 #A51D58 / 深色 #A78BFA）实测
+   *     樱粉 5.13:1、深色 5.53:1 —— 两个主题都留足余量，
+   *     而且深色那边还顺带把原来的 4.61:1 提到了 5.53:1。
+   *
+   * ★ soft 在两个主题里的方向相反（樱粉更暗、深色更亮），
+   *   这正是它「同一个语义、各自按底色标定」的用意 ——
+   *   不是「浅一点的强调色」，而是「压在底色上仍然达标的强调色」。
+   */
+  color: var(--jp-accent-soft);
   font-size: 0.625rem;
   font-weight: 700;
   line-height: 0.75rem;
@@ -2071,7 +2225,9 @@ html[data-lang='ja'] .i18n-zh {
   gap: 0.1rem;
   padding: 0 0.2rem;
   color: var(--jp-fg-muted);
-  font-size: 0.5625rem;
+  /* ★ 9px（0.5625rem）低于可读下限，提到 10px。
+     再大就装不下三行剧名、格子会明显变高。 */
+  font-size: 0.625rem;
   line-height: 1.15;
 }
 
@@ -2103,20 +2259,45 @@ html[data-lang='ja'] .i18n-zh {
   }
 }
 
+@media (max-width: 639px) {
+  /*
+   * 手机上不显示格内剧名
+   *
+   * ★ 为什么藏掉而不是继续缩小：390px 下七列，每格约 48px，
+   *   剧名只能显示 2~4 个字再被截断（实测「美少…」「王者…」「SPY…」）——
+   *   那不是「信息少一点」，是**完全读不出来**，
+   *   而缩到 8px（原来的 0.5rem）之后连那几个字也糊了。
+   *
+   * ★ 信息并没有丢：右上角圆点标记「这天有戏」，
+   *   点一下下面的列表会给出完整剧名。
+   *   屏幕阅读器读的是 sr-only 的「N 部劇目有演出」，也不受影响
+   *   （剧名本来就标了 aria-hidden）。
+   *
+   * ★ 副产品：格子不用再给剧名留高度，min-height 从 4.5rem 降到 3.25rem，
+   *   手机上整页日历的空旷感明显减轻（原来一个月要滚好几屏全是空格子）。
+   */
+  .jp-calendar-day__shows {
+    display: none;
+  }
+
+  .jp-calendar-blank,
+  .jp-calendar-day {
+    min-height: 3.25rem;
+  }
+
+  .jp-calendar-day {
+    gap: 0;
+    padding-top: 0.35rem;
+  }
+}
+
 @media (max-width: 380px) {
   .jp-calendar-blank,
   .jp-calendar-day {
-    min-height: 4rem;
+    min-height: 3rem;
   }
 
   .jp-calendar-day {
-    gap: 0.125rem;
-    padding-top: 0.35rem;
-  }
-
-  .jp-calendar-day__shows {
-    gap: 0.075rem;
-    padding: 0 0.1rem;
-    font-size: 0.5rem;
+    padding-top: 0.3rem;
   }
 }

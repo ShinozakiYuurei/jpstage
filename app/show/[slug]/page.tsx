@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getShow, allShowSlugs, getSeries, getVenue, getShowsBySeries, toCardData } from '@/lib/data';
 import { hexToChannels } from '@/lib/color';
-import { KIND_LABEL, SOURCE_LABEL, prefLabel, pick } from '@/lib/i18n';
+import { KIND_LABEL, SOURCE_LABEL, VENDOR_LABEL, prefLabel, pick } from '@/lib/i18n';
 import { formatDateWithWeekday, formatPeriod, formatPerformances, relativeDayLabel } from '@/lib/format';
 import { PosterImage } from '@/components/PosterImage';
 import { PosterArt } from '@/components/PosterArt';
@@ -232,7 +232,7 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
              *   本页（钓鱼攻击的常见手法）。noopener 切断这个引用。
              *   noreferrer 则是顺带不把 referrer 传给外站 ——
              *   对本站这种聚合站，不泄露用户来源是合适的默认。 */}
-            {(show.officialUrl || show.ticketUrl) && (
+            {(show.officialUrl || show.ticketChannels.length > 0) && (
               <div className="mt-5 flex flex-wrap gap-2">
                 {show.officialUrl && (
                   <a
@@ -248,20 +248,50 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
                     </span>
                   </a>
                 )}
-                {show.ticketUrl && (
-                  <a
-                    href={show.ticketUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="jp-btn-ghost rounded-full px-4 py-2 text-xs font-semibold"
-                  >
-                    <span className="i18n-zh">購票資訊</span>
-                    <span className="i18n-ja">チケット</span>
-                    <span aria-hidden className="ml-1">
-                      ↗
+                {/*
+                 * 售票平台
+                 *
+                 * ★ 为什么逐个平台给链接、而不是合并成一个「购票资讯」：
+                 *   同一部作品常常同时在三家卖（实测某作品有 lawson / pia /
+                 *   eplus 三个专属页），合并就等于替用户随机挑一家 ——
+                 *   而观众手上往往只有某家的账号。
+                 *
+                 * ★ 为什么渠道名只显示一种语言：
+                 *   这是**链接的标签**，用户认出的是平台品牌本身
+                 *   （两边写「イープラス」），所以与筛选项不同 ——
+                 *   筛选项要并排比较才写两种，标签只需认得出。
+                 *
+                 * ★ 为什么有平台但没有链接时不给链接：
+                 *   那表示源站只登记了「在哪儿买」、没给这部作品的页面。
+                 *   编一个平台首页链接出去等于骗用户（点进去找不到这部戏），
+                 *   所以渲染成纯标签，让它只承担「告诉你有这家」的作用。
+                 */}
+                {show.ticketChannels.map((ch) => {
+                  const label = VENDOR_LABEL[ch.vendor];
+                  return ch.url ? (
+                    <a
+                      key={ch.vendor}
+                      href={ch.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="jp-btn-ghost rounded-full px-3 py-1.5 text-xs font-semibold"
+                    >
+                      <span className="i18n-zh">{label.zh}</span>
+                      <span className="i18n-ja">{label.ja}</span>
+                      <span aria-hidden className="ml-1">
+                        ↗
+                      </span>
+                    </a>
+                  ) : (
+                    <span
+                      key={ch.vendor}
+                      className="rounded-full border border-hairline px-3 py-1.5 text-xs text-fg-soft"
+                    >
+                      <span className="i18n-zh">{label.zh}</span>
+                      <span className="i18n-ja">{label.ja}</span>
                     </span>
-                  </a>
-                )}
+                  );
+                })}
               </div>
             )}
 

@@ -272,6 +272,12 @@ export function getShowBriefs(): ShowBrief[] {
       status: s.status,
       cities,
       venueIds,
+      /*
+       * 售票平台：只在 brief 里带 **id**，不带 url ——
+       * url 只在详情页渲染，而每部作品多带几个长链接会让客户端
+       * bundle 白涨几十 KB（筛选一次也用不上）。
+       */
+      ticketVendors: [...new Set((s.ticketChannels ?? []).map((c) => c.vendor))],
       startDate: s.startDate,
       endDate: s.endDate,
       poster: s.poster,

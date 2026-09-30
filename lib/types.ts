@@ -93,6 +93,49 @@ export interface StaffMember {
   name: string;
 }
 
+/**
+ * 售票平台（票務代理）
+ *
+ * ★ 为什么归一化成固定 id 而不是存源站原文：
+ *   同一家在源站有十几种写法（ローソンチケット / l-tike / ローチケ /
+ *   Boo-Wooチケット），而且同一家占好几个网域。存原文的话筛选器里会
+ *   出现一堆指向同一家、却各自只命中一部分作品的选项 ——
+ *   用户选「ローソン」会漏掉写成「l-tike」的那些。
+ *   id 是**跨源稳定的**：CoRich 写「イープラス」、协会站写「イープラス」
+ *   （或只写一个链接），都落到同一个 id。
+ *   显示名单独放在 lib/i18n.ts 的 VENDOR_LABEL。
+ */
+export type TicketVendor =
+  | 'lawson'
+  | 'pia'
+  | 'eplus'
+  | 'cn'
+  | 'hikosen'
+  | 'asoview'
+  | 'etix'
+  | 'gingeki'
+  | 'seven'
+  | 'tbs'
+  | 'rakuten'
+  | 'shochiku'
+  | 'toho'
+  | 'fany'
+  | 'livepocket'
+  | 'other';
+
+export interface TicketChannel {
+  vendor: TicketVendor;
+  /**
+   * 该平台的**这部作品**购票页；拿不到（只有平台名或只有客服页）时为 null。
+   *
+   * ★ 为什么要区分「有链接」与「只有平台名」：
+   *   源站把客服页（faq.l-tike.com、t.pia.jp/help/）与作品页混在同一栏。
+   *   客服页只是「有问题找谁」，点进去买不到票 —— 把它当购票链接给出去，
+   *   用户会以为本站指错了地方。所以只保留作品页，其余留 null。
+   */
+  url: string | null;
+}
+
 export interface Show {
   slug: string;
   title: LocalizedText;
@@ -127,7 +170,18 @@ export interface Show {
    */
   accent: string;
   officialUrl: string | null;
+  /** 單一購票連結（舊欄位，保留相容；多平台請用 ticketChannels） */
   ticketUrl: string | null;
+  /**
+   * 可购票的平台清单。**允许为空** —— 源站并非每部作品都登记了售票处
+   * （实测 70 部里有 15 部没有），缺了不代表不能买，只代表本站不知道。
+   *
+   * ★ 为什么不合并成一个 ticketUrl：同一部作品常常同时在三家卖
+   *   （实测某作品同时有 lawson / pia / eplus 三个专属链接），
+   *   只留一个会随机丢掉另外两家 —— 而「我在哪买得到」正是
+   *   观众手上只有某家账号时最需要的信息。
+   */
+  ticketChannels: TicketChannel[];
   cast: string[];
   staff: StaffMember[];
   /** 作品紹介。允許純文字，換行用 \n（渲染時轉 <br>） */
@@ -191,6 +245,18 @@ export interface ShowCardData {
 export interface ShowBrief extends ShowCardData {
   seriesId: string;
   seriesName: LocalizedText;
+  /**
+   * 售票平台 id（去重）。筛选在客户端跑，所以必须进 brief。
+   *
+   * ★ 为什么不改成「有票/没票」这种布尔值：
+   *   观众要的是「**我有的那家账号**能不能买」，而不是「有没有票」。
+   *   布尔值只能回答后者，答不了前者 —— 所以原样带上 vendor id，
+   *   筛选时按「命中任一所选平台」判断（与城市维度的 OR 逻辑一致）。
+   *
+   * ★ 为什么只带 id 不带 url：url 只在详情页渲染，列表用不到，
+   *   每部作品多带几个长字符串会让客户端 bundle 白涨几十 KB。
+   */
+  ticketVendors: TicketVendor[];
   /** 搜索用：标题 + 系列 + 出演者 + 会場，全部小写化后拼接 */
   haystack: string;
 }

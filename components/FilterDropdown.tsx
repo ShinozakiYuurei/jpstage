@@ -150,6 +150,37 @@ export function FilterDropdown({
     };
   }, [open, place]);
 
+  /**
+   * ESC 关闭菜单
+   *
+   * ★ 为什么必须补：菜单原来是「只能再点一次按钮、或点背景层」才能关。
+   *   背景层是 aria-hidden 的空 div、不可聚焦 —— 键盘用户
+   *   **没有任何办法**关掉它（只能 Tab 回按钮再按一次，
+   *   而那还要求用户先想到「再按一次会关」）。
+   *   ESC 关浮层是所有平台都有的约定，缺了它等于键盘用户被卡住。
+   *
+   * ★ 为什么关闭后要把焦点还给按钮：
+   *   焦点若停在已经消失的菜单上，浏览器会把它丢回 <body> ——
+   *   下一次 Tab 从页面顶部重新开始，而用户原本只是在筛选区里。
+   *   还给触发按钮，焦点位置与「菜单没开过」时一致。
+   *
+   * ★ 为什么监听 document 而不是菜单本身：
+   *   焦点可能在菜单里，也可能还在按钮上（开了菜单但没 Tab 进去），
+   *   甚至可能在页面别处（开了菜单后点了正文）。
+   *   挂在 document 上才保证「只要菜单开着，按 ESC 就一定关」。
+   */
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      setOpen(false);
+      btnRef.current?.focus();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
+
   const toggle = (v: string) => {
     if (selectionMode === 'single') {
       onChange([v]);

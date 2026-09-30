@@ -1,4 +1,4 @@
-import type { Lang, LocalizedText, ShowKind, SourceKind } from './types';
+import type { Lang, LocalizedText, ShowKind, SourceKind, TicketVendor } from './types';
 
 /**
  * 語言層
@@ -60,6 +60,53 @@ export function pick(t: LocalizedText | undefined, lang: Lang): string {
   if (!t) return '';
   return t[lang] || t.zh || t.ja || '';
 }
+
+/**
+ * 售票平台显示名
+ *
+ * ★ 为什么中日写法不同：
+ *   平台名是**品牌**，日本用户认的是片假名写法（「イープラス」、
+ *   「ローソンチケット」），而中文圈用户更常见的是「易宝乐思」这类
+   音译或直接写英文原名。两种都写出来，中文模式不强迫用户认日文，
+ *   日文模式仍是源站的官方写法。
+ *
+ * ★ 为什么筛选项显示成「中日 / 原文」而详情页只用一种：
+ *   筛选项是**并排比较**的场景（用户要在一堆选项里认出一个），
+ *   两种写法都给出更容易认出来；而详情页的渠道标签空间有限，
+ *   且用户已经知道自己选了哪家，只显示一种即可。
+ *
+ * ★ 为什么键与 scripts/scrape.mjs 的 TICKET_VENDORS 一一对应：
+ *   两边是**同一张表的两个面** —— 抓取那边决定「什么算 pia」，
+ *   这里决定「pia 显示成什么」。若两边漂移，页面上会出现
+ *   一个能筛出作品、却没有任何标签的幽灵平台。
+ */
+export const VENDOR_LABEL: Record<TicketVendor, LocalizedText> = {
+  lawson: { zh: '乐虎（Lawson 售票）', ja: 'ローソンチケット' },
+  pia: { zh: 'Ticket Pia', ja: 'チケットぴあ' },
+  eplus: { zh: 'E-Plus（イープラス）', ja: 'イープラス' },
+  cn: { zh: 'CN Playguide', ja: 'CNプレイガイド' },
+  hikosen: { zh: '飞行船（DAQ!!）', ja: '飛行船オンラインチケット' },
+  asoview: { zh: 'Asoview', ja: 'アソビュー！' },
+  etix: { zh: 'E-Get / e-ティックス', ja: 'イーティックス' },
+  gingeki: { zh: '天王洲银河剧场', ja: '銀河劇場' },
+  seven: { zh: 'Seven Ticket（7-Eleven）', ja: 'セブンチケット' },
+  tbs: { zh: 'TBS Online Ticket', ja: 'TBSオンラインチケット' },
+  rakuten: { zh: 'Rakuten Ticket', ja: '楽天チケット' },
+  shochiku: { zh: 'Ticket Web 松竹', ja: 'チケットWeb松竹' },
+  toho: { zh: '东宝 Navigator', ja: '東宝ナビザーブ' },
+  fany: { zh: 'FANY Ticket', ja: 'FANYチケット' },
+  livepocket: { zh: 'LivePocket', ja: 'LivePocket' },
+  /*
+   * 兜底桶：源站这一栏里混着主办方窗口与场馆自有售票页
+   *（实测：テニミュ製作委員会、いばらき所做センター…），
+   * 它们的共同点是「本站在册的取票处」而不是某一家票务代理。
+   *
+   * ★ 为什么不给它单独一个筛选项：只有 7 部命中，单独列出来
+   *   是一个点进去只有 7 张卡、且用户无法据此判断「去哪儿买」的入口。
+   *   详情页上仍然显示（那是真实信息），只是不进筛选器。
+   */
+  other: { zh: '其他售票处', ja: 'その他のチケット' },
+};
 
 /** 公演類型標籤 */
 export const KIND_LABEL: Record<ShowKind, LocalizedText> = {

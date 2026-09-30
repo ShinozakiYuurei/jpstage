@@ -268,6 +268,179 @@ function first(re, s) {
 }
 
 // ────────────────────────────────────────────────────────────
+// 售票平台（票務代理）
+// ────────────────────────────────────────────────────────────
+
+  /*
+   * ★ 归一化表不是「凭印象列的知名平台」，而是《从 862 个缓存详情页里统计出来的实际写法》（见下方分布）。
+   *   这一点很关键：凭印象写会漏掉大量真实存在、用户天天在用的平台 ——
+   *   飞行船（44 部）、アソビュー！（44 部）、e-ティックス（42 部）
+   *   都不是「众所周知的三大天王」，但在 2.5 次元的票务里占比很高。
+   *
+   * ★ 为什么每个平台都同时给 hosts 与 names：
+   *   链接的网域最可靠（源站把「ローソンチケット」链到 l-tike.com），
+   *   但协会站常只写《纯文本》（没有链接）；反过来，
+   *   同一个平台在 CoRich 上又有多个网域（ローソン一家就占三个：
+   *   l-tike.com / www2.lawsonticket.com / www.tennimu.com）。
+   *   两者取并集，任一命中即认。
+   */
+  const TICKET_VENDORS = [
+    // ── 三大主力（627 + 449 + 419 = 1495 次，占全部条目的绝大多数）──
+    { id: 'lawson', hosts: ['l-tike.com', 'lawsonticket.com', 'l-tike.jp'], names: [/ローソンチケット/, /ローチケ/, /Boo-?Wo[oō]チケット/] },
+    { id: 'pia', hosts: ['pia.jp', 'pia.co.jp', 'pia-get.com'], names: [/チケットぴあ/, /^ぴあ$/, /メ〜?チケ/] },
+    { id: 'eplus', hosts: ['eplus.jp'], names: [/イープラス/] },
+    // ── 中量级（8~77 部不等，都是真实售票窗口）──
+    { id: 'cn', hosts: ['cnplayguide.com', 'cncn.jp'], names: [/CNプレイガイド/] },
+    { id: 'hikosen', hosts: [], names: [/飛行船オンラインチケット/, /^飛行船$/] },
+    { id: 'asoview', hosts: ['urakata.app'], names: [/アソビュー！?/] },
+    { id: 'etix', hosts: ['e-tix.jp', 'e-get.jp'], names: [/イーティックス/, /e-?GET(?:！|!)?/i] },
+    { id: 'gingeki', hosts: ['gingeki.jp'], names: [/銀河劇場/, /天王洲 銀河劇場/] },
+    { id: 'seven', hosts: ['7ticket.jp'], names: [/セブンチケット/] },
+    { id: 'tbs', hosts: ['tbs.co.jp'], names: [/TBS(?:オンラインチケット|チケット)/] },
+    { id: 'rakuten', hosts: ['r-t.jp', 'rakuten.co.jp'], names: [/楽天チケット/] },
+    { id: 'shochiku', hosts: ['ticket-web-shochiku.com'], names: [/チケット\s*[Ww][Ee][Bb]松竹/, /^松竹$/] },
+    { id: 'toho', hosts: ['toho-navi.com'], names: [/東宝ナビザーブ/] },
+    { id: 'fany', hosts: ['fany.lol'], names: [/FANY(?:\s*Ticket)?/i] },
+    { id: 'livepocket', hosts: ['livepocket.jp'], names: [/LivePocket/i] },
+  ];const TICKET_VENDOR_IDS = new Set([...TICKET_VENDORS.map((v) => v.id), 'other']);
+const TICKET_VENDOR_ORDER = new Map(TICKET_VENDORS.map((v, i) => [v.id, i]));
+
+/** 取网域（拿不到返回空串 —— 源站里有 mailto: 与 tel: 这类非 http 链接） */
+function hostOf(url) {
+  try {
+    return new URL(url).hostname.toLowerCase();
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * (链接, 文字) → 售票平台 id；认不出返回 null
+ *
+ * ★★ 为什么**先认文字、后认网域** ★★
+ *   两个不同服务共用同一个网域：CoRich 上「飛行船オンラインチケット」
+ *   与「CNプレイガイド」链的都是 www.cnplayguide.com（实测 44 + 77 次）。
+ *   若按网域先判，所有飞行船都会被算成 CNプレイガイド ——
+ *   筛选器里选「CNプレイガイド」会捞出根本没在 CN 买的作品。
+ *   文字是源站自己写的、且在同一个框里并排出现，歧义远小于网域，
+ *   所以文字优先；网域只用来兜住「只有链接、没有文字」的情况。
+ */
+function ticketVendorOf(href, label) {
+  for (const v of TICKET_VENDORS) {
+    if (v.names.some((re) => re.test(label))) return v.id;
+  }
+  const host = href ? hostOf(href) : '';
+  if (host) {
+    for (const v of TICKET_VENDORS) {
+      if (v.hosts.some((d) => host === d || host.endsWith('.' + d))) return v.id;
+    }
+  }
+  return null;
+}
+
+/**
+ * 这个链接是不是**这部作品**的售票页
+ *
+ * ★ 为什么要判：源站把两类东西混在同一栏里 ——
+ *   ① 作品专属的售票页（l-tike.com/m-tourabu/）；
+ *   ② 各家的**客服入口**（faq.l-tike.com、t.pia.jp/help/、mailto:）。
+ *   ②只是「有问题找谁」，点进去买不到票。若当成购票链接给出去，
+ *   用户会以为本站指错了地方。
+ *   判据是「网域是客服子域」或「路径落在 faq/help/support/contact 下」，
+ *   两者都不像作品页 —— 作品页总是带作品名的 slug。
+ */
+function isShowSpecificTicketUrl(url) {
+  let u;
+  try {
+    u = new URL(url);
+  } catch {
+    return false; // mailto: / tel: 等一律不是购票页
+  }
+  if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
+  if (/^(faq|help|support|contact)\./i.test(u.hostname)) return false;
+  const path = u.pathname.replace(/\/+$/, '');
+  if (!path) return false; // 站点首页
+  if (/^\/(faq|help|support|hc|contact)(\/|$)/i.test(path)) return false;
+  return true;
+}
+
+/** 同一平台只留一条；优先保留**带作品专属链接**的那条 */
+function mergeTicketChannels(entries) {
+  const byVendor = new Map();
+  for (const { vendor, url } of entries) {
+    const prev = byVendor.get(vendor);
+    if (prev === undefined) byVendor.set(vendor, url);
+    else if (prev === null && url) byVendor.set(vendor, url);
+  }
+  return [...byVendor]
+    .sort((a, b) => (TICKET_VENDOR_ORDER.get(a[0]) ?? 99) - (TICKET_VENDOR_ORDER.get(b[0]) ?? 99))
+    .map(([vendor, url]) => ({ vendor, url }));
+}
+
+/** CoRich 作品总页侧栏「チケット取扱い」→ 售票平台 */
+function corichTicketChannels(html) {
+  const block = first(
+    /<div id="sidePG">\s*<p class="header"><span>チケット取扱い<\/span><\/p>\s*<ul class="BlankLink">([\s\S]*?)<\/ul>/,
+    html,
+  );
+  if (!block) return [];
+  const entries = [];
+  for (const m of block.matchAll(/<a href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g)) {
+    const href = m[1].replace(/&amp;/g, '&');
+    const label = textOf(m[2]);
+    entries.push({
+      vendor: ticketVendorOf(href, label) ?? 'other',
+      url: isShowSpecificTicketUrl(href) ? href : null,
+    });
+  }
+  return mergeTicketChannels(entries);
+}
+
+/**
+ * 协会站详情页「チケットに関するお問い合わせ」→ 售票平台
+ *
+ * ★ 为什么只认**认得出的平台**、且一律不带链接：
+ *   这一栏的标题就是「お問い合わせ（咨询）」，里面既有平台名，
+ *   也有「公演事務局」「サンライズプロモーション」这类主办方窗口，
+ *   而链接全是客服页（faq.l-tike.com / support-qa.eplus.jp / mailto:）。
+ *   把主办方窗口当成售票平台、把客服页当成购票链接，都是错的 ——
+ *   所以这里只取「能对上某个平台的**名字**」这一件事。
+ */
+function j25TicketChannels(html) {
+  const block = first(
+    /<h3>チケット(?:・公演)?に関するお問い合わせ(?:先)?[\s\S]*?<\/h3>\s*<p>([\s\S]*?)<\/p>/,
+    html,
+  );
+  if (!block) return [];
+  const entries = [];
+  for (const m of block.matchAll(/<a href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g)) {
+    const vendor = ticketVendorOf(m[1].replace(/&amp;/g, '&'), textOf(m[2]));
+    if (vendor) entries.push({ vendor, url: null });
+  }
+  const text = textOf(block);
+  for (const v of TICKET_VENDORS) {
+    if (v.names.some((re) => re.test(text))) entries.push({ vendor: v.id, url: null });
+  }
+  return mergeTicketChannels(entries);
+}
+
+/**
+ * 两组档期有没有交集
+ *
+ * 只被「跨源认领售票平台」的守卫用到（见双源合并）：
+ * 合并键是标题，而同一部作品会隔年再演，标题完全一样。
+ */
+function runsOverlap(a, b) {
+  for (const x of a) {
+    for (const y of b) {
+      if (x.start <= y.end && y.start <= x.end) return true;
+    }
+  }
+  return false;
+}
+
+
+// ────────────────────────────────────────────────────────────
 // 译名层
 // ────────────────────────────────────────────────────────────
 
@@ -605,6 +778,14 @@ function parseMainPage(html, mainId) {
    */
   data.posterAll = corichPosterAll(html);
   data.posterMain = data.posterAll[0] ?? null;
+
+  /*
+   * 售票平台（侧栏「チケット取扱い」）。
+   *
+   * ★ 为什么在这一层顺手抓、不另开一趟：它与作品数据同页，
+   *   而 get() 有会话缓存 —— 等于零成本。另起一趟要再走一遍全部总页。
+   */
+  data.ticketChannels = corichTicketChannels(html);
 
   return data;
 }
@@ -991,6 +1172,7 @@ function parseJ25Detail(html, j25Id) {
     runs,
     kind,
     source: 'j25',
+    ticketChannels: j25TicketChannels(html),
     sourceUrl: J25_BASE + '/stage/' + j25Id,
   };
 }
@@ -1092,7 +1274,8 @@ async function fetchCategory() {
  * ★ 为什么用 `freeword_type=title`（只搜标题）而不是搜全部：
  *   「全部」会把「出演者名字里含有该 IP 名」的无关公演也捞进来
  *   （实测「刀剣乱舞」搜全部得到 178 条，其中大量是剧团的普通公演）。
- *   只搜标题得到的才是「作品名里带这个 IP」的公演。
+ *   只搜标题得到的才是「作品名里带这个 IP」的公演；本地过滤不区分
+ *   英文字母大小写，避免 Fate 漏掉 2FATE 这类标题。
  */
 async function fetchByKeywords(keywords) {
   const all = [];
@@ -1492,6 +1675,23 @@ async function main() {
       });
       const titleIsSubtitleCombined =
         Boolean(existing.subtitle) && normTitle(`${existing.title}${existing.subtitle}`) === key;
+
+      /*
+       * 售票平台：协会站这一栏常常只有「お問い合わせ」窗口、拿不到平台，
+       * 而 CoRich 同一部作品的侧栏是完整的 —— 所以协会站没有时**回落到
+       * CoRich 那一份**。
+       *
+       * ★★ 为什么回落要加「档期有交集」的守卫 ★★
+       *   合并键是归一化后的标题，而同一部作品会**隔年再演**
+       *   （实测：协会站 2027 年的 NARUTO 舞台，标题与 CoRich 上
+       *   2021 年那一版完全一致）。不加守卫就会把 2021 年的售票平台
+       *   挂到 2027 年的公演上 —— 页面看起来完全正常，只是指向了错的票务。
+       *   档期有交集才认，是同名不同版之间最便宜也最可靠的判据。
+       */
+      const ticketChannels = mergeTicketChannels([
+        ...(j.ticketChannels ?? []),
+        ...(runsOverlap(runs, existing.runs) ? (existing.ticketChannels ?? []) : []),
+      ]);
       works.set(existingKey, {
         ...existing,
         ...j,
@@ -1499,6 +1699,7 @@ async function main() {
         title: titleIsSubtitleCombined ? existing.title : j.title,
         subtitle: existing.subtitle ?? j.subtitle,
         runs,
+        ticketChannels,
         // CoRich 有而協會站沒有的欄位要保住（如 kind 的細分類別）
         kind: j.kind,
         _fromJ25: true,
@@ -1707,6 +1908,7 @@ async function main() {
       accent: DEFAULT_ACCENT,
       officialUrl: w.officialUrl || null,
       ticketUrl: null,
+      ticketChannels: w.ticketChannels ?? [],
       cast: splitNames(w.castRaw),
       staff: parseStaff(w.staffRaw),
       summary: {
@@ -2647,6 +2849,27 @@ function validate({ shows, series, venues }) {
       }
       if (s.startDate && s.startDate !== start) errors.push(`${where}: startDate 与 runs 不一致`);
       if (s.endDate && s.endDate !== end) errors.push(`${where}: endDate 与 runs 不一致`);
+    }
+  }
+
+  /*
+   * 售票平台：只查「形状」不查内容 ——
+   *   它是**参考信息**，缺了不影响公演本身（与 venue.city 同一档），
+   *   但 vendor id 必须是我们认得的那几个：否则筛选器里会出现一个
+   *   点进去什么都没有、也匹配不到任何卡片的幽灵选项。
+   */
+  for (const s of shows) {
+    if (!Array.isArray(s.ticketChannels)) {
+      errors.push('show「' + s.slug + '」: 缺少 ticketChannels');
+      continue;
+    }
+    for (const c of s.ticketChannels) {
+      if (!TICKET_VENDOR_IDS.has(c.vendor)) {
+        errors.push('show「' + s.slug + '」: 未知售票平台「' + c.vendor + '」');
+      }
+      if (c.url && !/^https?:\/\//.test(c.url)) {
+        errors.push('show「' + s.slug + '」: 售票链接不是 http(s)（' + c.url + '）');
+      }
     }
   }
 

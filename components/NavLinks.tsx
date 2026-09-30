@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 
 /**
@@ -52,6 +52,60 @@ function norm(p: string) {
 
 export function NavLinks() {
   const pathname = norm(usePathname() || '/');
+  const navRef = useRef<HTMLElement>(null);
+
+  /**
+   * 横向溢出提示（两侧渐隐）
+   *
+   * ★ 为什么需要它：
+   *   390px 下顶栏要同时容纳 logo + 5 个导航项 + 语言 + 主题，
+   *   而导航需要 231px、实际只分到 164px —— 必须横向滚动。
+   *   但滚动条被 .no-scrollbar 藏了，用户看不出「右边还有内容」，
+   *   实测「會場」只剩 29% 可见、「系列」直接是 0% ——
+   *   表现为「导航少了两项」，而不是「这里可以滑」。
+   *
+   * ★ 为什么用 mask（把内容本身渐隐）而不是盖一层渐变色块：
+   *   顶栏是半透明玻璃，身后是页面背景与环境光。盖实色渐变会在玻璃上
+   *   留下一道可见的色带；mask 透出的是顶栏自己的底，两种主题都自然。
+   *
+   * ★ 为什么由 JS 写 data-edge-*，不交给 CSS：
+   *   CSS 无法判断「是否真的溢出」「是否已滚到端点」。写死渐隐会让
+   *   桌面端（不溢出）也把最后一项淡化；而滚到端点后不撤掉渐隐，
+   *   末项会永远看上去是被裁的。
+   *   属性只在**真实溢出**时存在，所以首屏（属性未设）与桌面端一致，
+   *   不会产生 hydration mismatch。
+   */
+  useEffect(() => {
+    const el = navRef.current;
+    if (!el) return;
+
+    const sync = () => {
+      const max = el.scrollWidth - el.clientWidth;
+      el.dataset.edgeLeft = String(el.scrollLeft > 1);
+      el.dataset.edgeRight = String(el.scrollLeft < max - 1);
+    };
+
+    sync();
+    el.addEventListener('scroll', sync, { passive: true });
+    /* ResizeObserver 监听窗口缩放：导航宽度变了，溢出与否也可能变。
+       ★ 它**看不到**语言切换：标签宽度变了，但导航自身的盒子宽度
+         由 flex 决定、不变，所以它不触发。语言切换必须另听（见下）。 */
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+
+    /* 语言切换：中/日标签长度不同（如「日曆」↔「カレンダー」），
+       切完 scrollWidth 就变了，而上面两个监听都不会触发。
+       不补这一处，切完语言后渐隐会停在旧状态，直到用户滚动才自愈 ——
+       而「要不要滚动」正是这个提示要回答的问题，不能等它自愈。 */
+    const mo = new MutationObserver(sync);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-lang'] });
+
+    return () => {
+      el.removeEventListener('scroll', sync);
+      ro.disconnect();
+      mo.disconnect();
+    };
+  }, []);
 
   /*
    * 详情页的 aria-current 补写（视觉色块由 globals.css 的 :has() 负责）
@@ -86,6 +140,7 @@ export function NavLinks() {
 
   return (
     <nav
+      ref={navRef}
       /*
        * ★ 手机上这一行必须能横向滚动，不能换行
        *

@@ -274,6 +274,32 @@
     "accent": "#a7879d",
     "officialUrl": "https://www.toei-anim.co.jp/precure-dreamstage/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/precure_mt/"
+      },
+      {
+        "vendor": "pia",
+        "url": "https://w.pia.jp/t/star-detective-precure-z/"
+      },
+      {
+        "vendor": "eplus",
+        "url": "https://eplus.jp/precure_dreamstage/"
+      },
+      {
+        "vendor": "hikosen",
+        "url": "https://www.cnplayguide.com/hikosen/?org=HS&PgK=evt&kcd=131936"
+      },
+      {
+        "vendor": "asoview",
+        "url": "https://hikosen.my.urakata.app/channels/09da6962-1a70-4484-8c52-f512c95ca134/products?salesProductTagCode=un2bmvfru6"
+      },
+      {
+        "vendor": "other",
+        "url": "https://www.ibarakiken-bunkacenter.com/ticket/"
+      }
+    ],
     "cast": [],
     "staff": [],
     "summary": {
@@ -310,6 +336,12 @@
     "accent": "#4c2c5c",
     "officialUrl": "https://2026.jujutsukaisen-stage.com/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "pia",
+        "url": "https://w.pia.jp/t/jujutsukaisen-stage/"
+      }
+    ],
     "cast": [
       "佐藤流司",
       "熊沢学",
@@ -552,6 +584,20 @@
     "accent": "#8d8d81",
     "officialUrl": "https://www.marv.jp/special/aoharutetsudou/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/AOHARU7/"
+      },
+      {
+        "vendor": "pia",
+        "url": "https://w.pia.jp/t/AOHARU7/"
+      },
+      {
+        "vendor": "eplus",
+        "url": "https://eplus.jp/AOHARU7/"
+      }
+    ],
     "cast": [
       "永山たかし",
       "KIMERU",
@@ -748,6 +794,20 @@
     "accent": "#ae5f76",
     "officialUrl": "https://www.tennimu.com/tennimu2_2026/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/tennimu/"
+      },
+      {
+        "vendor": "pia",
+        "url": "https://w.pia.jp/t/tennimu/"
+      },
+      {
+        "vendor": "eplus",
+        "url": "https://eplus.jp/tennimu/"
+      }
+    ],
     "cast": [
       "今牧輝琉",
       "高橋怜也",
@@ -993,6 +1053,12 @@
     "accent": "#728fa4",
     "officialUrl": "https://www.marv.jp/special/musical-pandorahearts/index.html",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/m-pandora/"
+      }
+    ],
     "cast": [
       "横山賀三",
       "牧浦乙葵",
@@ -1199,6 +1265,12 @@
     "accent": "#817c5a",
     "officialUrl": "https://tigerandbunny-stage.com/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "eplus",
+        "url": "https://eplus.jp/tigerandbunny-stage/"
+      }
+    ],
     "cast": [
       "spi",
       "塩田一期",
@@ -1449,6 +1521,12 @@
     "accent": "#a38b85",
     "officialUrl": "https://www.tobooks.jp/booklove-musical2026/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/booklove-musical2026/"
+      }
+    ],
     "cast": [
       "池村碧彩（Wキャスト）",
       "西山瑞桜（Wキャスト）",
@@ -1557,6 +1635,12 @@
     "accent": "#9a8179",
     "officialUrl": "https://hypnosismic-stage.com/divisionjamtour/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/s-hypnosismic-divisionjamtour3/"
+      }
+    ],
     "cast": [
       "石川凌雅",
       "松岡拳紀介",
@@ -1664,6 +1748,7 @@
     "accent": "#a68a83",
     "officialUrl": "https://lit.link/ohanashino",
     "ticketUrl": null,
+    "ticketChannels": [],
     "cast": [
       "天川葵葉",
       "みのまる。"
@@ -1730,6 +1815,12 @@
     "accent": "#a17f6f",
     "officialUrl": "https://stage-toukenranbu.jp/stage/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/s-tourabu/"
+      }
+    ],
     "cast": [
       "鈴木拡樹",
       "荒牧慶彦",
@@ -1795,6 +1886,12 @@
     "accent": "#63605c",
     "officialUrl": "https://musical-toukenranbu.jp/pages/winter2025",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/m-tourabu/"
+      }
+    ],
     "cast": [
       "新木宏典",
       "山﨑晶吾",
@@ -1901,6 +1998,24 @@
     "accent": "#747474",
     "officialUrl": "https://www.tennimu.com/4th_2026rikkai_1/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/play/mevent/?mid=782180"
+      },
+      {
+        "vendor": "pia",
+        "url": "https://t.pia.jp/pia/search_all.do?kw=%E3%83%9F%E3%83%A5%E3%83%BC%E3%82%B8%E3%82%AB%E3%83%AB+%E3%83%86%E3%83%8B%E3%82%B9%E3%81%AE%E7%8E%8B%E5%AD%90%E6%A7%98"
+      },
+      {
+        "vendor": "eplus",
+        "url": null
+      },
+      {
+        "vendor": "other",
+        "url": "https://www.kariya-bunka.jp/ticket/"
+      }
+    ],
     "cast": [
       "竹内雄大",
       "寺田友哉",
@@ -2166,6 +2281,20 @@
     "accent": "#4fa070",
     "officialUrl": "https://www.tennimu.com/4th_2026shitenhoji/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/tennimu/"
+      },
+      {
+        "vendor": "pia",
+        "url": "https://w.pia.jp/t/tennimu/"
+      },
+      {
+        "vendor": "eplus",
+        "url": "https://eplus.jp/tennimu/"
+      }
+    ],
     "cast": [
       "竹内雄大",
       "寺田友哉",
@@ -2368,6 +2497,20 @@
     "accent": "#6d5d9e",
     "officialUrl": "https://www.tennimu.com/tennimu2_2025/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/tennimu/"
+      },
+      {
+        "vendor": "pia",
+        "url": "https://w.pia.jp/t/tennimu/"
+      },
+      {
+        "vendor": "eplus",
+        "url": "https://eplus.jp/tennimu/"
+      }
+    ],
     "cast": [
       "今牧輝琉",
       "高橋怜也",
@@ -2445,6 +2588,12 @@
     "accent": "#55626a",
     "officialUrl": "https://hypnosismic-stage.com/202603/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/s-hypnosismic-fpm/"
+      }
+    ],
     "cast": [
       "三井淳平",
       "今井俊斗",
@@ -2545,6 +2694,16 @@
     "accent": "#7d7679",
     "officialUrl": "https://ensemble-stage.jp/2026rk/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/ensemble_stage_2026rk/"
+      },
+      {
+        "vendor": "eplus",
+        "url": "https://eplus.jp/ensta-s-rk2026/"
+      }
+    ],
     "cast": [
       "橋本祥平",
       "高崎翔太",
@@ -2768,6 +2927,16 @@
     "accent": "#7593b4",
     "officialUrl": "https://ensemble-stage.jp/2025bm/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/ensemble-stage-2025bm/"
+      },
+      {
+        "vendor": "eplus",
+        "url": "https://eplus.jp/ensta-s/"
+      }
+    ],
     "cast": [
       "山崎大輝",
       "猪野広樹",
@@ -3016,6 +3185,36 @@
     "accent": "#7f9087",
     "officialUrl": "https://www.tohostage.com/spy-family2/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/bw-ticket/play/spy-family2/"
+      },
+      {
+        "vendor": "pia",
+        "url": "https://w.pia.jp/a/misonoza"
+      },
+      {
+        "vendor": "eplus",
+        "url": "https://eplus.jp/spy-family-h/"
+      },
+      {
+        "vendor": "cn",
+        "url": "https://www.cnplayguide.com/misonoza_cn/"
+      },
+      {
+        "vendor": "etix",
+        "url": "http://www.e-tix.jp/misonoza/index.html"
+      },
+      {
+        "vendor": "toho",
+        "url": "https://tohostage.toho-navi.com/web5ap05y/pt/?G=t0o1h2o1&RTNfld=naviserve&app=s5tt0&RTNent=pe&RTNmyp=pm&RTNtik=pt&k=d28a6f07efb144aef576bee64b227dead0af6837mq4ru82l"
+      },
+      {
+        "vendor": "other",
+        "url": "https://toshima-theatre.jp/ticket/"
+      }
+    ],
     "cast": [
       "森崎ウィン（Wキャスト）",
       "木内健人（Wキャスト）",
@@ -3287,6 +3486,40 @@
     "accent": "#6d8377",
     "officialUrl": "https://www.tohostage.com/spy-family/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/spy_family2025/"
+      },
+      {
+        "vendor": "pia",
+        "url": "https://t.pia.jp/pia/search_all.do?kw=%E5%BE%A1%E5%9C%92%E5%BA%A7"
+      },
+      {
+        "vendor": "eplus",
+        "url": "https://eplus.jp/spy-family-t/"
+      },
+      {
+        "vendor": "cn",
+        "url": "https://www.cnplayguide.com/evt/evtlst.aspx?kcd=123349"
+      },
+      {
+        "vendor": "etix",
+        "url": "https://www.e-tix.jp/misonoza/"
+      },
+      {
+        "vendor": "rakuten",
+        "url": null
+      },
+      {
+        "vendor": "toho",
+        "url": null
+      },
+      {
+        "vendor": "other",
+        "url": "http://kyodotokai.co.jp/tickets/"
+      }
+    ],
     "cast": [
       "森崎ウィン（Wキャスト）",
       "平方元基（Wキャスト）",
@@ -3495,6 +3728,32 @@
     "accent": "#837a8a",
     "officialUrl": "https://www.tohostage.com/kingdom2/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/kingdom2/"
+      },
+      {
+        "vendor": "pia",
+        "url": "https://w.pia.jp/t/kingdom/"
+      },
+      {
+        "vendor": "eplus",
+        "url": "https://eplus.jp/kingdom2-o/"
+      },
+      {
+        "vendor": "etix",
+        "url": "https://hakataza.e-tix.jp/pc/hakataza.html#1006"
+      },
+      {
+        "vendor": "toho",
+        "url": "https://tohostage.toho-navi.com/web5ap05x/pt/?G=t0o1h2o1&RTNfld=naviserve&app=s5tt0&RTNent=pe&RTNmyp=pm&RTNtik=pt&k=152a51db759c78ef305aa595f402c02b91aed0edmq4r1yw6"
+      },
+      {
+        "vendor": "other",
+        "url": "https://www.shinkabukiza.co.jp/perf_info/20260921.html"
+      }
+    ],
     "cast": [
       "三浦宏規（Wキャスト）",
       "高野洸（Wキャスト）",
@@ -3728,6 +3987,16 @@
     "accent": "#7f59b9",
     "officialUrl": "https://www.marv.jp/special/precure_stage/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/precure_stage-3/"
+      },
+      {
+        "vendor": "gingeki",
+        "url": "https://www.s2.e-get.jp/web5ap04a/pt/?G=gi3dy9un&app=s4gt0&RTNfld=gingeki&RTNent=pe&RTNmyp=pm&RTNtik=pt&k=dc1f5e034a2cb24c75cf80549fa65f645356917amgfx9xp0"
+      }
+    ],
     "cast": [
       "田村升吾",
       "滝澤諒",
@@ -3935,6 +4204,12 @@
     "accent": "#728fa3",
     "officialUrl": "https://www.marv.jp/special/musical-pandorahearts/index.html",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/m-pandora/"
+      }
+    ],
     "cast": [
       "横山賀三",
       "竹内夢",
@@ -4109,6 +4384,12 @@
     "accent": "#978652",
     "officialUrl": "https://bocchi.rocks/stage/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "other",
+        "url": "https://bocchi.rocks/stage/"
+      }
+    ],
     "cast": [
       "守乃まも",
       "大竹美希",
@@ -4288,6 +4569,12 @@
     "accent": "#b580a3",
     "officialUrl": "https://stage-tensura.com/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/play/mevent/?mid=690232"
+      }
+    ],
     "cast": [
       "尾木波菜(≠ME)",
       "世良大雅",
@@ -4368,6 +4655,24 @@
     "accent": "#da38a3",
     "officialUrl": "https://prettyguardiansailormoon-stst.com/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/play/mevent/?mid=775497"
+      },
+      {
+        "vendor": "pia",
+        "url": "https://t.pia.jp/pia/events/prettyguardiansailormoon-stst/"
+      },
+      {
+        "vendor": "eplus",
+        "url": "https://eplus.jp/sf/detail/4476980001?P6=001&P1=0402&P59=1"
+      },
+      {
+        "vendor": "etix",
+        "url": "https://www.s2.e-get.jp/web5ap04b/pt/?G=mi11tt25&RTNfld=stst&app=s4gt0&RTNent=pe&RTNmyp=pm&RTNtik=pt&k=95e1845cfade1bcb803a76de79db72e35a0b6313mlxlbgqg"
+      }
+    ],
     "cast": [],
     "staff": [
       {
@@ -4711,6 +5016,12 @@
     "accent": "#52431c",
     "officialUrl": "https://www.musical-nintama.jp/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "eplus",
+        "url": "https://eplus.jp/sf/word/0000075122"
+      }
+    ],
     "cast": [
       "湯本健一",
       "渡辺和貴",
@@ -4833,6 +5144,12 @@
     "accent": "#2d6391",
     "officialUrl": "https://www.musical-nintama.jp/15fes/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "eplus",
+        "url": "https://eplus.jp/musical-nintama/"
+      }
+    ],
     "cast": [
       "湯本健一",
       "渡辺和貴",
@@ -4912,6 +5229,28 @@
     "accent": "#8d7696",
     "officialUrl": "https://kemono-friends-butai.jp/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/kemono-friends-butai/"
+      },
+      {
+        "vendor": "pia",
+        "url": "https://w.pia.jp/t/kemono-friends-butai/"
+      },
+      {
+        "vendor": "eplus",
+        "url": "https://eplus.jp/kemono-friends-butai/"
+      },
+      {
+        "vendor": "cn",
+        "url": "https://www.cnplayguide.com/kfs/ticket"
+      },
+      {
+        "vendor": "fany",
+        "url": "https://ticket.fany.lol/event/detail/9458"
+      }
+    ],
     "cast": [
       "稲場愛香",
       "AOI（WHITESCORPION）",
@@ -5111,6 +5450,12 @@
     "accent": "#9a8174",
     "officialUrl": "https://2fate.com/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "pia",
+        "url": "https://t.pia.jp/pia/event/event.do?eventCd=2600177"
+      }
+    ],
     "cast": [
       "川﨑皇輝",
       "青木滉平",
@@ -5172,6 +5517,12 @@
     "accent": "#7f8fa9",
     "officialUrl": "https://officeendless.com/sp/bluelock_stage/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "other",
+        "url": "https://officeendless.com/sp/bluelock_stage/"
+      }
+    ],
     "cast": [
       "竹中凌平",
       "織部典成",
@@ -5267,6 +5618,20 @@
     "accent": "#9c8aa3",
     "officialUrl": "https://officeendless.com/sp/bluelock_stage/epi-nagi/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/epi-nagi/"
+      },
+      {
+        "vendor": "pia",
+        "url": "https://w.pia.jp/t/bluelock-stage/"
+      },
+      {
+        "vendor": "eplus",
+        "url": "https://eplus.jp/bluelock_stage-renagi/"
+      }
+    ],
     "cast": [
       "佐藤たかみち",
       "菊池修司",
@@ -5360,6 +5725,20 @@
     "accent": "#af868a",
     "officialUrl": "https://www.kemonojihen-stage.com/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/play/mevent/?mid=788595"
+      },
+      {
+        "vendor": "pia",
+        "url": "https://t.pia.jp/pia/event/event.do?eventCd=2621913"
+      },
+      {
+        "vendor": "eplus",
+        "url": "https://eplus.jp/sf/detail/4564520001?P6=001&P1=0402&P59=1"
+      }
+    ],
     "cast": [
       "富本惣昭",
       "和泉宗兵",
@@ -5425,6 +5804,7 @@
     "accent": "#9e8b97",
     "officialUrl": "https://shinsakura-stage.com/",
     "ticketUrl": null,
+    "ticketChannels": [],
     "cast": [
       "太田夢莉",
       "岩田陽葵",
@@ -5552,6 +5932,12 @@
     "accent": "#6c83a0",
     "officialUrl": "https://www.marv.jp/special/keroro-musical/index.html",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": null
+      }
+    ],
     "cast": [
       "田村升吾",
       "大友至恩",
@@ -5632,6 +6018,16 @@
     "accent": "#ae83a4",
     "officialUrl": "https://tamon-stage.com/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "pia",
+        "url": "https://w.pia.jp/t/tamon-stage/"
+      },
+      {
+        "vendor": "gingeki",
+        "url": "https://www.s2.e-get.jp/web5ap04a/pt/?G=gi3dy9un&app=s4gt0&RTNfld=gingeki&RTNent=pe&RTNmyp=pm&RTNtik=pt&k=0a234b4e2b67dd12210221559c00058b752d6f77mq8yi9u1"
+      }
+    ],
     "cast": [
       "楢林奏多",
       "持田悠生",
@@ -5828,6 +6224,7 @@
     "accent": "#a1877d",
     "officialUrl": "https://www.lovelive-anime.jp/musical/",
     "ticketUrl": null,
+    "ticketChannels": [],
     "cast": [
       "堀内まり菜",
       "宮本佳林",
@@ -5973,6 +6370,16 @@
     "accent": "#848a8d",
     "officialUrl": "https://www.marv.jp/special/m-hakuoki/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/m-hakuoki/"
+      },
+      {
+        "vendor": "gingeki",
+        "url": null
+      }
+    ],
     "cast": [
       "木村聖哉",
       "百名ヒロキ",
@@ -6159,6 +6566,12 @@
     "accent": "#d40016",
     "officialUrl": "https://www.marv.jp/special/sugushinu-stage/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/play/mevent/?mid=681899"
+      }
+    ],
     "cast": [
       "山本一慶",
       "鈴木裕樹",
@@ -6380,6 +6793,16 @@
     "accent": "#8a86b9",
     "officialUrl": "https://mahoyaku-stage.com/ffy_mfts_part2",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "pia",
+        "url": "https://w.pia.jp/t/mahoyaku-stage-ffymfts2/"
+      },
+      {
+        "vendor": "gingeki",
+        "url": "https://www.s2.e-get.jp/web5ap04a/pt/?G=gi3dy9un&app=s4gt0&RTNfld=gingeki&RTNent=pe&RTNmyp=pm&RTNtik=pt&k=8cdd71074621bf5ba45a3fdc4741a1140863069ammmvvbzx"
+      }
+    ],
     "cast": [
       "伊勢大貴",
       "北川尚弥",
@@ -6643,6 +7066,16 @@
     "accent": "#8a8484",
     "officialUrl": "https://mahoyaku-stage.com/ffy_mfts_part1",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "pia",
+        "url": "https://t.pia.jp/pia/search_all.do?kw=%E9%AD%94%E6%B3%95%E4%BD%BF%E3%81%84%E3%81%AE%E7%B4%84%E6%9D%9F"
+      },
+      {
+        "vendor": "gingeki",
+        "url": "https://www.s2.e-get.jp/web5ap04a/pt/?G=gi3dy9un&app=s4gt0&RTNfld=gingeki&RTNent=pe&RTNmyp=pm&RTNtik=pt&k=0a239c8f26a3468749ba9470722cc52b69fb6115mcomc89k"
+      }
+    ],
     "cast": [
       "伊勢大貴",
       "北川尚弥",
@@ -6903,6 +7336,12 @@
     "accent": "#a28b82",
     "officialUrl": "http://bunal-butai.com",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "eplus",
+        "url": "https://eplus.jp/sf/detail/4598160001?P6=981&P1=0402&P10=10&P59=1"
+      }
+    ],
     "cast": [
       "平野良",
       "陳内将",
@@ -6994,6 +7433,24 @@
     "accent": "#948f8e",
     "officialUrl": "https://bunal-butai.com/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/bunal9/"
+      },
+      {
+        "vendor": "pia",
+        "url": null
+      },
+      {
+        "vendor": "eplus",
+        "url": "https://eplus.jp/bunal9/"
+      },
+      {
+        "vendor": "gingeki",
+        "url": "https://www.s2.e-get.jp/web5ap04b/pt/?G=gi3dy9un&app=s4gt0&RTNfld=gingeki&RTNent=pe&RTNmyp=pm&RTNtik=pt&k=ac774270aefa31118cbfb80cc665e2f48dfa1056mkgl9muq"
+      }
+    ],
     "cast": [
       "泰江和明",
       "反橋宗一郎",
@@ -7092,6 +7549,16 @@
     "accent": "#5a698c",
     "officialUrl": "https://www.marv.jp/special/jg-stage/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": "https://l-tike.com/jg-stage/"
+      },
+      {
+        "vendor": "gingeki",
+        "url": "https://www.s2.e-get.jp/web5ap04b/pt/?G=gi3dy9un&app=s4gt0&RTNfld=gingeki&RTNent=pe&RTNmyp=pm&RTNtik=pt&k=6ac0bfed2cd5c29e56061e4574769631e38cdc54mfeq7uor"
+      }
+    ],
     "cast": [
       "本田礼生",
       "橋本真一",
@@ -7274,6 +7741,12 @@
     "accent": "#788ecf",
     "officialUrl": "https://suikoden-stage.com/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "eplus",
+        "url": "https://eplus.jp/suikoden-stage-hp/"
+      }
+    ],
     "cast": [
       "岡村直樹",
       "和田琢磨",
@@ -7361,6 +7834,12 @@
     "accent": "#908dac",
     "officialUrl": "https://kinpri-stage.com/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "pia",
+        "url": "https://w.pia.jp/t/kinpri-stage/"
+      }
+    ],
     "cast": [
       "田村升吾",
       "横井翔二郎",
@@ -7422,6 +7901,12 @@
     "accent": "#909093",
     "officialUrl": "https://omotenashi-stage.com/2026re/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "pia",
+        "url": "https://w.pia.jp/t/omotenashi-stage/"
+      }
+    ],
     "cast": [
       "坪倉康晴",
       "中山咲月",
@@ -7638,6 +8123,12 @@
     "accent": "#b58296",
     "officialUrl": "https://everydayhost-musical.com/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "pia",
+        "url": "https://t.pia.jp/pia/event/event.do?eventCd=2628505"
+      }
+    ],
     "cast": [
       "宮崎湧",
       "長谷川幹",
@@ -7866,6 +8357,7 @@
     "accent": "#9e8d83",
     "officialUrl": "https://www.musical-nintama.jp/nagaya-2/#wrapper",
     "ticketUrl": null,
+    "ticketChannels": [],
     "cast": [],
     "staff": [],
     "summary": {
@@ -7901,6 +8393,7 @@
     "accent": "#866662",
     "officialUrl": "https://hypnosismic-stage.com/stylewars2026/",
     "ticketUrl": null,
+    "ticketChannels": [],
     "cast": [],
     "staff": [],
     "summary": {
@@ -7935,6 +8428,12 @@
     "accent": "#db1010",
     "officialUrl": "https://paradoxlive-stage.jp/rage/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "pia",
+        "url": null
+      }
+    ],
     "cast": [],
     "staff": [],
     "summary": {
@@ -7969,6 +8468,12 @@
     "accent": "#bb7f97",
     "officialUrl": "https://hikosen.co.jp/tatarano_utahime/202610_kagurabarai/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "eplus",
+        "url": null
+      }
+    ],
     "cast": [],
     "staff": [],
     "summary": {
@@ -8003,6 +8508,7 @@
     "accent": "#6a5c63",
     "officialUrl": "https://hypnosismic-stage.com/battleofpride2026/",
     "ticketUrl": null,
+    "ticketChannels": [],
     "cast": [],
     "staff": [],
     "summary": {
@@ -8052,6 +8558,12 @@
     "accent": "#815c2d",
     "officialUrl": "https://musical-toukenranbu.jp/pages/autumn2026",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": null
+      }
+    ],
     "cast": [],
     "staff": [],
     "summary": {
@@ -8087,6 +8599,12 @@
     "accent": "#5091bd",
     "officialUrl": "https://toukenranbu-iceblade.jp/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": null
+      }
+    ],
     "cast": [],
     "staff": [],
     "summary": {
@@ -8121,6 +8639,12 @@
     "accent": "#c18158",
     "officialUrl": "https://www.event-td.com/sunredstage/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": null
+      }
+    ],
     "cast": [],
     "staff": [],
     "summary": {
@@ -8155,6 +8679,7 @@
     "accent": "#6b46e5",
     "officialUrl": "https://sheeta.jp/doramabutaietabo/",
     "ticketUrl": null,
+    "ticketChannels": [],
     "cast": [],
     "staff": [],
     "summary": {
@@ -8189,6 +8714,7 @@
     "accent": "#bd7f8d",
     "officialUrl": "https://kemono-friends-butai.jp/",
     "ticketUrl": null,
+    "ticketChannels": [],
     "cast": [],
     "staff": [],
     "summary": {
@@ -8223,6 +8749,7 @@
     "accent": "#5d70a3",
     "officialUrl": "https://mahoyaku-stage.com/orchestra3",
     "ticketUrl": null,
+    "ticketChannels": [],
     "cast": [],
     "staff": [],
     "summary": {
@@ -8292,6 +8819,12 @@
     "accent": "#875d4c",
     "officialUrl": "https://musical-toukenranbu.jp/pages/shinkenranbusai2026",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "lawson",
+        "url": null
+      }
+    ],
     "cast": [],
     "staff": [],
     "summary": {
@@ -8331,6 +8864,7 @@
     "accent": "#ad83a9",
     "officialUrl": "https://www.marv.jp/special/precure_stage/",
     "ticketUrl": null,
+    "ticketChannels": [],
     "cast": [],
     "staff": [],
     "summary": {
@@ -8370,6 +8904,12 @@
     "accent": "#a77c4d",
     "officialUrl": "https://www.gekidan-haikyu.com/stage2026/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "pia",
+        "url": null
+      }
+    ],
     "cast": [],
     "staff": [],
     "summary": {
@@ -8404,6 +8944,12 @@
     "accent": "#8e8ea1",
     "officialUrl": "https://kinpri-stage.com/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "pia",
+        "url": null
+      }
+    ],
     "cast": [],
     "staff": [],
     "summary": {
@@ -8443,6 +8989,12 @@
     "accent": "#919090",
     "officialUrl": "https://omotenashi-stage.com/2027dl/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "pia",
+        "url": null
+      }
+    ],
     "cast": [],
     "staff": [],
     "summary": {
@@ -8497,6 +9049,7 @@
     "accent": "#888faf",
     "officialUrl": "https://www.tennimu.com/4th_2027rikkai_2/",
     "ticketUrl": null,
+    "ticketChannels": [],
     "cast": [],
     "staff": [],
     "summary": {
@@ -8531,6 +9084,7 @@
     "accent": "#80663c",
     "officialUrl": "https://naruto-ninjashow.com/",
     "ticketUrl": null,
+    "ticketChannels": [],
     "cast": [],
     "staff": [],
     "summary": {
@@ -8570,6 +9124,7 @@
     "accent": "#5a698c",
     "officialUrl": "https://www.marv.jp/special/jg-stage/",
     "ticketUrl": null,
+    "ticketChannels": [],
     "cast": [],
     "staff": [],
     "summary": {
@@ -8604,6 +9159,12 @@
     "accent": "#a38995",
     "officialUrl": "https://shinsakura.scissors-blitz.com/",
     "ticketUrl": null,
+    "ticketChannels": [
+      {
+        "vendor": "pia",
+        "url": null
+      }
+    ],
     "cast": [],
     "staff": [],
     "summary": {
@@ -8638,6 +9199,7 @@
     "accent": "#334a5f",
     "officialUrl": "https://deathnotethemusical.com/",
     "ticketUrl": null,
+    "ticketChannels": [],
     "cast": [],
     "staff": [],
     "summary": {
@@ -8677,6 +9239,7 @@
     "accent": "#738fd3",
     "officialUrl": "https://suikoden-stage.com/",
     "ticketUrl": null,
+    "ticketChannels": [],
     "cast": [],
     "staff": [],
     "summary": {
