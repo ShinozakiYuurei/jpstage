@@ -49,6 +49,29 @@
 #
 #  改成独立文件后：内容原样送过去，参数走命令行，零嵌套转义。
 #  附带好处是这些脚本能被单独审查与单独测试。
+# =======================================================================
+#  * SITE_ROOT 为什么是 /home/web/jpstage（宿主机视角）
+# =======================================================================
+#
+#   nginx 跑在**容器**里（docker-compose 的 nginx 服务），而站点配置
+#   写的是 root /var/www/jpstage —— 那是**容器内**的路径。
+#   两者不是冲突，是同一份数据的两个视角：
+#     宿主机 /home/web/jpstage  --bind mount-->  容器 /var/www/jpstage
+#   挂载声明在 /home/web/docker-compose.yml：
+#     - ./jpstage:/var/www/jpstage
+#   实测两边同一文件 inode 相同（stat -c %i），确认是 bind mount。
+#
+#   * 推论（两条，别再当成两套路径去「对齐」）：
+#     (1) 部署脚本必须在**宿主机**路径写：/home/web/jpstage。
+#         写进容器内的 /var/www/jpstage 会落到容器的可写层，
+#         容器重建即丢失，且宿主机侧看不到 —— 站点仍是旧版。
+#     (2) 看到 nginx 配的 root 路径「在宿主机不存在」是**正常的**，
+#         不要据此判断配置坏了。判断配置是否正确，要看挂载在不在：
+#           docker inspect nginx   (看 .Mounts 里 .Source -> .Destination)
+#         挂载在，两个路径就是通的。
+#
+#   ! 这条曾经被误判过一次：在宿主机上 ls /var/www/jpstage 发现「不存在」，
+#   就得出「nginx root 指向空目录、部署写错地方」的结论 —— 实际完全正常。
 set -euo pipefail
 
 VPS="${VPS_ALIAS:-伤心的云-HK}"
