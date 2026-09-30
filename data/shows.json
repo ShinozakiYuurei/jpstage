@@ -745,7 +745,7 @@
       }
     ],
     "poster": "/posters/shin-tennis-no-oujisama-470035.webp",
-    "accent": "#ca5c74",
+    "accent": "#ae5f76",
     "officialUrl": "https://www.tennimu.com/tennimu2_2026/",
     "ticketUrl": null,
     "cast": [
@@ -3461,38 +3461,6 @@
     "sourceUrl": "https://stage.corich.jp/stage_main/372790"
   },
   {
-    "slug": "kingdom-410852",
-    "title": {
-      "zh": "DANCE 王者天下 OSAKA 2026",
-      "ja": "DANCE KINGDOM OSAKA 2026"
-    },
-    "seriesId": "kingdom",
-    "company": "エイベックス・エンタテインメント",
-    "kind": "stage",
-    "startDate": "2026-02-28",
-    "endDate": "2026-03-01",
-    "runs": [
-      {
-        "venueId": "v3225",
-        "startDate": "2026-02-28",
-        "endDate": "2026-03-01",
-        "performances": null
-      }
-    ],
-    "poster": "/posters/kingdom-410852.webp",
-    "accent": "#5672a6",
-    "officialUrl": "https://dancemaster.avex.jp/event/dk_osaka/",
-    "ticketUrl": null,
-    "cast": [],
-    "staff": [],
-    "summary": {
-      "zh": "地區最大規模的舞蹈活動「DANCE KINGDOM」，既是日常課程成果的發表場合，也是透過舞蹈創造感動的場域——讓人體會努力的重要與成就感、與夥伴共享的感動，以及表現自我的樂趣。\n這裡有著平常課堂體驗不到的各種刺激。\n站上真實舞台的感動與興奮無可取代，透過在舞台上跳舞所獲得的成長與技能提升更是無可估量。\nDANCE KINGDOM 不僅能成為平日上課的動力，也蘊藏著為日常生活帶來巨大變化的可能性。\n本次主題是「SIGNAL」。\n本屆是第16屆舉辦，因此將「16」看成字母的「I」與「G」，定為「SIGNAL」。\n這個主題蘊含著暗號、訊號、契機之意，期盼在 DANCE KINGDOM 的經驗，能成為每位演出者邁向下一步的契機。\n此外，主視覺以第1屆為基礎，加入現代化標誌等進行品牌重塑，在繼承過往歷程的同時，營造全新的世界觀。\n衷心期待各位在舞台上展現自我、充滿力量的表演。\n「Color the Future with Us」\n培育孩子們的未來。從 avex 的舞蹈開始。\nDANCE KINGDOM 營運團隊一同",
-      "ja": "地域最大級のダンスイベント「DANCE KINGDOM」は、日々のレッスンの成果発表の場でありながら、努力の大切さと達成感、それを仲間と分かち合う感動、自分を表現する楽しさなど、ダンスを通して感動を作る創造の場です。\n\n普段のレッスンでは体験できない、様々な刺激があるでしょう。\n生のステージに立つ感動や興奮に勝るものはなく、ステージで踊ることによって得られる成長やスキルアップは計り知れません。\n普段のレッスンのモチベーションだけではなく、日常にも大きな変化をもたらす可能性を秘めているのがDANCE KINGDOMです。\n\nそして、今回のテーマは「SIGNAL」。\n\n今回は、16回目の開催となるので、「16」をアルファベットの「I」と「G」に見立て、「SIGNAL」にしました。\nこのテーマには、合図・信号・きっかけという意味が込められており、DANCE KINGDOMでの経験が出演者一人ひとりにとって、新たなステップアップのきっかけとなることを願っています。\n\nさらに、メインビジュアルについても第1回のものをベースに、近代的なロゴなどを取り入れリブランディングを行い、これまでの歩みを継承しながら新たな世界観を演出します。\n\nステージで自分らしく力強くパフォーマンスする皆様の姿を心より楽しみにしております。\n\n「Color the Future with Us」\n子どもたちの未来を育てる。avexのダンスから。\n\nDANCE KINGDOM　運営スタッフ一同"
-    },
-    "source": "corich",
-    "sourceUrl": "https://stage.corich.jp/stage_main/410852"
-  },
-  {
     "slug": "kingdom-449516",
     "title": {
       "zh": "王者天下Ⅱ -継承-",
@@ -5119,6 +5087,54 @@
     },
     "source": "corich",
     "sourceUrl": "https://stage.corich.jp/stage_main/403865"
+  },
+  {
+    "slug": "2fate-二つの心と一つの夢-412445",
+    "title": {
+      "zh": "2FATE：兩顆心與一個夢",
+      "ja": "2FATE～二つの心と一つの夢～"
+    },
+    "seriesId": "2fate-二つの心と一つの夢",
+    "company": "音楽劇『2FATE～二つの心と一つの夢～』（エイベックス・ライヴ・クリエイティヴ／クオーレ／サンライズプロモーション）",
+    "kind": "stage",
+    "startDate": "2026-02-21",
+    "endDate": "2026-02-28",
+    "runs": [
+      {
+        "venueId": "v8747",
+        "startDate": "2026-02-21",
+        "endDate": "2026-02-28",
+        "performances": 8
+      }
+    ],
+    "poster": "/posters/2fate-二つの心と一つの夢-412445.webp",
+    "accent": "#9a8174",
+    "officialUrl": "https://2fate.com/",
+    "ticketUrl": null,
+    "cast": [
+      "川﨑皇輝",
+      "青木滉平",
+      "田村海琉",
+      "西銘駿",
+      "白又敦",
+      "藤浦功一",
+      "大林素子"
+    ],
+    "staff": [
+      {
+        "role": {
+          "zh": "劇作",
+          "ja": "劇作"
+        },
+        "name": "ヨリコジュン"
+      }
+    ],
+    "summary": {
+      "zh": "改編自導演兼編劇ヨリコジュン的獲獎短片《2FATE》。罹患重症心臟病的設計師佐藤健一接受移植手術後，聽見捐贈者山田真的聲音，並開始夢見真在舞台上歌唱。真以幽靈之姿現身，請健一替他完成登台演出的心願；在真家人的支持下，健一踏上歌唱舞台，兩人的生命與夢想也因此交會。",
+      "ja": "ヨリコジュンが監督・脚本・撮影・編集・音楽を務め\nN.Y、ロンドン、パリ、フィレンツェなど世界の映画祭で称賛された短編映画「2FATE」。\n2026年2月、ストーリーをリメイクし音楽劇として上演！\n\n本作は、ベストセラーSF小説「銀河英雄伝説」舞台シリーズやジョン・キャメロン・ミッチェル主演『HEDWIG AND ANGRY INCH SPECIAL SHOW』など、これまで多くの舞台作品の脚本・演出・映像を手掛けてきたヨリコジュンが、2022年に監督・脚本・撮影・編集・音楽を担当し制作され、同年のフランスの映画祭パリフィルムアワードにて、「最優秀ドラマ賞」を受賞した短編映画「2FATE」の設定を、舞台出演者に合わせて大幅に自ら特別にリメイクして、音楽劇として作り上げられます。\n\n映画で描かれた心臓移植によって出逢った二つの命が、一つの目標に向かう姿はそのままに、登場人物を男性に変更し、二人の友情を中心に、彼らの成長を見守る様子も描かれます。そして、多彩なジャンルの楽曲演奏を得意とする大嶋吾郎が奏でる音楽により物語の彩りをさらに深めます。\n\n類まれなる才能を持つ希代のクリエーターとして注目されるヨリコジュンが作り出す、観劇者の心をつかむかのような映像美術を駆使した舞台クリエイティブ、大嶋吾郎が奏でる多彩な音楽、川﨑皇輝ら登場人物に息吹を吹き込む実力派俳優陣による、舞台上での化学反応にご期待ください。\n\n🔳STORY\n広告代理店で働く若手デザイナー佐藤健一（＝川﨑皇輝）は、重い心臓病で移植手術を受ける。手術後、意識が朦朧とする中で「俺の心臓は君の中にある」と語りかける青年・山田真（＝青木滉平）の声を聞く。\n\n目覚めてからは真がステージで歌う夢を見るようになり、やがて真の幽霊が現れ「夢を叶えてくれないなら心臓を返して」と迫る。健一は自分の中に宿る変化を感じつつ、真の願いを継ぐ決意を固める。\n\n真の父・山田剛（＝藤浦功一）の音楽教室でレッスンを受け、真の弟・海斗（＝田村海琉）のサポートもあり、初舞台として病院で真の歌を披露し成功し、多くの協力を得て大規模ライブイベントへの出演が決まる・・・。"
+    },
+    "source": "corich",
+    "sourceUrl": "https://stage.corich.jp/stage_main/412445"
   },
   {
     "slug": "ブルーロック-466266",
@@ -7380,7 +7396,7 @@
   {
     "slug": "18trip-452081",
     "title": {
-      "zh": "『18TRIP』-R1ze＆Ev3ns-",
+      "zh": "《18TRIP》-R1ze＆Ev3ns-",
       "ja": "『18TRIP』-R1ze＆Ev3ns-"
     },
     "seriesId": "18trip",
@@ -8120,7 +8136,7 @@
   {
     "slug": "永久少年-1146",
     "title": {
-      "zh": "『永久少年 Eternal Boys THE STAGE』",
+      "zh": "《永久少年 Eternal Boys 舞台版》",
       "ja": "『永久少年 Eternal Boys THE STAGE』"
     },
     "seriesId": "永久少年",
@@ -8369,7 +8385,7 @@
   {
     "slug": "king-of-prism-1167",
     "title": {
-      "zh": "舞台「KING OF PRISM」Special Event み～んなときめけ！キラメキ☆LIVE",
+      "zh": "舞台《KING OF PRISM》特別活動：閃耀☆LIVE",
       "ja": "舞台「KING OF PRISM」Special Event み～んなときめけ！キラメキ☆LIVE"
     },
     "seriesId": "king-of-prism",
@@ -8403,7 +8419,7 @@
   {
     "slug": "18trip-1166",
     "title": {
-      "zh": "Omotenashi Stage『18TRIP』 -Day2＆L4mps-",
+      "zh": "款待舞台《18TRIP》-Day2＆L4mps-",
       "ja": "Omotenashi Stage『18TRIP』 -Day2＆L4mps-"
     },
     "seriesId": "18trip",
@@ -8564,6 +8580,40 @@
     "sourceUrl": "https://www.j25musical.jp/stage/1160",
     "summarySources": [
       "https://www.marv.jp/special/jg-stage/"
+    ]
+  },
+  {
+    "slug": "新サクラ大戦-1171",
+    "title": {
+      "zh": "新櫻花大戰 the Stage：誠劍歌仕合",
+      "ja": "新サクラ大戦 the Stage ～誠剣歌仕合～"
+    },
+    "seriesId": "新サクラ大戦",
+    "company": "「新サクラ大戦 the Stage ～誠剣歌仕合～」製作委員会2027",
+    "kind": "stage",
+    "startDate": "2027-02-13",
+    "endDate": "2027-02-14",
+    "runs": [
+      {
+        "venueId": "1010",
+        "startDate": "2027-02-13",
+        "endDate": "2027-02-14"
+      }
+    ],
+    "poster": "/posters/新サクラ大戦-1171.webp",
+    "accent": "#a38995",
+    "officialUrl": "https://shinsakura.scissors-blitz.com/",
+    "ticketUrl": null,
+    "cast": [],
+    "staff": [],
+    "summary": {
+      "zh": "帝國華擊團・嵐山花組得知新「誠劍」現世，這把「歌之誠劍」不只要求劍技，更只有具備歌唱實力的人才能駕馭。死鬼神眾也為此現身，眾人將以歌聲與劍技一決高下，展開壯烈的「歌仕合」。本作是《新櫻花大戰 the Stage ～誠傳 TSURUGI～》演員帶來的現場演出，並以《新櫻花大戰》樂曲為中心呈現歌唱與表演。",
+      "ja": "嵐山いろは組に、新たな誠剣が発見されたとの報せが届く。それは剣技だけでなく、歌の技量を持つ者にしか使いこなせない「歌の誠剣」。同じ情報を得た死鬼神衆も加わり、誰が新たな誠剣を手にするのか、壮絶な「歌仕合」が始まる。『新サクラ大戦 the Stage ～誠伝 TSURUGI～』のキャストによるLIVE公演で、『新サクラ大戦』の楽曲を中心に歌とパフォーマンスを届ける。"
+    },
+    "source": "j25",
+    "sourceUrl": "https://www.j25musical.jp/stage/1171",
+    "summarySources": [
+      "https://shinsakura.scissors-blitz.com/"
     ]
   },
   {

@@ -27,24 +27,36 @@ export function applySummarySupplements(shows, supplements) {
     if (!supplement?.summary) continue;
 
     show.summary ??= {};
-    let filled = false;
+    let updatedShow = false;
+    let updatedSummary = false;
+
+    const titleZh = supplement.title?.zh?.trim();
+    if (titleZh && show.title?.zh?.trim() !== titleZh) {
+      show.title ??= {};
+      show.title.zh = titleZh;
+      updatedShow = true;
+    }
 
     /* 日文：源站优先，只有源站没登记时才用补充表 */
     const ja = show.summary.ja?.trim() ?? '';
     if (!ja && supplement.summary.ja?.trim()) {
       show.summary.ja = supplement.summary.ja;
-      filled = true;
+      updatedShow = true;
+      updatedSummary = true;
     }
 
     /* 中文：人工翻译/整理优先于机器翻译 */
     const zh = supplement.summary.zh?.trim();
     if (zh && show.summary.zh?.trim() !== zh) {
       show.summary.zh = zh;
-      filled = true;
+      updatedShow = true;
+      updatedSummary = true;
     }
 
-    if (filled) {
+    if (updatedSummary) {
       show.summarySources = [...supplement.sources];
+    }
+    if (updatedShow) {
       updated++;
     }
   }

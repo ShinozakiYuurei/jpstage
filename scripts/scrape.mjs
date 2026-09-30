@@ -158,11 +158,9 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
  *   几秒钟出结果，且不再打对方服务器。
  *
  * ★ 为什么缓存默认开、且没有「跳过缓存」的开关：
- *   缓存过的 HTML 只在**当次抓取会话**内可信 —— 所以脚本结束时
- *   会清掉（见 main 末尾）。若留到下次，就会拿到上周的档期
- *   而当自己以为抓的是最新的 —— 那正是这类脚本最危险的一类 bug
- *   （数据看起来正常，只是过期了）。
- *   所以：会话内缓存加速迭代，会话结束即失效。
+ *   磁盘缓存只在**当次抓取会话**内可信，所以每次正式抓取开始时
+ *   都先清理上次的缓存。否则页面结构虽正常，数据却可能悄悄过期。
+ *   会话内缓存用于复用同一 URL；下一轮开始时失效。
  *
  * ★ 为什么 key 用 URL 的哈希而不是 URL 本身：URL 里含日文与查询串，
  *   直接做文件名在 Windows 上会撞上非法字符与长度限制。
@@ -1116,7 +1114,8 @@ async function fetchByKeywords(keywords) {
         console.warn(`  关键字「${kw}」第 ${page} 页失败：${e.message}`);
         break;
       }
-      const rows = parseSearchPage(html).filter((r) => r.title.includes(kw));
+      const keywordLower = kw.toLowerCase();
+      const rows = parseSearchPage(html).filter((r) => r.title.toLowerCase().includes(keywordLower));
       for (const r of rows) {
         if (!seen.has(r.stageId)) {
           seen.add(r.stageId);
@@ -1168,6 +1167,7 @@ async function main() {
     return;
   }
 
+  fs.rmSync(CACHE_DIR, { recursive: true, force: true });
   fs.mkdirSync(CACHE_DIR, { recursive: true });
   fs.mkdirSync(POSTER_DIR, { recursive: true });
 
@@ -1849,7 +1849,6 @@ const ROMAN = {
   進撃の巨人: 'attack-on-titan',
   'SPY×FAMILY': 'spy-family',
   弱虫ペダル: 'yowamushi-pedal',
-  KINGDOM: 'kingdom',
   キングダム: 'kingdom',
   名探偵コナン: 'conan',
   名探偵プリキュア: 'precure',

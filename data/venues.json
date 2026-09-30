@@ -948,18 +948,6 @@
     "theaterId": "331"
   },
   {
-    "id": "v3225",
-    "name": {
-      "zh": "COOL JAPAN PARK OSAKA・WW音樂廳",
-      "ja": "COOL JAPAN PARK OSAKA・WWホール"
-    },
-    "pref": "大阪府",
-    "city": "大阪",
-    "address": "大阪府大阪市中央区大阪城3-6",
-    "seats": 1138,
-    "theaterId": "3225"
-  },
-  {
     "id": "v1282",
     "name": {
       "zh": "大阪新歌舞伎座",
@@ -1162,6 +1150,18 @@
     "address": "",
     "seats": null,
     "theaterId": null
+  },
+  {
+    "id": "v3225",
+    "name": {
+      "zh": "COOL JAPAN PARK OSAKA・WW音樂廳",
+      "ja": "COOL JAPAN PARK OSAKA・WWホール"
+    },
+    "pref": "大阪府",
+    "city": "大阪",
+    "address": "大阪府大阪市中央区大阪城3-6",
+    "seats": 1138,
+    "theaterId": "3225"
   },
   {
     "id": "v2208",
@@ -1423,6 +1423,18 @@
     },
     "pref": "京都府",
     "city": "京都",
+    "address": "",
+    "seats": null,
+    "theaterId": null
+  },
+  {
+    "id": "1010",
+    "name": {
+      "zh": "劇場1010",
+      "ja": "シアター1010"
+    },
+    "pref": "",
+    "city": "シアター1010",
     "address": "",
     "seats": null,
     "theaterId": null

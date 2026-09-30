@@ -165,7 +165,7 @@
       "zh": "《王者天下》",
       "ja": "『キングダム』"
     },
-    "sourceKind": "other"
+    "sourceKind": "manga"
   },
   {
     "id": "bocchi-the-rock",
@@ -224,6 +224,18 @@
     "original": {
       "zh": "《動物朋友》",
       "ja": "『けものフレンズ』"
+    },
+    "sourceKind": "other"
+  },
+  {
+    "id": "2fate-二つの心と一つの夢",
+    "name": {
+      "zh": "2FATE：兩顆心與一個夢",
+      "ja": "2FATE～二つの心と一つの夢～"
+    },
+    "original": {
+      "zh": "《2FATE～二つの心と一つの夢～》",
+      "ja": "『2FATE～二つの心と一つの夢～』"
     },
     "sourceKind": "other"
   },
