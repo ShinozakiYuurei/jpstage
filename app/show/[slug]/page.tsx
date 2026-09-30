@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { getShow, allShowSlugs, getSeries, getVenue, getShowsBySeries, toCardData } from '@/lib/data';
 import { hexToChannels } from '@/lib/color';
 import { KIND_LABEL, SOURCE_LABEL, VENDOR_LABEL, prefLabel, pick } from '@/lib/i18n';
+import { PAYMENT_LABEL, paymentMethodsOf, type PaymentMethod } from '@/lib/ticket-payments';
 import { formatDateWithWeekday, formatPeriod, formatPerformances, relativeDayLabel } from '@/lib/format';
 import { PosterImage } from '@/components/PosterImage';
 import { PosterArt } from '@/components/PosterArt';
@@ -292,6 +293,69 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
                     </span>
                   );
                 })}
+              </div>
+            )}
+
+            {/*
+             * 支付方式
+             *
+             * ★ 为什么放在售票平台下面而不是做成一个独立区块：
+             *   用户看完「在哪买」的下一个问题就是「我的卡能不能用」——
+             *   两件事贴在一起看，不必来回滚动。
+             *
+             * ★ 为什么只在已核实时列具体方式：
+             *   未核实的平台写「待確認」而不是留空 ——
+             *   留空会被读成「这家不收卡」，而实际是「本站还没查到」。
+             *   显示错的比不显示更糟，显示「不知道」是诚实的。
+             *
+             * ★ 为什么按平台分行而不是汇总去重：
+             *   支付方式是**平台的**政策。把三家平台的卡种汇总成一串，
+             *   用户拿着 Visa 去 ローソン 买不到时，会以为是本站骗人 ——
+             *   而真相是另一家才收。分行呈现才对应真实世界的规则。
+             */}
+            {show.ticketChannels.length > 0 && (
+              <div className="mt-4 rounded-xl border border-hairline p-3">
+                <p className="text-xs font-semibold text-fg-soft">
+                  <span className="i18n-zh">各平台可用的支付方式</span>
+                  <span className="i18n-ja">チケットサイトごとの支払方法</span>
+                </p>
+                <ul className="mt-2 space-y-1.5">
+                  {show.ticketChannels.map((ch) => {
+                    const info = paymentMethodsOf(ch.vendor);
+                    const label = VENDOR_LABEL[ch.vendor];
+                    return (
+                      <li key={ch.vendor} className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[11px] leading-relaxed">
+                        <span className="shrink-0 font-medium text-fg-soft">
+                          <span className="i18n-zh">{label.zh}</span>
+                          <span className="i18n-ja">{label.ja}</span>
+                        </span>
+                        {info.verified ? (
+                          <span className="text-fg-muted">
+                            {info.methods.map((m: PaymentMethod) => (
+                              <span key={m} className="mr-1.5 inline-block">
+                                <span className="i18n-zh">{PAYMENT_LABEL[m].zh}</span>
+                                <span className="i18n-ja">{PAYMENT_LABEL[m].ja}</span>
+                              </span>
+                            ))}
+                          </span>
+                        ) : (
+                          <span className="text-fg-dim">
+                            <span className="i18n-zh">支付方式待確認</span>
+                            <span className="i18n-ja">支払方法は未確認</span>
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+                <p className="mt-2 text-[10px] leading-relaxed text-fg-dim">
+                  <span className="i18n-zh">
+                    支付方式依各售票平台官方說明整理；實際可用方式可能因公演或付款時間而異。
+                  </span>
+                  <span className="i18n-ja">
+                    支払方法は各チケットサイトの公式案内に基づきます。公演や支払時期により異なる場合があります。
+                  </span>
+                </p>
               </div>
             )}
 

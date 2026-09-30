@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import type { ShowBrief, ShowKind, ShowStatus, TicketVendor } from '@/lib/types';
 import { KIND_LABEL, SOURCE_LABEL, VENDOR_LABEL, cityLabel } from '@/lib/i18n';
+import { PAYMENT_LABEL, type PaymentMethod } from '@/lib/ticket-payments';
 import { FilterDropdown, type FilterOption } from './FilterDropdown';
 import { ShowCard } from './ShowCard';
 
@@ -41,9 +42,10 @@ type Filters = {
   source: string[];
   status: string[];
   vendor: string[];
+  payment: string[];
 };
 
-const EMPTY: Filters = { kind: [], city: [], source: [], status: [], vendor: [] };
+const EMPTY: Filters = { kind: [], city: [], source: [], status: [], vendor: [], payment: [] };
 
 /** 排序模式 */
 type Sort = 'start' | 'end' | 'title';
@@ -86,6 +88,7 @@ export function ShowExplorer({
     const bySource = new Map<string, number>();
     const byStatus = new Map<string, number>();
     const byVendor = new Map<string, number>();
+    const byPayment = new Map<string, number>();
 
     /** 按除 exclude 之外的所有条件过滤 */
     const pass = (b: ShowBrief, exclude: keyof Filters | null, q: string) => {
@@ -102,6 +105,18 @@ export function ShowExplorer({
       if (exclude !== 'vendor' && filters.vendor.length) {
         // 与城市维度同一套 OR 逻辑：命中任一所选平台即算符合
         if (!b.ticketVendors.some((v) => filters.vendor.includes(v))) return false;
+      }
+      if (exclude !== 'payment' && filters.payment.length) {
+        /*
+         * 支付方式：命中任一所选方式即算符合（同城市/平台的 OR 逻辑）。
+         *
+         * ★ 只算已核实的平台：
+         *   未核实平台的 payments 是空数组，本来就不会命中；
+         *   但「已核实但确实不支持任何所列方式」与「未核实」在这里
+         *   表现相同（都是空），这是可接受的 —— 筛选器的语义是
+         *   「找出能用这种方式的公演」，而不是「找出所有平台都核实过的公演」。
+         */
+        if (!b.payments.some((p) => filters.payment.includes(p))) return false;
       }
       if (q && !b.haystack.includes(q)) return false;
       return true;
@@ -121,8 +136,11 @@ export function ShowExplorer({
       if (pass(b, 'vendor', q)) {
         for (const v of b.ticketVendors) byVendor.set(v, (byVendor.get(v) ?? 0) + 1);
       }
+      if (pass(b, 'payment', q)) {
+        for (const p of b.payments) byPayment.set(p, (byPayment.get(p) ?? 0) + 1);
+      }
     }
-    return { byKind, byCity, bySource, byStatus, byVendor };
+    return { byKind, byCity, bySource, byStatus, byVendor, byPayment };
   }, [briefs, query, filters]);
 
   /** 最终结果 */
@@ -134,6 +152,9 @@ export function ShowExplorer({
       if (filters.source.length && !filters.source.includes(sourceOf(b.seriesId))) return false;
       if (filters.status.length && !filters.status.includes(b.status)) return false;
       if (filters.vendor.length && !b.ticketVendors.some((v) => filters.vendor.includes(v))) {
+        return false;
+      }
+      if (filters.payment.length && !b.payments.some((p) => filters.payment.includes(p))) {
         return false;
       }
       if (q && !b.haystack.includes(q)) return false;
@@ -212,6 +233,24 @@ export function ShowExplorer({
       count: n,
     }));
 
+  /**
+   * 支付方式选项
+   *
+   * ★ 为什么按「命中数」降序：与城市/平台维度同一套排序 ——
+   *   支持 Visa 的公演最多，排前面；只被一两家平台支持的沉到后面。
+   *
+   * ★ 为什么零命中的方式不显示：与平台维度同理 ——
+   *   选项是**算出来的**，数据变了它会自动出现；硬留着会让人
+   *   以为本站坏了（点进去空的）。支付宝/微信支付目前没有任何
+   *   日本售票平台支持，所以不会出现在这里，这是诚实的表达。
+   */
+  const paymentOptions: FilterOption[] = [...facets.byPayment.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([p, n]) => {
+      const label = PAYMENT_LABEL[p as PaymentMethod];
+      return { value: p, label: label.zh + " / " + label.ja, count: n };
+    });
+
   const sortOptions: FilterOption[] = [
     { value: 'start', label: '開演日 ↓ / 開幕日' },
     { value: 'end', label: '結束日 ↓ / 終了日' },
@@ -224,6 +263,7 @@ export function ShowExplorer({
     filters.source.length +
     filters.status.length +
     filters.vendor.length +
+    filters.payment.length +
     (query.trim() ? 1 : 0);
 
   const reset = () => {
@@ -297,13 +337,15 @@ export function ShowExplorer({
          * 筛选器网格：手机上 2 列，平板 3 列，桌面 6 列
          *
          * ★ 为什么桌面是 6 而不是 5：
-         *   加了「售票平台」之后一共有 6 个筛选器（类型 / 会场 / 原作 /
-         *   状态 / 售票平台 / 排序）。5 列会让排序单独掉到第二行，
-         *   而排序是最高频的操作之一 —— 让它独占一行等于每次都要多滚一次。
-         *   6 列在 1280px 下每格约 200px，够放下「類型 / 種別」这类标签。
+         *   加了「售票平台」与「支付方式」之后一共 7 个筛选器（类型 /
+         *   会场 / 原作 / 状态 / 售票平台 / 支付方式 / 排序）。
+         *   支付方式只在有已核实数据时出现（见下方条件渲染），
+         *   所以实际列数在 6~7 之间 —— 用 7 列时每格在 1280px 下
+         *   约 170px，仍够放下「支付方式 / 支払方法」这类标签；
+         *   少于 7 个时最后一格留空，不会挤压前面的宽度。
          *   （实测窄屏仍是 2 列，不受影响。）
          */}
-        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-7">
           <FilterDropdown
             label="類型 / 種別"
             placeholder="所有類型"
@@ -342,6 +384,23 @@ export function ShowExplorer({
             selected={filters.vendor}
             onChange={(v) => setFilters((f) => ({ ...f, vendor: v }))}
           />
+          {/*
+            * 支付方式：只在有已核实数据时出现。
+            *
+            * ★ 为什么与平台筛选并存而不是合并：
+            *   平台回答「在哪买」，支付方式回答「我的卡能不能用」——
+            *   用户常常是先认平台（我有ぴあ账号）、再用支付方式确认。
+            *   两者是不同的决策维度，合起来会逼用户先想清楚是哪一家。
+            */}
+          {paymentOptions.length > 0 && (
+            <FilterDropdown
+              label="支付方式 / 支払方法"
+              placeholder="所有支付方式"
+              options={paymentOptions}
+              selected={filters.payment}
+              onChange={(v) => setFilters((f) => ({ ...f, payment: v }))}
+            />
+          )}
           <FilterDropdown
             label="排序 / 並び順"
             placeholder="開演日 ↓ / 開幕日"

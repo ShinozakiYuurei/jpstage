@@ -13,6 +13,7 @@ import type {
   ShowStatus,
   Venue,
 } from './types';
+import { paymentMethodsOf } from './ticket-payments';
 
 /**
  * 資料層
@@ -228,6 +229,8 @@ export function getShowsByVenue(venueId: string): Show[] {
  */
 export function getShowBriefs(): ShowBrief[] {
   return ALL_SHOWS.map((s) => {
+    /** 該作品的售票平台（去重）。支付方式與 verified 判定都以它為輸入 */
+    const vendors = [...new Set((s.ticketChannels ?? []).map((c) => c.vendor))];
     const series = SERIES_BY_ID.get(s.seriesId);
     const venueIds = [...new Set(s.runs.map((r) => r.venueId))];
     /*
@@ -277,7 +280,19 @@ export function getShowBriefs(): ShowBrief[] {
        * url 只在详情页渲染，而每部作品多带几个长链接会让客户端
        * bundle 白涨几十 KB（筛选一次也用不上）。
        */
-      ticketVendors: [...new Set((s.ticketChannels ?? []).map((c) => c.vendor))],
+      ticketVendors: vendors,
+      /*
+       * 支付方式：由**平台**推导，不是作品自己的字段。
+       *
+       * ★ 为什么在数据层算好而不是让客户端查表：
+       *   客户端组件不能 import lib/data.ts（会把整份 JSON 打进 bundle），
+       *   而 lib/ticket-payments.ts 是纯表、可以进 bundle ——
+       *   但既然这里已经在遍历 ticketChannels，顺手推导成本是零，
+       *   客户端就只需要读一个数组，不必再维护一份「vendor → payments」查询。
+       *
+       * ★ 未核实的平台贡献空数组：本字段是「已知可用的方式」的并集。
+       */
+      payments: [...new Set(vendors.flatMap((v) => paymentMethodsOf(v).methods))],
       startDate: s.startDate,
       endDate: s.endDate,
       poster: s.poster,

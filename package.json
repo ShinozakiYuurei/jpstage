@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "test:payments": "node --experimental-strip-types --test scripts/test-ticket-payments.ts",
     "scrape": "node scripts/scrape.mjs",
     "validate": "node scripts/scrape.mjs --validate-only",
     "preview": "node probe/serve.mjs out 4321",

@@ -1,3 +1,5 @@
+import type { PaymentMethod } from './ticket-payments';
+
 /**
  * 站内数据类型
  *
@@ -259,4 +261,17 @@ export interface ShowBrief extends ShowCardData {
   ticketVendors: TicketVendor[];
   /** 搜索用：标题 + 系列 + 出演者 + 会場，全部小写化后拼接 */
   haystack: string;
+  /**
+   * 售票平台的**支付方式**（去重）。筛选在客户端跑，所以必须进 brief。
+   *
+   * ★ 为什么按平台推导而不是每部作品单独存：
+   *   支付方式是**平台政策**（ローソン 支持什么卡，全站一致），
+   *   不是这部作品的属性。规则见 lib/ticket-payments.ts。
+   *   这里只放推导结果，客户端筛选时不必再查那张表。
+   *
+   * ★ 未核实的平台在这里贡献空数组（未知，不等于「不支持」）：
+   *   详情页要显示「支付方式待確認」时，直接查
+   *   lib/ticket-payments.ts 的 verified —— 那是服务端渲染，拿得到。
+   */
+  payments: PaymentMethod[];
 }
