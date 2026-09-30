@@ -337,7 +337,7 @@ export function ShowExplorer({
 
           <FilterDropdown
             label="售票平台 / チケット"
-            placeholder="所有售票处"
+            placeholder="所有售票處"
             options={vendorOptions}
             selected={filters.vendor}
             onChange={(v) => setFilters((f) => ({ ...f, vendor: v }))}

@@ -81,19 +81,19 @@ export function pick(t: LocalizedText | undefined, lang: Lang): string {
  *   一个能筛出作品、却没有任何标签的幽灵平台。
  */
 export const VENDOR_LABEL: Record<TicketVendor, LocalizedText> = {
-  lawson: { zh: '乐虎（Lawson 售票）', ja: 'ローソンチケット' },
+  lawson: { zh: '樂虎（Lawson 售票）', ja: 'ローソンチケット' },
   pia: { zh: 'Ticket Pia', ja: 'チケットぴあ' },
   eplus: { zh: 'E-Plus（イープラス）', ja: 'イープラス' },
   cn: { zh: 'CN Playguide', ja: 'CNプレイガイド' },
-  hikosen: { zh: '飞行船（DAQ!!）', ja: '飛行船オンラインチケット' },
+  hikosen: { zh: '飛行船（DAQ!!）', ja: '飛行船オンラインチケット' },
   asoview: { zh: 'Asoview', ja: 'アソビュー！' },
   etix: { zh: 'E-Get / e-ティックス', ja: 'イーティックス' },
-  gingeki: { zh: '天王洲银河剧场', ja: '銀河劇場' },
+  gingeki: { zh: '天王洲銀河劇場', ja: '銀河劇場' },
   seven: { zh: 'Seven Ticket（7-Eleven）', ja: 'セブンチケット' },
   tbs: { zh: 'TBS Online Ticket', ja: 'TBSオンラインチケット' },
   rakuten: { zh: 'Rakuten Ticket', ja: '楽天チケット' },
   shochiku: { zh: 'Ticket Web 松竹', ja: 'チケットWeb松竹' },
-  toho: { zh: '东宝 Navigator', ja: '東宝ナビザーブ' },
+  toho: { zh: '東宝 Navigator', ja: '東宝ナビザーブ' },
   fany: { zh: 'FANY Ticket', ja: 'FANYチケット' },
   livepocket: { zh: 'LivePocket', ja: 'LivePocket' },
   /*
@@ -105,7 +105,7 @@ export const VENDOR_LABEL: Record<TicketVendor, LocalizedText> = {
    *   是一个点进去只有 7 张卡、且用户无法据此判断「去哪儿买」的入口。
    *   详情页上仍然显示（那是真实信息），只是不进筛选器。
    */
-  other: { zh: '其他售票处', ja: 'その他のチケット' },
+  other: { zh: '其他售票處', ja: 'その他のチケット' },
 };
 
 /** 公演類型標籤 */
