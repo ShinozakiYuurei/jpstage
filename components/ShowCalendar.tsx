@@ -212,7 +212,10 @@ export function ShowCalendar({
     return byDay;
   }, [dates, filteredEntries, today]);
 
-  const selectedEntries = entriesByDay.get(selectedDate) ?? [];
+  const selectedEntries = useMemo(
+    () => entriesByDay.get(selectedDate) ?? [],
+    [entriesByDay, selectedDate],
+  );
   const selectedShows = useMemo(() => groupByShow(selectedEntries), [selectedEntries]);
 
   useEffect(() => {

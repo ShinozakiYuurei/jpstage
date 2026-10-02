@@ -479,7 +479,6 @@ function inferSeries(jaTitle) {
 let toTrad = null;
 function trad(s) {
   if (!toTrad) {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const OpenCC = require('opencc-js');
     toTrad = OpenCC.Converter({ from: 'cn', to: 'tw' });
   }
