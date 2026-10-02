@@ -327,7 +327,7 @@
         "endDate": "2026-11-23"
       },
       {
-        "venueId": "v-671e0731",
+        "venueId": "v8748",
         "startDate": "2026-11-28",
         "endDate": "2026-11-29"
       }
@@ -565,7 +565,7 @@
     "endDate": "2026-11-29",
     "runs": [
       {
-        "venueId": "v-dacb78b2",
+        "venueId": "v675",
         "startDate": "2026-11-05",
         "endDate": "2026-11-15"
       },
@@ -575,7 +575,7 @@
         "endDate": "2026-11-23"
       },
       {
-        "venueId": "aiia-2-5-theater-kobe",
+        "venueId": "v3273",
         "startDate": "2026-11-27",
         "endDate": "2026-11-29"
       }
@@ -770,12 +770,12 @@
     "endDate": "2026-11-15",
     "runs": [
       {
-        "venueId": "kanadevia-hall",
+        "venueId": "v1806",
         "startDate": "2026-10-02",
         "endDate": "2026-10-12"
       },
       {
-        "venueId": "v-671e0731",
+        "venueId": "v8748",
         "startDate": "2026-10-17",
         "endDate": "2026-10-25"
       },
@@ -785,7 +785,7 @@
         "endDate": "2026-11-01"
       },
       {
-        "venueId": "kanadevia-hall",
+        "venueId": "v1806",
         "startDate": "2026-11-06",
         "endDate": "2026-11-15"
       }
@@ -1039,12 +1039,12 @@
     "endDate": "2026-10-18",
     "runs": [
       {
-        "venueId": "h",
+        "venueId": "v8747",
         "startDate": "2026-10-02",
         "endDate": "2026-10-12"
       },
       {
-        "venueId": "aiia-2-5-theater-kobe",
+        "venueId": "v3273",
         "startDate": "2026-10-16",
         "endDate": "2026-10-18"
       }
@@ -1256,7 +1256,7 @@
         "endDate": "2026-09-27"
       },
       {
-        "venueId": "aiia-2-5-theater-kobe",
+        "venueId": "v3273",
         "startDate": "2026-10-02",
         "endDate": "2026-10-04"
       }
@@ -5006,7 +5006,7 @@
         "endDate": "2026-11-02"
       },
       {
-        "venueId": "cool-japan-park-osaka-tt",
+        "venueId": "v3226",
         "startDate": "2026-11-07",
         "endDate": "2026-11-15"
       }
@@ -5497,7 +5497,7 @@
     "endDate": "2026-10-24",
     "runs": [
       {
-        "venueId": "v-f2f1c02b",
+        "venueId": "v161",
         "startDate": "2026-10-01",
         "endDate": "2026-10-11"
       },
@@ -6360,7 +6360,7 @@
     "endDate": "2026-10-25",
     "runs": [
       {
-        "venueId": "v-f2f1c02b",
+        "venueId": "v161",
         "startDate": "2026-10-16",
         "endDate": "2026-10-25"
       }
@@ -6556,7 +6556,7 @@
     "endDate": "2026-11-29",
     "runs": [
       {
-        "venueId": "v-b32ee82b",
+        "venueId": "v8747",
         "startDate": "2026-11-20",
         "endDate": "2026-11-29"
       }
@@ -7321,12 +7321,12 @@
     "endDate": "2027-02-14",
     "runs": [
       {
-        "venueId": "h",
+        "venueId": "v8747",
         "startDate": "2027-01-29",
         "endDate": "2027-02-07"
       },
       {
-        "venueId": "cool-japan-park-osaka-ww",
+        "venueId": "v3225",
         "startDate": "2027-02-12",
         "endDate": "2027-02-14"
       }
@@ -8113,7 +8113,7 @@
     "endDate": "2026-11-15",
     "runs": [
       {
-        "venueId": "v-b32ee82b",
+        "venueId": "v8747",
         "startDate": "2026-11-06",
         "endDate": "2026-11-15"
       }
@@ -8418,7 +8418,7 @@
     "endDate": "2026-10-11",
     "runs": [
       {
-        "venueId": "v-dacb78b2",
+        "venueId": "v675",
         "startDate": "2026-10-02",
         "endDate": "2026-10-11"
       }
@@ -8533,7 +8533,7 @@
     "endDate": "2026-10-25",
     "runs": [
       {
-        "venueId": "kanadevia-hall",
+        "venueId": "v1806",
         "startDate": "2026-09-07",
         "endDate": "2026-09-13"
       },
@@ -8548,7 +8548,7 @@
         "endDate": "2026-10-11"
       },
       {
-        "venueId": "kanadevia-hall",
+        "venueId": "v1806",
         "startDate": "2026-10-17",
         "endDate": "2026-10-25"
       }
@@ -8704,7 +8704,7 @@
     "endDate": "2026-12-06",
     "runs": [
       {
-        "venueId": "v-dacb78b2",
+        "venueId": "v675",
         "startDate": "2026-12-04",
         "endDate": "2026-12-06"
       }
@@ -8849,12 +8849,12 @@
     "endDate": "2026-12-27",
     "runs": [
       {
-        "venueId": "v-f2f1c02b",
+        "venueId": "v161",
         "startDate": "2026-12-05",
         "endDate": "2026-12-13"
       },
       {
-        "venueId": "cool-japan-park-osaka-ww",
+        "venueId": "v3225",
         "startDate": "2026-12-26",
         "endDate": "2026-12-27"
       }
@@ -8889,12 +8889,12 @@
     "endDate": "2027-01-11",
     "runs": [
       {
-        "venueId": "h",
+        "venueId": "v8747",
         "startDate": "2026-12-19",
         "endDate": "2026-12-27"
       },
       {
-        "venueId": "cool-japan-park-osaka-ww",
+        "venueId": "v3225",
         "startDate": "2027-01-09",
         "endDate": "2027-01-11"
       }
@@ -8934,7 +8934,7 @@
     "endDate": "2026-12-31",
     "runs": [
       {
-        "venueId": "v-e90aa030",
+        "venueId": "v315",
         "startDate": "2026-12-31",
         "endDate": "2026-12-31"
       }
@@ -8979,7 +8979,7 @@
         "endDate": "2027-01-17"
       },
       {
-        "venueId": "aiia-2-5-theater-kobe",
+        "venueId": "v3273",
         "startDate": "2027-01-23",
         "endDate": "2027-01-31"
       }
@@ -9019,12 +9019,12 @@
     "endDate": "2027-03-22",
     "runs": [
       {
-        "venueId": "kanadevia-hall",
+        "venueId": "v1806",
         "startDate": "2027-01-17",
         "endDate": "2027-01-24"
       },
       {
-        "venueId": "v-671e0731",
+        "venueId": "v8748",
         "startDate": "2027-01-30",
         "endDate": "2027-02-07"
       },
@@ -9039,7 +9039,7 @@
         "endDate": "2027-03-07"
       },
       {
-        "venueId": "kanadevia-hall",
+        "venueId": "v1806",
         "startDate": "2027-03-13",
         "endDate": "2027-03-22"
       }
@@ -9109,7 +9109,7 @@
     "endDate": "2027-02-28",
     "runs": [
       {
-        "venueId": "v-f2f1c02b",
+        "venueId": "v161",
         "startDate": "2027-02-12",
         "endDate": "2027-02-21"
       },
@@ -9224,12 +9224,12 @@
     "endDate": "2027-07-25",
     "runs": [
       {
-        "venueId": "h",
+        "venueId": "v8747",
         "startDate": "2027-07-03",
         "endDate": "2027-07-19"
       },
       {
-        "venueId": "v-671e0731",
+        "venueId": "v8748",
         "startDate": "2027-07-24",
         "endDate": "2027-07-25"
       }

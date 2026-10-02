@@ -48,7 +48,7 @@ type Filters = {
 const EMPTY: Filters = { kind: [], city: [], source: [], status: [], vendor: [], payment: [] };
 
 /** 排序模式 */
-type Sort = 'start' | 'end' | 'title';
+type Sort = 'start' | 'end' | 'title' | 'performances';
 
 export function ShowExplorer({
   briefs,
@@ -180,6 +180,13 @@ export function ShowExplorer({
       return true;
     });
     out.sort((a, b) => {
+      if (sort === 'performances') {
+        // 场次多→少：演出场次数是「规模」的实际口径（见 ShowCardData）。
+        // 未登记场次的公演按 0 沉底，同场次按开演日近的在前。
+        const pa = a.performances ?? 0;
+        const pb = b.performances ?? 0;
+        return pb - pa || a.startDate.localeCompare(b.startDate);
+      }
       if (sort === 'title') {
         // 按中文标题排序。localeCompare('zh-Hant') 会按汉字读音（拼音）排，
         // 而不是按 Unicode 码位 —— 后者对用户是完全无意义的顺序。
@@ -271,6 +278,7 @@ export function ShowExplorer({
     });
 
   const sortOptions: FilterOption[] = [
+    { value: 'performances', label: '場次（多→少） / 公演数（多い順）' },
     { value: 'start', label: '開演日 ↓ / 開幕日' },
     { value: 'end', label: '結束日 ↓ / 終了日' },
     { value: 'title', label: '作品名 / 作品名' },

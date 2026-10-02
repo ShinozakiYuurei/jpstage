@@ -43,6 +43,7 @@ const LINKS = [
   { href: '/calendar', label: '日曆', labelJa: 'カレンダー', nav: 'calendar' },
   { href: '/venue', label: '會場', labelJa: '会場', nav: 'venue' },
   { href: '/series', label: '系列', labelJa: 'シリーズ', nav: 'series' },
+  { href: '/archive', label: '檔案庫', labelJa: 'アーカイブ', nav: 'archive' },
 ] as const;
 
 /** 去掉尾部斜杠再比，避免 "/now" 与 "/now/" 判成两个路由 */

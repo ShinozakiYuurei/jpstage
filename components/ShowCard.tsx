@@ -182,6 +182,21 @@ export function ShowCard({
             <span className="i18n-ja">{KIND_LABEL[show.kind].ja}</span>
           </span>
 
+          {/*
+           * 场次数：「按規模排列」的可见依据。卡片上直接给出 全N場，
+           * 用户才知道排序比的是演出场次数（不是座席也不是城市数）。
+           * 未登记场次的数据不显示 —— 宁可没有，不显示猜出来的数。
+           */}
+          {show.performances != null && (
+            <>
+              <span className="text-fg-faint">·</span>
+              <span className="tabular-nums">
+                <span className="i18n-zh">全{show.performances}場</span>
+                <span className="i18n-ja">全{show.performances}公演</span>
+              </span>
+            </>
+          )}
+
           {firstCity && (
             <>
               <span className="text-fg-faint">·</span>

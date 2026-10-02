@@ -81,23 +81,6 @@ function spanOf(runs: Run[]): { startDate: string; endDate: string } {
 // ── 索引（模組層建一次，避免每個頁面各自 filter 一遍） ────────────────
 const SERIES_BY_ID = new Map(SERIES.map((s) => [s.id, s]));
 const VENUE_BY_ID = new Map(VENUES.map((v) => [v.id, v]));
-const CALENDAR_CITY_ALIASES: Record<string, string> = {
-  'AiiA 2.5 Theater Kobe': '神戸',
-  'Kanadevia Hall': '東京',
-  'シアターH': '東京',
-  'シアターサンモール': '東京',
-  '天王洲 銀河劇場': '東京',
-  '新国立劇場 中劇場': '東京',
-  '日本青年館ホール': '東京',
-  '草月ホール': '東京',
-  '近鉄アート館': '大阪',
-  'さいたま': '埼玉',
-};
-
-function calendarCity(city: string): string {
-  return CALENDAR_CITY_ALIASES[city] ?? (city === '（会場未記載）' ? '' : city);
-}
-
 const ALL_SHOWS: Show[] = SHOWS.map((s) => {
   const span = spanOf(s.runs);
   return { ...s, ...span, status: computeStatus(span.startDate, span.endDate) };
@@ -135,7 +118,8 @@ export function getCalendarEntries(): CalendarEntry[] {
         slug: show.slug,
         title: show.title,
         venue: VENUE_BY_ID.get(run.venueId)?.name ?? { zh: run.venueId, ja: run.venueId },
-        city: calendarCity(VENUE_BY_ID.get(run.venueId)?.city ?? ''),
+        city: VENUE_BY_ID.get(run.venueId)?.city ?? '',
+        kind: show.kind,
         startDate: run.startDate,
         endDate: run.endDate,
         status: run.startDate > TODAY_JST ? 'upcoming' : 'now',
@@ -287,6 +271,13 @@ export function getShowBriefs(): ShowBrief[] {
       cities,
       venueIds,
       /*
+       * 场次数合计：卡片展示与「場次多→少」排序都要用。
+       * 任一会場没登记场次就给不出可信总数，置 null（卡片隐藏、排序按 0）。
+       */
+      performances: s.runs.some((r) => r.performances != null)
+        ? s.runs.reduce((n, r) => n + (r.performances ?? 0), 0)
+        : null,
+      /*
        * 售票平台：只在 brief 里带 **id**，不带 url ——
        * url 只在详情页渲染，而每部作品多带几个长链接会让客户端
        * bundle 白涨几十 KB（筛选一次也用不上）。
@@ -339,6 +330,9 @@ export function toCardData(s: Show): ShowCardData {
     endDate: s.endDate,
     venueIds: [...new Set(s.runs.map((r) => r.venueId))],
     cities,
+    performances: s.runs.some((r) => r.performances != null)
+      ? s.runs.reduce((n, r) => n + (r.performances ?? 0), 0)
+      : null,
   };
 }
 

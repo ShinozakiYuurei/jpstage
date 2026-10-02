@@ -182,7 +182,12 @@ async function main() {
     const searchWord = await evaluate(`(() => {
       const h = document.querySelector('a[href^="/show/"] h3');
       const t = (h?.textContent || '').trim();
-      return t.slice(0, 2);
+      /*
+       * 取标题前 10 个字符而不是 2 个：搜索覆盖 cast / 會場（haystack），
+       * 太短的词（如「SP」）会合法地命中出演者名（cast 里有叫 spi 的），
+       * 那时「每个结果标题都含关键词」的断言本身就不成立 —— 不是搜索坏了。
+       */
+      return t.slice(0, 10);
     })()`);
     const searchResult = await evaluate(`(async () => {
       const input = document.querySelector('input[type="search"]');
@@ -471,10 +476,11 @@ async function main() {
     check('点「日本語」切换生效', langBtn.jaVisible > 0 && langBtn.zhVisible === 0, `ja=${langBtn.jaVisible} zh=${langBtn.zhVisible}`);
     check('切换后 <html lang> 变 ja', langBtn.lang === 'ja', `lang=${langBtn.lang}`);
 
-    // ── 首页日历：点日期显示当天剧目（桌面 + 手机实际触控）──
-    console.log('\n⑦ 首页日历日期交互（桌面 + 手机）');
+    // ── 日历页：点日期显示当天剧目（桌面 + 手机实际触控）──
+    // 日历已从首页收进 /calendar（首页首屏只留上演中 + 搜索）。
+    console.log('\n⑦ /calendar 日期交互（桌面 + 手机）');
     async function testHomeCalendarDate(device) {
-      await send('Page.navigate', { url: BASE + '/' });
+      await send('Page.navigate', { url: BASE + '/calendar/' });
       await sleep(1300);
       const point = await evaluate(`(() => {
         const button = document.querySelector('.jp-calendar-day.has-shows:not(.is-today)')
@@ -493,7 +499,7 @@ async function main() {
           date: [match[1], match[2].padStart(2, '0'), match[3].padStart(2, '0')].join('/'),
         };
       })()`);
-      if (!point) return { ok: false, reason: '首页没有带公演的日期' };
+      if (!point) return { ok: false, reason: '/calendar 没有带公演的日期' };
 
       if (device === 'mobile') {
         await send('Input.dispatchTouchEvent', {
@@ -545,7 +551,7 @@ async function main() {
     });
     const desktopCalendar = await testHomeCalendarDate('desktop');
     check(
-      '首页桌面端点日期显示当天剧目',
+      '/calendar 桌面端点日期显示当天剧目',
       desktopCalendar.ok,
       `${desktopCalendar.date ?? desktopCalendar.reason} · ${desktopCalendar.showCount ?? 0} 部`,
     );
@@ -555,7 +561,7 @@ async function main() {
     });
     const mobileCalendar = await testHomeCalendarDate('mobile');
     check(
-      '首页手机端触控日期显示剧目并滚动到结果',
+      '/calendar 手机端触控日期显示剧目并滚动到结果',
       mobileCalendar.ok,
       `${mobileCalendar.date ?? mobileCalendar.reason} · ${mobileCalendar.showCount ?? 0} 部 · ${mobileCalendar.touchTarget ?? ''} · 结果区 y=${Math.round(mobileCalendar.detailsTop ?? 0)}px`,
     );

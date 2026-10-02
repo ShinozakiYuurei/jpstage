@@ -44,12 +44,26 @@ export async function generateMetadata({
   if (!show) return {};
   const series = getSeries(show.seriesId);
   const title = pick(show.title, 'zh');
+  const description =
+    `${show.title.zh}（${show.title.ja}）的日本公演資訊：期間 ${show.startDate} 〜 ${show.endDate}，共 ${show.runs.length} 個會場。${series ? `原作：${series.original.zh}` : ''}`;
   return {
     title,
-    description: `${show.title.zh}（${show.title.ja}）的日本公演資訊：期間 ${show.startDate} 〜 ${show.endDate}，共 ${show.runs.length} 個會場。${series ? `原作：${series.original.zh}` : ''}`,
+    description,
     openGraph: {
       title,
+      description,
       type: 'article',
+      /*
+       * 主视觉已在構建期壓成 /posters/*.webp，分享卡直接復用 ——
+       * 沒有海報的作品寧可不出圖，也不給佔位空圖。
+       */
+      images: show.poster ? [{ url: show.poster, alt: title }] : undefined,
+    },
+    twitter: {
+      card: show.poster ? 'summary_large_image' : 'summary',
+      title,
+      description,
+      images: show.poster ? [show.poster] : undefined,
     },
   };
 }

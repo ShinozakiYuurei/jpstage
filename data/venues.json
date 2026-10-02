@@ -66,7 +66,7 @@
       "ja": "サンシティホール"
     },
     "pref": "埼玉県",
-    "city": "さいたま",
+    "city": "埼玉",
     "address": "埼玉県越谷市南越谷1-2876-1",
     "seats": 1675,
     "theaterId": "867"
@@ -150,7 +150,7 @@
       "ja": "ウェスタ川越"
     },
     "pref": "埼玉県",
-    "city": "さいたま",
+    "city": "埼玉",
     "address": "埼玉県川越市新宿町1-17-17",
     "seats": 1700,
     "theaterId": "2957"
@@ -294,7 +294,7 @@
       "ja": "狭山市市民会館　大ホール"
     },
     "pref": "埼玉県",
-    "city": "さいたま",
+    "city": "埼玉",
     "address": "埼玉県狭山市入間川2－33－1",
     "seats": 1398,
     "theaterId": "299"
@@ -426,7 +426,7 @@
       "ja": "大宮ソニックシティ"
     },
     "pref": "埼玉県",
-    "city": "さいたま",
+    "city": "埼玉",
     "address": "埼玉県さいたま市桜木町1－7－5",
     "seats": null,
     "theaterId": "315"
@@ -521,30 +521,6 @@
       "zh": "Shibuya LOVEZ",
       "ja": "Shibuya LOVEZ"
     },
-    "pref": "",
-    "city": "Shibuya LOVEZ",
-    "address": "",
-    "seats": null,
-    "theaterId": null
-  },
-  {
-    "id": "v-671e0731",
-    "name": {
-      "zh": "Ｓｋｙ劇場ＭＢＳ",
-      "ja": "ＳｋｙシアターＭＢＳ"
-    },
-    "pref": "",
-    "city": "ＳｋｙシアターＭＢＳ",
-    "address": "",
-    "seats": null,
-    "theaterId": null
-  },
-  {
-    "id": "v-dacb78b2",
-    "name": {
-      "zh": "品川プリンスホテル ステラボール",
-      "ja": "品川プリンスホテル ステラボール"
-    },
     "pref": "東京都",
     "city": "東京",
     "address": "",
@@ -557,32 +533,8 @@
       "zh": "多賀城市民會館 大音樂廳",
       "ja": "多賀城市民会館 大ホール"
     },
-    "pref": "",
-    "city": "多賀城市民会館 大ホール",
-    "address": "",
-    "seats": null,
-    "theaterId": null
-  },
-  {
-    "id": "aiia-2-5-theater-kobe",
-    "name": {
-      "zh": "AiiA 2.5 Theater Kobe",
-      "ja": "AiiA 2.5 Theater Kobe"
-    },
-    "pref": "",
-    "city": "AiiA 2.5 Theater Kobe",
-    "address": "",
-    "seats": null,
-    "theaterId": null
-  },
-  {
-    "id": "kanadevia-hall",
-    "name": {
-      "zh": "Kanadevia Hall",
-      "ja": "Kanadevia Hall"
-    },
-    "pref": "",
-    "city": "Kanadevia Hall",
+    "pref": "宮城県",
+    "city": "仙台",
     "address": "",
     "seats": null,
     "theaterId": null
@@ -593,20 +545,8 @@
       "zh": "土岐市文化プラザ サン音樂廳",
       "ja": "土岐市文化プラザ サンホール"
     },
-    "pref": "",
-    "city": "土岐市文化プラザ サンホール",
-    "address": "",
-    "seats": null,
-    "theaterId": null
-  },
-  {
-    "id": "h",
-    "name": {
-      "zh": "劇場H",
-      "ja": "シアターH"
-    },
-    "pref": "",
-    "city": "シアターH",
+    "pref": "岐阜県",
+    "city": "岐阜",
     "address": "",
     "seats": null,
     "theaterId": null
@@ -689,8 +629,8 @@
       "zh": "明治座",
       "ja": "明治座"
     },
-    "pref": "",
-    "city": "明治座",
+    "pref": "東京都",
+    "city": "東京",
     "address": "",
     "seats": null,
     "theaterId": null
@@ -701,8 +641,8 @@
       "zh": "新歌舞伎座",
       "ja": "新歌舞伎座"
     },
-    "pref": "",
-    "city": "新歌舞伎座",
+    "pref": "大阪府",
+    "city": "大阪",
     "address": "",
     "seats": null,
     "theaterId": null
@@ -713,8 +653,8 @@
       "zh": "SGC HALL ARIAKE",
       "ja": "SGC HALL ARIAKE"
     },
-    "pref": "",
-    "city": "SGC HALL ARIAKE",
+    "pref": "東京都",
+    "city": "東京",
     "address": "",
     "seats": null,
     "theaterId": null
@@ -1001,8 +941,8 @@
       "zh": "クラブeX",
       "ja": "クラブeX"
     },
-    "pref": "",
-    "city": "クラブeX",
+    "pref": "神奈川県",
+    "city": "横浜",
     "address": "",
     "seats": null,
     "theaterId": null
@@ -1025,20 +965,8 @@
       "zh": "キャナルシティ劇場",
       "ja": "キャナルシティ劇場"
     },
-    "pref": "",
-    "city": "キャナルシティ劇場",
-    "address": "",
-    "seats": null,
-    "theaterId": null
-  },
-  {
-    "id": "cool-japan-park-osaka-tt",
-    "name": {
-      "zh": "COOL JAPAN PARK OSAKA TT音樂廳",
-      "ja": "COOL JAPAN PARK OSAKA TTホール"
-    },
-    "pref": "",
-    "city": "COOL JAPAN PARK OSAKA TTホール",
+    "pref": "福岡県",
+    "city": "福岡",
     "address": "",
     "seats": null,
     "theaterId": null
@@ -1054,18 +982,6 @@
     "address": "東京都文京区後楽1丁目3-53 IMM THEATER",
     "seats": 705,
     "theaterId": "8681"
-  },
-  {
-    "id": "v-f2f1c02b",
-    "name": {
-      "zh": "天王洲 銀河劇場",
-      "ja": "天王洲 銀河劇場"
-    },
-    "pref": "",
-    "city": "天王洲 銀河劇場",
-    "address": "",
-    "seats": null,
-    "theaterId": null
   },
   {
     "id": "brillia-hall",
@@ -1128,30 +1044,6 @@
     "theaterId": "125"
   },
   {
-    "id": "v-b32ee82b",
-    "name": {
-      "zh": "劇場Ｈ",
-      "ja": "シアターＨ"
-    },
-    "pref": "",
-    "city": "シアターＨ",
-    "address": "",
-    "seats": null,
-    "theaterId": null
-  },
-  {
-    "id": "cool-japan-park-osaka-ww",
-    "name": {
-      "zh": "COOL JAPAN PARK OSAKA WW音樂廳",
-      "ja": "COOL JAPAN PARK OSAKA WWホール"
-    },
-    "pref": "",
-    "city": "COOL JAPAN PARK OSAKA WWホール",
-    "address": "",
-    "seats": null,
-    "theaterId": null
-  },
-  {
     "id": "v3225",
     "name": {
       "zh": "COOL JAPAN PARK OSAKA・WW音樂廳",
@@ -1181,8 +1073,8 @@
       "zh": "近鉄アート館",
       "ja": "近鉄アート館"
     },
-    "pref": "",
-    "city": "近鉄アート館",
+    "pref": "大阪府",
+    "city": "大阪",
     "address": "",
     "seats": null,
     "theaterId": null
@@ -1193,8 +1085,8 @@
       "zh": "草月音樂廳",
       "ja": "草月ホール"
     },
-    "pref": "",
-    "city": "草月ホール",
+    "pref": "東京都",
+    "city": "東京",
     "address": "",
     "seats": null,
     "theaterId": null
@@ -1205,8 +1097,8 @@
       "zh": "ぴあアリーナMM",
       "ja": "ぴあアリーナMM"
     },
-    "pref": "",
-    "city": "ぴあアリーナMM",
+    "pref": "神奈川県",
+    "city": "横浜",
     "address": "",
     "seats": null,
     "theaterId": null
@@ -1217,8 +1109,8 @@
       "zh": "スタァライト劇場（旧：飛行船劇場）",
       "ja": "スタァライト劇場（旧：飛行船シアター）"
     },
-    "pref": "",
-    "city": "スタァライト劇場（旧：飛行船シアター）",
+    "pref": "東京都",
+    "city": "東京",
     "address": "",
     "seats": null,
     "theaterId": null
@@ -1229,8 +1121,8 @@
       "zh": "国立代々木競技場 第一体育館",
       "ja": "国立代々木競技場 第一体育館"
     },
-    "pref": "",
-    "city": "国立代々木競技場 第一体育館",
+    "pref": "東京都",
+    "city": "東京",
     "address": "",
     "seats": null,
     "theaterId": null
@@ -1241,8 +1133,8 @@
       "zh": "I'M A SHOW",
       "ja": "I'M A SHOW"
     },
-    "pref": "",
-    "city": "I'M A SHOW",
+    "pref": "東京都",
+    "city": "東京",
     "address": "",
     "seats": null,
     "theaterId": null
@@ -1253,8 +1145,8 @@
       "zh": "パルテノン多摩 大音樂廳",
       "ja": "パルテノン多摩 大ホール"
     },
-    "pref": "",
-    "city": "パルテノン多摩 大ホール",
+    "pref": "東京都",
+    "city": "東京",
     "address": "",
     "seats": null,
     "theaterId": null
@@ -1265,8 +1157,8 @@
       "zh": "あなぶきアリーナ香川",
       "ja": "あなぶきアリーナ香川"
     },
-    "pref": "",
-    "city": "あなぶきアリーナ香川",
+    "pref": "香川県",
+    "city": "香川",
     "address": "",
     "seats": null,
     "theaterId": null
@@ -1301,8 +1193,8 @@
       "zh": "沖繩サントリーアリーナ",
       "ja": "沖縄サントリーアリーナ"
     },
-    "pref": "",
-    "city": "沖縄サントリーアリーナ",
+    "pref": "沖縄県",
+    "city": "沖縄",
     "address": "",
     "seats": null,
     "theaterId": null
@@ -1313,8 +1205,8 @@
       "zh": "サンドーム福井",
       "ja": "サンドーム福井"
     },
-    "pref": "",
-    "city": "サンドーム福井",
+    "pref": "福井県",
+    "city": "福井",
     "address": "",
     "seats": null,
     "theaterId": null
@@ -1349,20 +1241,8 @@
       "zh": "有明アリーナ",
       "ja": "有明アリーナ"
     },
-    "pref": "",
-    "city": "有明アリーナ",
-    "address": "",
-    "seats": null,
-    "theaterId": null
-  },
-  {
-    "id": "v-e90aa030",
-    "name": {
-      "zh": "大宮ソニックシティ 大音樂廳",
-      "ja": "大宮ソニックシティ 大ホール"
-    },
-    "pref": "",
-    "city": "大宮ソニックシティ 大ホール",
+    "pref": "東京都",
+    "city": "東京",
     "address": "",
     "seats": null,
     "theaterId": null
@@ -1373,8 +1253,8 @@
       "zh": "KAAT神奈川藝術劇場〈音樂廳〉",
       "ja": "KAAT神奈川芸術劇場〈ホール〉"
     },
-    "pref": "",
-    "city": "KAAT神奈川芸術劇場〈ホール〉",
+    "pref": "神奈川県",
+    "city": "横浜",
     "address": "",
     "seats": null,
     "theaterId": null
@@ -1385,8 +1265,8 @@
       "zh": "刈谷市綜合文化中心 アイリス 大音樂廳",
       "ja": "刈谷市総合文化センター アイリス 大ホール"
     },
-    "pref": "",
-    "city": "刈谷市総合文化センター アイリス 大ホール",
+    "pref": "愛知県",
+    "city": "名古屋",
     "address": "",
     "seats": null,
     "theaterId": null
@@ -1397,8 +1277,8 @@
       "zh": "久留米シティプラザ ザ・グランド音樂廳",
       "ja": "久留米シティプラザ ザ・グランドホール"
     },
-    "pref": "",
-    "city": "久留米シティプラザ ザ・グランドホール",
+    "pref": "福岡県",
+    "city": "福岡",
     "address": "",
     "seats": null,
     "theaterId": null
@@ -1409,8 +1289,8 @@
       "zh": "南座",
       "ja": "南座"
     },
-    "pref": "",
-    "city": "南座",
+    "pref": "京都府",
+    "city": "京都",
     "address": "",
     "seats": null,
     "theaterId": null
@@ -1433,8 +1313,8 @@
       "zh": "劇場1010",
       "ja": "シアター1010"
     },
-    "pref": "",
-    "city": "シアター1010",
+    "pref": "東京都",
+    "city": "東京",
     "address": "",
     "seats": null,
     "theaterId": null
@@ -1446,7 +1326,7 @@
       "ja": "バービカン劇場"
     },
     "pref": "",
-    "city": "バービカン劇場",
+    "city": "",
     "address": "",
     "seats": null,
     "theaterId": null

@@ -28,9 +28,31 @@ export async function generateMetadata({
   // 查不到而整頁 notFound（詳見 app/show/[slug]/page.tsx 的註釋）
   const series = getSeries(decodeURIComponent(await params.then((p) => p.id)));
   if (!series) return {};
+  const shows = getShowsBySeries(series.id);
+  /*
+   * 系列主视觉：getShowsBySeries 已按「上演中 → 即將開演 → 已結束、
+   * 同状态最新在前」排好，取第一个有海报的作为分享图 ——
+   * 没有任何海报的系列不出空图。
+   */
+  const poster = shows.find((show) => show.poster)?.poster ?? null;
+  const title = `${series.name.zh}的舞台公演`;
+  const description =
+    `${series.original.zh}的 2.5 次元舞台劇、音樂劇公演一覽。${series.name.zh} / ${series.name.ja}の舞台化作品まとめ。`;
   return {
-    title: `${series.name.zh}的舞台公演`,
-    description: `${series.original.zh}的 2.5 次元舞台劇、音樂劇公演一覽。${series.name.zh} / ${series.name.ja}の舞台化作品まとめ。`,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      images: poster ? [{ url: poster, alt: series.name.zh }] : undefined,
+    },
+    twitter: {
+      card: poster ? 'summary_large_image' : 'summary',
+      title,
+      description,
+      images: poster ? [poster] : undefined,
+    },
   };
 }
 

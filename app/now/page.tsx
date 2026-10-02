@@ -6,7 +6,7 @@ import { LiveCount } from '@/components/LiveCounts';
 export const metadata: Metadata = {
   title: '上演中的公演',
   description:
-    '日本 2.5 次元舞台劇、音樂劇現正上演中的公演一覽。可按類型、城市、原作媒體篩選，並依開演日或規模排序。上演中の2.5次元舞台・ミュージカル公演一覧。',
+    '日本 2.5 次元舞台劇、音樂劇現正上演中的公演一覽。可按類型、城市、原作媒體篩選，並依場次或開演日排序。上演中の2.5次元舞台・ミュージカル公演一覧。',
 };
 
 /**
@@ -44,11 +44,11 @@ export default function NowPage() {
         <p className="mt-2 text-sm text-fg-muted">
           {/* 计数挂载后按实时 JST 重算（LiveCounts），不会把已落幕的公演数进去 */}
           <span className="i18n-zh">
-            共 <LiveCount spans={spans} status="now" fallback={meta.counts.now} /> 部公演正在日本各地上演，按規模排列。
-            可依類型、城市、原作媒體進一步篩選。
+            共 <LiveCount spans={spans} status="now" fallback={meta.counts.now} /> 部公演正在日本各地上演，按演出場次由多到少排列（場次＝各會場的公演場次合計）。
+            可依類型、城市、原作媒體進一步篩選，排序可切換。
           </span>
           <span className="i18n-ja">
-            日本各地で上演中の公演が <LiveCount spans={spans} status="now" fallback={meta.counts.now} /> 件。規模順に並んでいます。
+            日本各地で上演中の公演が <LiveCount spans={spans} status="now" fallback={meta.counts.now} /> 件。公演数が多い順に並んでいます。
             種別・都市・原作メディアで絞り込めます。
           </span>
         </p>
@@ -57,7 +57,7 @@ export default function NowPage() {
       <ShowExplorer
         briefs={briefs}
         initialStatus={['now']}
-        initialSort="start"
+        initialSort="performances"
         searchPlaceholder={{ zh: '搜尋作品名、出演者、會場…', ja: '作品名・出演者・会場で検索…' }}
         hideStatusFilter
       />

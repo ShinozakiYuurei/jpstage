@@ -82,6 +82,8 @@ export interface CalendarEntry {
   venue: LocalizedText;
   /** 会场所属城市，用于日历筛选 */
   city: string;
+  /** 類型（ミュージカル / 舞台 / ライブ…），用于日历筛选 */
+  kind: ShowKind;
   startDate: string;
   endDate: string;
   /** 此档期相对构建时日本日期的状态 */
@@ -241,6 +243,14 @@ export interface ShowCardData {
   venueIds: string[];
   /** 去重后的城市（首站在前，用于卡片上的城市标签与「+N」） */
   cities: string[];
+  /**
+   * 全部会場的演出场次数合计（各 run 均未登记场次时为 null）。
+   *
+   * ★ 为什么进卡片数据：它就是「按規模排列」的真实含义 —— 演出场次数，
+   *   不是座席数、也不是巡演城市数。把它显示在卡片信息行上，
+   *   排序依据就可见了，用户不用再猜「规模」是什么。
+   */
+  performances: number | null;
 }
 
 /** 筛选面板用的扁平化公演摘要 */

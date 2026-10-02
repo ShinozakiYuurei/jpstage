@@ -7,12 +7,11 @@ import {
   getMeta,
   toCardData,
   getAllSeries,
-  getCalendarEntries,
-  getTodayJst,
+  getShowBriefs,
 } from '@/lib/data';
 import { LiveCount } from '@/components/LiveCounts';
 import { LiveShowGrid } from '@/components/LiveShowGrid';
-import { ShowCalendar } from '@/components/ShowCalendar';
+import { SiteSearch } from '@/components/SiteSearch';
 
 /**
  * 首页
@@ -114,6 +113,12 @@ export default function HomePage() {
         <span className="i18n-zh">日本 2.5 次元舞台劇資料庫</span>
         <span className="i18n-ja">日本2.5次元ミュージカル公演データベース</span>
       </h1>
+      {/*
+       * 全站搜索：只覆盖上演中与即將開演 —— 结果不与已結束混排，
+       * 完结作品单独收进 /archive（檔案庫，导航里有）。日历整体
+       * 收进 /calendar，首页首屏只留上演中 + 搜索。
+       */}
+      <SiteSearch briefs={getShowBriefs()} />
       {/* ── 上演中 ── */}
       <section>
         <SectionBar
@@ -122,12 +127,12 @@ export default function HomePage() {
           titleJa="上演中"
           subtitleZh={
             <>
-              共 <LiveCount spans={spans} status="now" fallback={now.length} /> 部公演正在上演，按規模排列。
+              共 <LiveCount spans={spans} status="now" fallback={now.length} /> 部公演正在上演，按演出場次由多到少排列。
             </>
           }
           subtitleJa={
             <>
-              <LiveCount spans={spans} status="now" fallback={now.length} /> 公演が上演中。規模順。
+              <LiveCount spans={spans} status="now" fallback={now.length} /> 公演が上演中。公演数が多い順。
             </>
           }
           ctaZh="查看全部"
@@ -190,36 +195,6 @@ export default function HomePage() {
             </p>
           }
         />
-      </section>
-
-      {/* ── 日历入口 ── */}
-      <section>
-        <Link
-          href="/calendar"
-          className="jp-glass group flex items-center gap-4 rounded-2xl p-4 transition sm:p-5"
-        >
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-veil-strong text-accent">
-            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3.5" y="5" width="17" height="16" rx="2.5" />
-              <path d="M7.5 3v4M16.5 3v4M3.5 9.5h17" />
-              <path d="M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01" />
-            </svg>
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block font-semibold text-fg group-hover:text-accent">
-              <span className="i18n-zh">按日期瀏覽<span className="jp-grad-text">演出日曆</span></span>
-              <span className="i18n-ja">日付から探す<span className="jp-grad-text">公演カレンダー</span></span>
-            </span>
-            <span className="mt-1 block text-sm text-fg-muted">
-              <span className="i18n-zh">查看每天正在演出和即將演出的舞台劇</span>
-              <span className="i18n-ja">日ごとの上演中・開幕予定の公演をチェック</span>
-            </span>
-          </span>
-          <span aria-hidden className="shrink-0 text-lg text-fg-dim transition group-hover:translate-x-1 group-hover:text-accent">→</span>
-        </Link>
-        <div className="mt-4">
-          <ShowCalendar entries={getCalendarEntries()} today={getTodayJst()} />
-        </div>
       </section>
 
       {/* ── 系列 ──

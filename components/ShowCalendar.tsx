@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FilterDropdown, type FilterOption } from '@/components/FilterDropdown';
 import { formatPeriod } from '@/lib/format';
-import { cityLabel } from '@/lib/i18n';
+import { cityLabel, KIND_LABEL } from '@/lib/i18n';
+import { escapeIcsText, foldIcsLine } from '@/lib/ics';
 import type { CalendarEntry } from '@/lib/types';
 
 const WEEKDAYS = {
@@ -53,30 +54,7 @@ function groupByShow(entries: CalendarEntry[]) {
   return [...groups.values()];
 }
 
-function escapeIcsText(value: string): string {
-  return value
-    .replace(/\\/g, '\\\\')
-    .replace(/\r?\n/g, '\\n')
-    .replace(/,/g, '\\,')
-    .replace(/;/g, '\\;');
-}
-
-/** RFC 5545 limits content lines to 75 UTF-8 octets; fold without splitting a character. */
-function foldIcsLine(line: string): string {
-  const encoder = new TextEncoder();
-  let folded = '';
-  let byteLength = 0;
-  for (const character of line) {
-    const characterBytes = encoder.encode(character).length;
-    if (byteLength + characterBytes > 75) {
-      folded += '\r\n ';
-      byteLength = 1;
-    }
-    folded += character;
-    byteLength += characterBytes;
-  }
-  return folded;
-}
+const ALL_KINDS = '__all_kind__';
 
 function downloadCalendarEvent(show: { slug: string; title: CalendarEntry['title'] }, entry: CalendarEntry) {
   const lang = document.documentElement.dataset.lang === 'ja' ? 'ja' : 'zh';
@@ -155,6 +133,8 @@ export function ShowCalendar({
   const [month, setMonth] = useState(initialMonth);
   const [selectedDate, setSelectedDate] = useState(today);
   const [selectedCity, setSelectedCity] = useState(ALL_CITIES);
+  const [selectedKind, setSelectedKind] = useState(ALL_KINDS);
+  const [weekendOnly, setWeekendOnly] = useState(false);
   const [dateSelectionRevision, setDateSelectionRevision] = useState(0);
   const detailsRef = useRef<HTMLElement>(null);
   const scrollDetailsOnDateChange = useRef(false);
@@ -191,12 +171,26 @@ export function ShowCalendar({
       })),
     ];
   }, [entries, today]);
+  const kindOptions: FilterOption[] = useMemo(() => {
+    const kinds = [
+      ...new Set(entries.filter((entry) => entry.endDate >= today).map((entry) => entry.kind)),
+    ];
+    return [
+      { value: ALL_KINDS, label: '所有類型 / すべての種別' },
+      ...kinds.map((kind) => ({
+        value: kind,
+        label: KIND_LABEL[kind].zh + ' / ' + KIND_LABEL[kind].ja,
+      })),
+    ];
+  }, [entries, today]);
   const filteredEntries = useMemo(
     () =>
-      selectedCity === ALL_CITIES
-        ? entries
-        : entries.filter((entry) => entry.city === selectedCity),
-    [entries, selectedCity],
+      entries.filter(
+        (entry) =>
+          (selectedCity === ALL_CITIES || entry.city === selectedCity) &&
+          (selectedKind === ALL_KINDS || entry.kind === selectedKind),
+      ),
+    [entries, selectedCity, selectedKind],
   );
   const dates = useMemo(() => monthDates(month), [month]);
   const entriesByDay = useMemo(() => {
@@ -256,6 +250,43 @@ export function ShowCalendar({
 
     if (firstAvailableDay) setSelectedDate(firstAvailableDay);
     else setSelectedDate(month === initialMonth ? today : firstDay);
+  }
+
+  function selectKind(values: string[]) {
+    setSelectedKind(values[0] ?? ALL_KINDS);
+  }
+
+  function isWeekend(date: string): boolean {
+    const [year, monthNumber, dayNumber] = date.split('-').map(Number);
+    const weekday = new Date(Date.UTC(year, monthNumber - 1, dayNumber)).getUTCDay();
+    return weekday === 0 || weekday === 6;
+  }
+
+  function toggleWeekendOnly() {
+    const next = !weekendOnly;
+    setWeekendOnly(next);
+    // 切到「只看週末」时，若当前选中日是平日，吸附到本月最近的、
+    // 在当前筛选下有演出的周末；没有则不动。
+    if (!next || isWeekend(selectedDate)) return;
+    const [year, monthNumber] = month.split('-').map(Number);
+    const lastDay = toIsoDate(new Date(Date.UTC(year, monthNumber, 0)));
+    const candidates = dates
+      .filter((date) => date >= month + '-01' && date <= lastDay && isWeekend(date))
+      .filter((date) =>
+        filteredEntries.some(
+          (entry) => entry.startDate <= date && entry.endDate >= date,
+        ),
+      )
+      .sort(
+        (a, b) =>
+          Math.abs(Date.parse(a) - Date.parse(selectedDate)) -
+          Math.abs(Date.parse(b) - Date.parse(selectedDate)),
+      );
+    if (candidates[0]) {
+      scrollDetailsOnDateChange.current = true;
+      setSelectedDate(candidates[0]);
+      setDateSelectionRevision((revision) => revision + 1);
+    }
   }
 
   function changeMonth(delta: number) {
@@ -324,6 +355,25 @@ export function ShowCalendar({
               selectionMode="single"
             />
           </div>
+          <div className="min-w-0 flex-1 sm:w-44 sm:flex-none">
+            <FilterDropdown
+              label="類型 / 種別"
+              placeholder="所有類型 / すべての種別"
+              options={kindOptions}
+              selected={[selectedKind]}
+              onChange={selectKind}
+              selectionMode="single"
+            />
+          </div>
+          <button
+            type="button"
+            aria-pressed={weekendOnly}
+            onClick={toggleWeekendOnly}
+            className={'jp-calendar-current shrink-0 rounded-xl border px-3 py-2 text-sm font-semibold transition ' + (weekendOnly ? 'border-accent bg-accent/10 text-accent' : 'border-hairline-strong bg-veil text-fg-soft hover:bg-veil-strong hover:text-fg')}
+          >
+            <span className="i18n-zh">只看週末</span>
+            <span className="i18n-ja">土日のみ</span>
+          </button>
         </div>
 
         <div className="grid grid-cols-7">
@@ -336,6 +386,10 @@ export function ShowCalendar({
           {dates.map((date) => {
             const inMonth = date.slice(0, 7) === month;
             if (!inMonth) return <div key={date} className="jp-calendar-blank" aria-hidden="true" />;
+            // 「只看週末」：格线保持 7 列，平日以空位占位，周末列不被挤歪。
+            if (weekendOnly && !isWeekend(date)) {
+              return <div key={date} className="jp-calendar-blank" aria-hidden="true" />;
+            }
 
             const dayEntries = entriesByDay.get(date) ?? [];
             const dayShows = groupByShow(dayEntries);

@@ -854,6 +854,72 @@ function slugifyVenue(ja, en) {
 }
 
 /**
+ * 会場名规范化（比對已知会場表用）：小写 + 全角转半角 + 去空白。
+ *
+ * ★ 为什么要有它：同一会場在不同源里写法不同（「ＳｋｙシアターＭＢＳ」
+ *   vs 「SkyシアターMBS」），按原文比对永远对不上 —— 实测同一会場
+ *   因此拆成两条 venue 数据，城市一个是大阪、一个却是场馆名本身。
+ */
+function normVenueKey(name) {
+  return (name ?? '')
+    .toLowerCase()
+    .replace(/[Ａ-Ｚａ-ｚ０-９！-～]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
+    .replace(/\s+/g, '');
+}
+
+/**
+ * 已知会場 → 都道府県（会場名完全不含地名时的兜底，规范化后前缀匹配）
+ *
+ * ★ 为什么不猜更多：这张表只收「有把握、不会搬家」的会場
+ *   （専用劇場、連鎖アリーナ、老舗劇場）。覆盖 20 个常见会場，
+ *   胜过让没把握的猜测污染整个筛选面 —— 推不出的照旧留空。
+ */
+const KNOWN_VENUE_PREFS = {
+  kanadeviahall: '東京都',
+  'skyシアターmbs': '大阪府',
+  'シアターh': '東京都',
+  'シアター1010': '東京都',
+  明治座: '東京都',
+  新歌舞伎座: '大阪府',
+  南座: '京都府',
+  '近鉄アート館': '大阪府',
+  '草月ホール': '東京都',
+  'クラブex': '神奈川県',
+  kaat: '神奈川県',
+  'ぴあアリーナmm': '神奈川県',
+  'キャナルシティ劇場': '福岡県',
+  '天王洲銀河劇場': '東京都',
+  cooljapanparkosaka: '大阪府',
+  '大宮ソニックシティ': '埼玉県',
+  shibuyalovez: '東京都',
+  "i'mashow": '東京都',
+  sgchallariake: '東京都',
+  'ステラボール': '東京都',
+  'スタァライト劇場': '東京都',
+};
+
+/**
+ * 会場别名 → 规范 id / 规范名
+ *
+ * ★ 为什么需要：协会站与 CoRich 对同一会場的写法不同，id 也就不同
+ *   （CoRich 有 theaterId 用「v<id>」，协会站只能用名字哈希），
+ *   结果同一会場出现两个页面（实测：シアターH 拆成三条、
+ *   SkyシアターMBS 拆成两条）。在建 venue 行之前把别名归一到
+ *   规范 id，两条数据自然合并。vid 必须与 CoRich 的 theaterId 一致。
+ */
+const VENUE_ALIASES = {
+  'skyシアターmbs': { vid: 'v8748', name: 'SkyシアターMBS' },
+  'aiia2.5theaterkobe': { vid: 'v3273' },
+  kanadeviahall: { vid: 'v1806' },
+  'シアターh': { vid: 'v8747' },
+  '天王洲銀河劇場': { vid: 'v161' },
+  cooljapanparkosakattホール: { vid: 'v3226', name: 'COOL JAPAN PARK OSAKA・TTホール' },
+  cooljapanparkosakawwホール: { vid: 'v3225', name: 'COOL JAPAN PARK OSAKA・WWホール' },
+  '大宮ソニックシティ大ホール': { vid: 'v315' },
+  '品川プリンスホテルステラボール': { vid: 'v675', name: 'ステラボール（Stellar Ball）' },
+};
+
+/**
  * 从会場名反推都道府県（协会站只给会場名时用）
  *
  * ★ 为什么需要它：协会站的「公演期間 / 劇場」一栏只有会場名，
@@ -885,9 +951,14 @@ function guessPref(venueName) {
     横浜: '神奈川県', 神戸: '兵庫県', 札幌: '北海道', 仙台: '宮城県',
     広島: '広島県', 福岡: '福岡県', 箕面: '大阪府', 豊橋: '愛知県',
     品川: '東京都', 渋谷: '東京都', 新宿: '東京都',
+    多賀城: '宮城県', 土岐: '岐阜県', 福井: '福井県', 刈谷: '愛知県',
+    久留米: '福岡県', 香川: '香川県', 沖縄: '沖縄県',
   };
   for (const [c, p] of Object.entries(cityToPref)) {
     if (venueName.includes(c)) return p;
+  }
+  for (const [k, p] of Object.entries(KNOWN_VENUE_PREFS)) {
+    if (normVenueKey(venueName).startsWith(k)) return p;
   }
   return '';
 }
@@ -1815,6 +1886,13 @@ async function main() {
        */
       // 協会站用酒店全名，CoRich 会場目录则用正式名和 theaterId；统一后复用同一会場。
       if (r.venueName === '品川プリンスホテル クラブ eX') r.venueName = 'クラブeX';
+      // 别名归一：同一会場在不同源里写法不同（全角/半角、带不带前缀），
+      // 先映射到规范名与规范 id 再建行 —— 否则同一会場拆成两个页面。
+      const venueAlias = VENUE_ALIASES[normVenueKey(r.venueName)];
+      if (venueAlias) {
+        if (venueAlias.name) r.venueName = venueAlias.name;
+        if (venueAlias.vid) r.theaterId = venueAlias.vid.slice(1);
+      }
       const vid = r.theaterId ? 'v' + r.theaterId : r.venueName === 'クラブeX' ? 'v66' : slugifyVenue(r.venueName, r.venueName);
       /*
        * ★ 协会站的会場**没有 pref**（它的「公演期間/劇場」一栏只有会場名）。
@@ -1824,18 +1902,13 @@ async function main() {
        */
       const pref = r.pref || guessPref(r.venueName);
       /*
-       * ★ city 的兜底：会場名若推不出都道府県（协会站大量如此 ——
-       *   「Kanadevia Hall」「シアターH」这类名字里没有任何地名），
-       *   city 就为空，而 validate 原本把它当**错误**阻断整轮抓取。
-       *
-       *   这个严厉程度不对：会場页上还有会場名这个主信息，
-       *   city 只用于筛选聚合。为它阻断写入，等于让「一个会場
-       *   查不到所在地」毁掉整站数据的更新。
-       *
-       *   所以这里用会場名兜底（页面显示的是会場名，不会变成空白），
-       *   并把它降级为警告 —— 见 validate 里的对应注释。
-       */
-      const city = pref ? cityOf(pref) : r.venueName;
+     * ★ city 的兜底：会場名若推不出都道府県（海外会場、未收录的
+     *   小会場），city 留空 —— 宁可没有，也不能把会場名当城市，
+     *   否则卡片会出现「クラブeX · クラブeX」这种城市与会場同名
+     *   的怪行，筛选聚合也被脏值污染。缺 city 由 validate 以
+     *   警告提示，不阻断写入。
+      */
+      const city = pref ? cityOf(pref) : '';
       if (!venueMap.has(vid)) {
         venueMap.set(vid, {
           id: vid,
@@ -2218,11 +2291,11 @@ function cityOf(pref) {
     宮城: '仙台',
     広島: '広島',
     神奈川: '横浜',
-    埼玉: 'さいたま',
+    埼玉: '埼玉',
     兵庫: '神戸',
     千葉: '千葉',
     静岡: '静岡',
-    沖縄: '那覇',
+    沖縄: '沖縄',
   };
   return map[t] ?? t;
 }
