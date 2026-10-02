@@ -301,13 +301,24 @@ async function main() {
     check('日文模式：日文可见、中文隐藏', jaCheck.zhVisible === 0 && jaCheck.jaVisible > 0, `zh ${jaCheck.zhVisible}，ja ${jaCheck.jaVisible}`);
 
     // 切回中文并验证 localStorage 记住
+    // ★ 对着线上跑时 JS chunk 要走网络，这里的点击可能落在 hydration
+    //   完成前（按钮还没接上事件，点了没反应、localStorage 也没写入）。
+    //   轮询重试直到写入成功；本地毫秒级完成，首轮即命中，行为不变。
     await evaluate(`(() => {
       const btn = document.querySelector('[data-lang-btn="zh"]');
       if (btn) btn.click();
       return true;
     })()`);
-    await sleep(300);
-    const remembered = await evaluate(`localStorage.getItem('jp-lang')`);
+    let remembered = null;
+    for (let i = 0; i < 10 && remembered !== 'zh'; i++) {
+      await sleep(400);
+      await evaluate(`(() => {
+        const btn = document.querySelector('[data-lang-btn="zh"]');
+        if (btn) btn.click();
+        return true;
+      })()`);
+      remembered = await evaluate(`localStorage.getItem('jp-lang')`);
+    }
     check('语言选择写入 localStorage', remembered === 'zh', `jp-lang=${remembered}`);
     const langAttr = await evaluate(`document.documentElement.lang`);
     check('<html lang> 与 data-lang 同步', langAttr === 'zh-Hant', `lang=${langAttr}`);
