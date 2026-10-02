@@ -6,6 +6,8 @@ import { prefLabel, pick } from '@/lib/i18n';
 import { formatPeriod } from '@/lib/format';
 import { LiveShowGrid } from '@/components/LiveShowGrid';
 import { T } from '@/components/T';
+import { LiveNowSuffix } from '@/components/LiveCounts';
+import { LiveStatusDot } from '@/components/LiveShowStatus';
 
 /**
  * 会場详情页
@@ -24,8 +26,8 @@ export async function generateMetadata({
 }: {
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
-  const { id } = await params;
-  const venue = getVenue(id);
+  // 防禦性 decode：目前 id 全 ASCII，但資料層不保證永遠如此
+  const venue = getVenue(decodeURIComponent(await params.then((p) => p.id)));
   if (!venue) return {};
   return {
     title: `${venue.name.zh}的公演日程`,
@@ -34,11 +36,12 @@ export async function generateMetadata({
 }
 
 export default async function VenuePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const venue = getVenue(id);
+  // 防禦性 decode（詳見 app/show/[slug]/page.tsx 的註釋）
+  const venue = getVenue(decodeURIComponent(await params.then((p) => p.id)));
   if (!venue) notFound();
 
   const shows = getShowsByVenue(venue.id);
+  /* 构建日的「正在上演」数：仅作 SSR 首帧 fallback，挂载后由 LiveNowSuffix 重算 */
   const nowCount = shows.filter((s) => s.status === 'now').length;
   /* 档期表：按各档开始日排序（同一会場可能有同一公演的多档） */
   const runs = getRunsByVenue(venue.id).sort((a, b) =>
@@ -88,11 +91,11 @@ export default async function VenuePage({ params }: { params: Promise<{ id: stri
         <p className="mt-3 text-xs text-fg-dim">
           <span className="i18n-zh">
             本站收錄此會場的 {shows.length} 部公演
-            {nowCount > 0 && `，其中 ${nowCount} 部正在上演`}。
+            <LiveNowSuffix spans={shows} fallback={nowCount} />。
           </span>
           <span className="i18n-ja">
             当会場の公演は {shows.length} 件
-            {nowCount > 0 && `（うち上演中 ${nowCount} 件）`}。
+            <LiveNowSuffix spans={shows} fallback={nowCount} />。
           </span>
         </p>
       </header>
@@ -120,18 +123,10 @@ export default async function VenuePage({ params }: { params: Promise<{ id: stri
             {runs.map(({ show, run }) => (
               <li key={`${show.slug}-${run.startDate}`} className="relative">
                 {/* 时间轴节点 */}
-                <span
-                  aria-hidden
-                  className="absolute -left-5 top-3.5 h-2.5 w-2.5 rounded-full border-2"
-                  style={{
-                    borderColor:
-                      show.status === 'now'
-                        ? 'var(--jp-st-now-dot)'
-                        : show.status === 'upcoming'
-                          ? 'var(--jp-st-soon-dot)'
-                          : 'var(--jp-st-end-dot)',
-                    background: 'var(--jp-canvas)',
-                  }}
+                <LiveStatusDot
+                  startDate={show.startDate}
+                  endDate={show.endDate}
+                  status={show.status}
                 />
                 <Link
                   href={`/show/${show.slug}`}

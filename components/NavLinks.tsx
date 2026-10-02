@@ -121,21 +121,34 @@ export function NavLinks() {
    *
    * 依赖 pathname：客户端换页（详情页 ↔ 详情页）时要重读一次 ——
    *   否则从待演公演点进上演中公演，aria-current 会停在上一次的答案上。
+    *   另外，详情页的 LiveShowArticle 挂载后会按实时 JST 改写
+    *   data-page-nav（公演开演/落幕时），这里要监听并跟着补跑一次，
+    *   aria-current 才不会落后于顶栏色块（视觉那半边走 :has()，
+    *   属性一变就自动跟）。
    */
   useEffect(() => {
-    // 详情页的归属不是路径能推的（同一个 /show 前缀装两种公演，
-    // /venue/<id> 也与 /venue 不同），只能读页面自己写下的
-    // [data-page-nav]；其余页面用路径即可。
-    const fromPage = document.querySelector<HTMLElement>('[data-page-nav]')?.dataset.pageNav;
-    const want =
-      fromPage ??
-      (pathname.startsWith('/show')
-        ? null
-        : LINKS.find((l) => l.href === pathname)?.nav ?? null);
-    for (const a of document.querySelectorAll<HTMLAnchorElement>('a[data-nav]')) {
-      if (a.dataset.nav === want) a.setAttribute('aria-current', 'page');
-      else a.removeAttribute('aria-current');
-    }
+    const sync = () => {
+      // 详情页的归属不是路径能推的（同一个 /show 前缀装两种公演，
+      // /venue/<id> 也与 /venue 不同），只能读页面自己写下的
+      // [data-page-nav]；其余页面用路径即可。
+      const fromPage = document.querySelector<HTMLElement>('[data-page-nav]')?.dataset.pageNav;
+      const want =
+        fromPage ??
+        (pathname.startsWith('/show')
+          ? null
+          : LINKS.find((l) => l.href === pathname)?.nav ?? null);
+      for (const a of document.querySelectorAll<HTMLAnchorElement>('a[data-nav]')) {
+        if (a.dataset.nav === want) a.setAttribute('aria-current', 'page');
+        else a.removeAttribute('aria-current');
+      }
+    };
+    sync();
+    const mo = new MutationObserver(sync);
+    mo.observe(document.documentElement, {
+      subtree: true,
+      attributeFilter: ['data-page-nav'],
+    });
+    return () => mo.disconnect();
   }, [pathname]);
 
   return (

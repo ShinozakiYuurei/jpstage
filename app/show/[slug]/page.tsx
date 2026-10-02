@@ -10,6 +10,12 @@ import { PosterImage } from '@/components/PosterImage';
 import { PosterArt } from '@/components/PosterArt';
 import { LiveShowGrid } from '@/components/LiveShowGrid';
 import { T } from '@/components/T';
+import {
+  LiveShowArticle,
+  LiveBreadcrumbStatus,
+  LiveStatusChip,
+  LiveUpcomingOnly,
+} from '@/components/LiveShowStatus';
 
 /**
  * 公演详情页
@@ -28,8 +34,13 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
-  const show = getShow(slug);
+  /*
+   * ★ 非ASCII slug 必須先 decode：Next 的動態路由參數是 percent-encoded
+   *   形式（路由層編碼），直接拿去查資料會查不到 —— 於是整頁悄悄走
+   *   notFound()，導出的檔案還是 200，線上就是一頁空殼。
+   *   generateStaticParams 寫出的目錄名是原始 slug，兩邊必須對齊。
+   */
+  const show = getShow(decodeURIComponent(await params.then((p) => p.slug)));
   if (!show) return {};
   const series = getSeries(show.seriesId);
   const title = pick(show.title, 'zh');
@@ -44,8 +55,8 @@ export async function generateMetadata({
 }
 
 export default async function ShowPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const show = getShow(slug);
+  // 非 ASCII slug 先 decode（詳見 generateMetadata 處的註釋）
+  const show = getShow(decodeURIComponent(await params.then((p) => p.slug)));
   if (!show) notFound();
 
   const series = getSeries(show.seriesId);
@@ -59,20 +70,18 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
   /*
    * ★ data-page-nav 决定顶栏哪一项高亮（机制见 components/NavLinks.tsx）。
    *   值必须与 NavLinks 的 nav 标识一致：'now' | 'upcoming'。
-   *   已结束的公演归到它原本属于的那一类没有意义（顶栏没有「已结束」项），
-   *   所以 ended 时给 'now' 会误导 —— 这里给 'upcoming' 也不对。
-   *   正确做法：已结束时**不写**这个属性，顶栏就不高亮任何一项，
-   *   而面包屑仍然正常显示「已結束」。
-   *   （用 undefined 让 React 直接不渲染该属性，而不是渲染成 data-page-nav="undefined"。）
+   *   归属的实时改写收在 LiveShowArticle 里：构建值只保证首屏，挂载后
+   *   按实时 JST 重算 —— 公演落幕/开演时顶栏高亮跟着实时归属走，
+   *   已结束则完全不写这个属性，顶栏不高亮任何一项。
    */
-  const pageNav =
-    show.status === 'now' ? 'now' : show.status === 'upcoming' ? 'upcoming' : undefined;
 
   return (
-    <article
-      {...(pageNav ? { 'data-page-nav': pageNav } : {})}
+    <LiveShowArticle
+      startDate={show.startDate}
+      endDate={show.endDate}
+      status={show.status}
       /* 主色通道值：详情页头部的氛围色与卡片同源 */
-      style={{ '--jp-accent-rgb': hexToChannels(show.accent) } as React.CSSProperties}
+      accentChannels={hexToChannels(show.accent)}
     >
       {/* 面包屑 */}
       <nav className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-fg-dim">
@@ -81,17 +90,12 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
           <span className="i18n-ja">ホーム</span>
         </Link>
         <span aria-hidden>/</span>
-        <Link
-          href={show.status === 'upcoming' ? '/upcoming' : '/now'}
-          className="transition hover:text-fg"
-        >
-          <span className="i18n-zh">
-            {show.status === 'upcoming' ? '即將開演' : show.status === 'now' ? '上演中' : '公演'}
-          </span>
-          <span className="i18n-ja">
-            {show.status === 'upcoming' ? '開幕予定' : show.status === 'now' ? '上演中' : '公演'}
-          </span>
-        </Link>
+        {/* 分类归属随实时状态切换（已落幕标「公演」），见 LiveShowStatus.tsx */}
+        <LiveBreadcrumbStatus
+          startDate={show.startDate}
+          endDate={show.endDate}
+          status={show.status}
+        />
         {series && (
           <>
             <span aria-hidden>/</span>
@@ -142,22 +146,11 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
           <div className="min-w-0 flex-1">
             {/* 状态 + 类型 */}
             <div className="flex flex-wrap items-center gap-2">
-              <span
-                className={
-                  show.status === 'now'
-                    ? 'jp-status jp-status--now'
-                    : show.status === 'upcoming'
-                      ? 'jp-status jp-status--upcoming'
-                      : 'jp-status'
-                }
-              >
-                <span className="i18n-zh">
-                  {show.status === 'now' ? '上演中' : show.status === 'upcoming' ? '即將開演' : '已結束'}
-                </span>
-                <span className="i18n-ja">
-                  {show.status === 'now' ? '上演中' : show.status === 'upcoming' ? '開幕予定' : '終了'}
-                </span>
-              </span>
+              <LiveStatusChip
+                startDate={show.startDate}
+                endDate={show.endDate}
+                status={show.status}
+              />
               <span className="jp-chip">
                 <span className="i18n-zh">{KIND_LABEL[show.kind].zh}</span>
                 <span className="i18n-ja">{KIND_LABEL[show.kind].ja}</span>
@@ -185,7 +178,11 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
             )}
 
             {/* 开演倒数：只在待演时有意义 */}
-            {show.status === 'upcoming' && (
+            <LiveUpcomingOnly
+              startDate={show.startDate}
+              endDate={show.endDate}
+              status={show.status}
+            >
               <p className="mt-2 text-sm font-semibold text-accent">
                 <span className="i18n-zh">{relativeDayLabel(show.startDate, 'zh')}</span>
                 <span className="i18n-ja">{relativeDayLabel(show.startDate, 'ja')}</span>
@@ -195,7 +192,7 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
                   <span className="i18n-ja">{formatDateWithWeekday(show.startDate, 'ja')} 開幕</span>
                 </span>
               </p>
-            )}
+            </LiveUpcomingOnly>
 
             {/* 资料表 */}
             <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
@@ -546,7 +543,7 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
           <LiveShowGrid shows={siblings.map(toCardData)} mode="all" />
         </section>
       )}
-    </article>
+    </LiveShowArticle>
   );
 }
 

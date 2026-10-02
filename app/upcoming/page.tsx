@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
-import { getShowBriefs, getMeta } from '@/lib/data';
+import { allShowSpans, getShowBriefs, getMeta } from '@/lib/data';
 import { ShowExplorer } from '@/components/ShowExplorer';
+import { LiveCount } from '@/components/LiveCounts';
 
 export const metadata: Metadata = {
   title: '即將開演的公演',
@@ -25,6 +26,7 @@ export const metadata: Metadata = {
 export default function UpcomingPage() {
   const briefs = getShowBriefs();
   const meta = getMeta();
+  const spans = allShowSpans();
 
   return (
     <>
@@ -38,11 +40,21 @@ export default function UpcomingPage() {
           </span>
         </h1>
         <p className="mt-2 text-sm text-fg-muted">
+          {/* 计数挂载后按实时 JST 重算（LiveCounts），开演后自动归位 */}
           <span className="i18n-zh">
-            共 {meta.counts.upcoming} 部公演等待開幕，按開幕日由近到遠排列。
+            共 <LiveCount
+              spans={spans}
+              status="upcoming"
+              fallback={meta.counts.upcoming}
+            />{' '}
+            部公演等待開幕，按開幕日由近到遠排列。
           </span>
           <span className="i18n-ja">
-            開幕を控えた公演が {meta.counts.upcoming} 件。開幕日の近い順に並んでいます。
+            開幕を控えた公演が <LiveCount
+              spans={spans}
+              status="upcoming"
+              fallback={meta.counts.upcoming}
+            /> 件。開幕日の近い順に並んでいます。
           </span>
         </p>
       </section>

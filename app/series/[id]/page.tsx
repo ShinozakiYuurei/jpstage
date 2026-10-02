@@ -3,8 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getSeries, allSeriesIds, getShowsBySeries, toCardData } from '@/lib/data';
 import { SOURCE_LABEL } from '@/lib/i18n';
-import { formatPeriod } from '@/lib/format';
-import { LiveShowGrid } from '@/components/LiveShowGrid';
+import { LiveShowGroups } from '@/components/LiveShowGroups';
 import { T } from '@/components/T';
 
 /**
@@ -25,8 +24,9 @@ export async function generateMetadata({
 }: {
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
-  const { id } = await params;
-  const series = getSeries(id);
+  // 非 ASCII id 先 decode：動態路由參數是 percent-encoded，直接查會
+  // 查不到而整頁 notFound（詳見 app/show/[slug]/page.tsx 的註釋）
+  const series = getSeries(decodeURIComponent(await params.then((p) => p.id)));
   if (!series) return {};
   return {
     title: `${series.name.zh}的舞台公演`,
@@ -35,31 +35,11 @@ export async function generateMetadata({
 }
 
 export default async function SeriesPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const series = getSeries(id);
+  // 非 ASCII id 先 decode（詳見 app/show/[slug]/page.tsx 的註釋）
+  const series = getSeries(decodeURIComponent(await params.then((p) => p.id)));
   if (!series) notFound();
 
   const shows = getShowsBySeries(series.id);
-  const groups = [
-    {
-      key: 'now' as const,
-      zh: '上演中',
-      ja: '上演中',
-      items: shows.filter((s) => s.status === 'now'),
-    },
-    {
-      key: 'upcoming' as const,
-      zh: '即將開演',
-      ja: '開幕予定',
-      items: shows.filter((s) => s.status === 'upcoming'),
-    },
-    {
-      key: 'ended' as const,
-      zh: '已結束',
-      ja: '終了',
-      items: shows.filter((s) => s.status === 'ended'),
-    },
-  ].filter((g) => g.items.length > 0);
 
   return (
     /* data-page-nav='series'：让顶栏「系列」高亮 */
@@ -100,43 +80,9 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
         </p>
       </header>
 
-      {groups.map((g) => (
-        <section key={g.key} className="mt-8">
-          <div className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-hairline pb-2.5">
-            <h2 className="text-lg font-semibold tracking-tight text-fg">
-              <span className="i18n-zh">{g.zh}</span>
-              <span className="i18n-ja">{g.ja}</span>
-            </h2>
-            <span className="ml-auto text-xs text-fg-dim">
-              {g.items.length}
-              <span className="i18n-zh"> 部</span>
-              <span className="i18n-ja"> 件</span>
-            </span>
-          </div>
-
-          {/* 卡片状态交给 LiveShowGrid 客户端实时重算：开演/落幕的公演挂载后
-              按实时 JST 从「上演中 / 即將開演」分组剔除；已結束是终态不会变，
-              该分组用 'all' 只重算徽章。 */}
-          <LiveShowGrid shows={g.items.map(toCardData)} mode={g.key === 'ended' ? 'all' : g.key} />
-
-          {/* 已结束的分组附上期间一览：用户常需要确认「上一部演到什么时候」 */}
-          {g.key === 'ended' && (
-            <ul className="mt-3 space-y-1 text-xs text-fg-dim">
-              {g.items.map((s) => (
-                <li key={s.slug} className="flex flex-wrap gap-x-2">
-                  <span className="text-fg-soft">
-                    <T t={s.title} />
-                  </span>
-                  <span className="tabular-nums">
-                    {/* 中日同形，一次渲染即可 */}
-                    {formatPeriod(s.startDate, s.endDate)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      ))}
+      {/* 分组在客户端按实时 JST 重算（归属/计数/网格同源），
+          公演开演/落幕时不会再出现「计数还挂着、网格已空」的错位 */}
+      <LiveShowGroups shows={shows.map(toCardData)} />
 
       {shows.length === 0 && (
         <p className="py-16 text-center text-fg-dim">

@@ -173,6 +173,17 @@ export function getUpcomingShows(): Show[] {
 }
 
 /**
+ * 全部公演的档期两端（LiveCounts 客户端重算「N 部上演中」用）
+ *
+ * ★ 为什么只挑这两个字段：客户端重算计数需要**每部**的档期，
+ *   但不需要标题、場次等其余字段 —— 几十部公演约 2KB，
+ *   这是把「共 N 部上演中」搬进客户端实时重算的最小代价。
+ */
+export function allShowSpans(): { startDate: string; endDate: string }[] {
+  return ALL_SHOWS.map((s) => ({ startDate: s.startDate, endDate: s.endDate }));
+}
+
+/**
  * 已結束（依結束日由近到遠）
  *
  * ★ 為什麼要保留已結束的資料而不是抓完就丟：

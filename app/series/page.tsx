@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { getAllSeries, getShowsBySeries, getAllShows } from '@/lib/data';
 import { SOURCE_LABEL } from '@/lib/i18n';
 import { T } from '@/components/T';
+import { LiveSeriesChips } from '@/components/LiveCounts';
 
 export const metadata: Metadata = {
   title: '系列作品一覽',
@@ -33,8 +34,9 @@ export default function SeriesListPage() {
       return {
         s,
         total: shows.length,
-        now: shows.filter((x) => x.status === 'now').length,
-        upcoming: shows.filter((x) => x.status === 'upcoming').length,
+        shows,
+        nowFallback: shows.filter((x) => x.status === 'now').length,
+        upcomingFallback: shows.filter((x) => x.status === 'upcoming').length,
       };
     })
     .sort((a, b) => b.total - a.total || a.s.name.zh.localeCompare(b.s.name.zh, 'zh-Hant'));
@@ -61,7 +63,7 @@ export default function SeriesListPage() {
       </section>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {items.map(({ s, total, now, upcoming }) => (
+        {items.map(({ s, total, shows, nowFallback, upcomingFallback }) => (
           <Link
             key={s.id}
             href={`/series/${s.id}`}
@@ -88,26 +90,12 @@ export default function SeriesListPage() {
                 <span className="i18n-zh"> 部公演</span>
                 <span className="i18n-ja"> 公演</span>
               </span>
-              {now > 0 && (
-                <>
-                  <span className="text-fg-faint">·</span>
-                  <span style={{ color: 'var(--jp-st-now-fg)' }}>
-                    {now}
-                    <span className="i18n-zh"> 上演中</span>
-                    <span className="i18n-ja"> 上演中</span>
-                  </span>
-                </>
-              )}
-              {upcoming > 0 && (
-                <>
-                  <span className="text-fg-faint">·</span>
-                  <span style={{ color: 'var(--jp-st-soon-fg)' }}>
-                    {upcoming}
-                    <span className="i18n-zh"> 即將開演</span>
-                    <span className="i18n-ja"> 開幕予定</span>
-                  </span>
-                </>
-              )}
+              {/* 两个计数挂载后按实时 JST 重算，归零后整段消失 */}
+              <LiveSeriesChips
+                spans={shows}
+                fallbackNow={nowFallback}
+                fallbackUpcoming={upcomingFallback}
+              />
             </p>
           </Link>
         ))}

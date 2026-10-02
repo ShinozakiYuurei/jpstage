@@ -1,4 +1,5 @@
-import { getMeta, SOURCE_NAME } from '@/lib/data';
+import { allShowSpans, getMeta, SOURCE_NAME } from '@/lib/data';
+import { LiveCount } from '@/components/LiveCounts';
 
 /**
  * 页脚
@@ -15,6 +16,7 @@ import { getMeta, SOURCE_NAME } from '@/lib/data';
  */
 export function SiteFooter({ updated }: { updated: string }) {
   const meta = getMeta();
+  const spans = allShowSpans();
 
   return (
     <footer className="mt-16 border-t border-hairline px-4 py-8 text-xs leading-relaxed text-fg-dim">
@@ -62,13 +64,27 @@ export function SiteFooter({ updated }: { updated: string }) {
           <span className="i18n-zh">最後更新</span>
           <span className="i18n-ja">最終更新</span> {updated}
           {' · '}
+          {/* 上演中/即將開演两个计数挂载后按实时 JST 重算（LiveCounts），
+              不会把已落幕的公演继续数进「上演中」 */}
           <span className="i18n-zh">
-            共 {meta.counts.shows} 部公演 / {meta.counts.now} 部上演中 /{' '}
-            {meta.counts.upcoming} 部即將開演
+            共 {meta.counts.shows} 部公演 /{' '}
+            <LiveCount spans={spans} status="now" fallback={meta.counts.now} />{' '}
+            部上演中 /{' '}
+            <LiveCount
+              spans={spans}
+              status="upcoming"
+              fallback={meta.counts.upcoming}
+            />{' '}
+            部即將開演
           </span>
           <span className="i18n-ja">
-            全 {meta.counts.shows} 公演 / 上演中 {meta.counts.now} / 開幕予定{' '}
-            {meta.counts.upcoming}
+            全 {meta.counts.shows} 公演 / 上演中{' '}
+            <LiveCount spans={spans} status="now" fallback={meta.counts.now} /> / 開幕予定{' '}
+            <LiveCount
+              spans={spans}
+              status="upcoming"
+              fallback={meta.counts.upcoming}
+            />
           </span>
           {' · '}
           {meta.counts.venues}

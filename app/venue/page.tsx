@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { getAllVenues, getVenueStats } from '@/lib/data';
+import { getAllVenues, getShowsByVenue, getVenueStats } from '@/lib/data';
 import { cityLabel, prefLabel } from '@/lib/i18n';
 import { T } from '@/components/T';
+import { LiveVenueNow } from '@/components/LiveCounts';
 
 export const metadata: Metadata = {
   title: '會場一覽',
@@ -81,6 +82,7 @@ export default function VenueListPage() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {g.list.map((v) => {
               const stats = getVenueStats(v.id);
+              const venueShows = getShowsByVenue(v.id);
               return (
                 <Link
                   key={v.id}
@@ -108,16 +110,8 @@ export default function VenueListPage() {
                     {stats.shows}
                     <span className="i18n-zh"> 部公演</span>
                     <span className="i18n-ja"> 公演</span>
-                    {stats.now > 0 && (
-                      <>
-                        <span className="text-fg-faint"> · </span>
-                        <span style={{ color: 'var(--jp-st-now-fg)' }}>
-                          {stats.now}
-                          <span className="i18n-zh"> 部上演中</span>
-                          <span className="i18n-ja"> 上演中</span>
-                        </span>
-                      </>
-                    )}
+                    {/* 上演中计数挂载后按实时 JST 重算，归零后整段消失 */}
+                    <LiveVenueNow spans={venueShows} fallback={stats.now} />
                   </p>
                 </Link>
               );

@@ -418,6 +418,80 @@ async function main() {
     const otherErrors = cdp.consoleErrors.filter((e) => /error/i.test(e) && !/favicon/i.test(e));
     check('无其他 console error', otherErrors.length === 0, otherErrors.slice(0, 2).join(' | '));
 
+    // ── ⑤ 实时状态重算（部署多日后，状态/计数/分组应自动跟上现实）──
+    //
+    // 静态导出的 status 与「N 部上演中」在构建日定死；客户端组件
+    // （LiveShowStatus / LiveCounts / LiveShowGroups）挂载后按实时 JST 重算。
+    // 用「档期只有一天、且已过 end」的公演（ヒプ-カリ-1139）当探针：
+    // 若重算失效，它会仍标「上演中」，首页/列表也还会数它。
+    console.log('\n⑤ 实时状态重算');
+    {
+      const showsData = JSON.parse(fs.readFileSync('data/shows.json', 'utf8'));
+      const todayJst = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
+      const statusOf = (s) => (s.endDate < todayJst ? 'ended' : s.startDate > todayJst ? 'upcoming' : 'now');
+      const slug = 'ヒプ-カリ-1139';
+      const targetShow = showsData.find((s) => s.slug === slug);
+      const expNow = showsData.filter((s) => statusOf(s) === 'now').length;
+      const expUp = showsData.filter((s) => statusOf(s) === 'upcoming').length;
+      const vid = targetShow.runs[0].venueId;
+      const sid = targetShow.seriesId;
+      const venueNow = showsData.filter((s) => s.runs.some((r) => r.venueId === vid) && statusOf(s) === 'now').length;
+      const consoleBefore = cdp.consoleErrors.length;
+      await send('Emulation.setDeviceMetricsOverride', {
+        width: 1280,
+        height: 900,
+        deviceScaleFactor: 1,
+        mobile: false,
+      });
+
+      await send('Page.navigate', { url: `${BASE}/show/${encodeURIComponent(slug)}/` });
+      await sleep(1200);
+      const badge = await evaluate(`document.querySelector('article .jp-status')?.innerText ?? ''`);
+      check('详情页徽章 = 已結束', badge.includes('已結束'), `badge=${badge}`);
+      const pageNav = await evaluate(`document.querySelector('article')?.dataset.pageNav ?? ''`);
+      check('详情页 data-page-nav 已摘除', pageNav === '', `pageNav=${pageNav}`);
+      const ariaNow = await evaluate(`document.querySelector('a[data-nav="now"]')?.getAttribute('aria-current') ?? null`);
+      check('顶栏 aria-current 已清', ariaNow === null, `aria=${ariaNow}`);
+
+      await send('Page.navigate', { url: BASE + '/' });
+      await sleep(1200);
+      const nowBar = await evaluate(`[...document.querySelectorAll('section p.text-fg-muted')].map((p) => p.innerText).find((t) => t.includes('部公演正在上演')) ?? ''`);
+      const mNow = nowBar.match(/共 (\d+) 部公演正在上演/);
+      check('首页「上演中」计数实时', !!mNow && Number(mNow[1]) === expNow, `got=${mNow?.[1]} exp=${expNow}`);
+      const footer = await evaluate(`document.querySelector('footer')?.innerText ?? ''`);
+      const mF1 = footer.match(/(\d+) 部上演中/);
+      const mF2 = footer.match(/(\d+) 部即將開演/);
+      check('页脚上演中计数实时', !!mF1 && Number(mF1[1]) === expNow, `got=${mF1?.[1]} exp=${expNow}`);
+      check('页脚即將開演计数实时', !!mF2 && Number(mF2[1]) === expUp, `got=${mF2?.[1]} exp=${expUp}`);
+      const homeLinks = await evaluate(`[...document.querySelectorAll('a[href*="${slug}"]')].length`);
+      check('首页已剔除已落幕公演', homeLinks === 0, `links=${homeLinks}`);
+
+      await send('Page.navigate', { url: `${BASE}/series/${sid}/` });
+      await sleep(1200);
+      // innerText 是「1 部」（可见的 i18n span 拼接），parseInt 取前导整数；
+      // Number() 会得到 NaN，经 CDP 的 JSON 序列化后变成 null，断言永远失败。
+      const groups = await evaluate(`[...document.querySelectorAll('article > section.mt-8')].map((sec) => ({ count: parseInt(sec.querySelector('span.ml-auto')?.innerText ?? '0', 10) || 0, cards: sec.querySelectorAll('a[href^="/show/"]').length, title: sec.querySelector('h2')?.innerText ?? '' }))`);
+      for (const g of groups) {
+        check(`系列分组「${g.title}」计数 = 卡片数`, g.count === g.cards, `count=${g.count} cards=${g.cards}`);
+      }
+      const seriesBadge = await evaluate(`[...document.querySelectorAll('a[href*="${slug}"] .jp-status')].map((s) => s.innerText).join('|')`);
+      check('系列页徽章 = 已結束', seriesBadge === '已結束', `badge=${seriesBadge}`);
+
+      await send('Page.navigate', { url: `${BASE}/venue/${encodeURIComponent(vid)}/` });
+      await sleep(1200);
+      const venueHead = await evaluate(`document.querySelector('header p.text-fg-dim')?.innerText ?? ''`);
+      if (venueNow === 0) {
+        check('會場详情「，其中 N 部正在上演」已消失', !venueHead.includes('，其中'), venueHead.replace(/\n/g, ' | '));
+      } else {
+        check('會場详情「其中 N 部正在上演」实时', venueHead.includes(`其中 ${venueNow} 部正在上演`), venueHead.replace(/\n/g, ' | '));
+      }
+      const dot = await evaluate(`document.querySelector('li a[href*="${slug}"]')?.closest('li')?.querySelector('span[aria-hidden]')?.getAttribute('style') ?? ''`);
+      check('時間軸圆点 = 已结束色', dot.includes('--jp-st-end-dot'), dot);
+
+      const liveErrors = cdp.consoleErrors.slice(consoleBefore).filter((e) => /hydrat|mismatch/i.test(e));
+      check('实时重算无 hydration 警告', liveErrors.length === 0, liveErrors.slice(0, 2).join(' | '));
+    }
+
     // ── 截图存档 ──
     const shots = [
       { name: 'home-dark', url: '/', theme: 'dark', w: 1280, h: 1000 },
@@ -430,7 +504,7 @@ async function main() {
     ];
     const outDir = path.resolve('probe/shots');
     fs.mkdirSync(outDir, { recursive: true });
-    console.log('\n⑤ 截图存档');
+    console.log('\n⑥ 截图存档');
     for (const s of shots) {
       await send('Emulation.setDeviceMetricsOverride', {
         width: s.w,

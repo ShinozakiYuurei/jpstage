@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
-import { getShowBriefs, getMeta } from '@/lib/data';
+import { allShowSpans, getShowBriefs, getMeta } from '@/lib/data';
 import { ShowExplorer } from '@/components/ShowExplorer';
+import { LiveCount } from '@/components/LiveCounts';
 
 export const metadata: Metadata = {
   title: '上演中的公演',
@@ -27,6 +28,7 @@ export const metadata: Metadata = {
 export default function NowPage() {
   const briefs = getShowBriefs();
   const meta = getMeta();
+  const spans = allShowSpans();
 
   return (
     <>
@@ -40,12 +42,13 @@ export default function NowPage() {
           </span>
         </h1>
         <p className="mt-2 text-sm text-fg-muted">
+          {/* 计数挂载后按实时 JST 重算（LiveCounts），不会把已落幕的公演数进去 */}
           <span className="i18n-zh">
-            共 {meta.counts.now} 部公演正在日本各地上演，按規模排列。
+            共 <LiveCount spans={spans} status="now" fallback={meta.counts.now} /> 部公演正在日本各地上演，按規模排列。
             可依類型、城市、原作媒體進一步篩選。
           </span>
           <span className="i18n-ja">
-            日本各地で上演中の公演が {meta.counts.now} 件。規模順に並んでいます。
+            日本各地で上演中の公演が <LiveCount spans={spans} status="now" fallback={meta.counts.now} /> 件。規模順に並んでいます。
             種別・都市・原作メディアで絞り込めます。
           </span>
         </p>

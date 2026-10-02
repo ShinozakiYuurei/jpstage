@@ -1,5 +1,7 @@
+import type { ReactNode } from 'react';
 import Link from 'next/link';
 import {
+  allShowSpans,
   getNowShows,
   getUpcomingShows,
   getMeta,
@@ -8,6 +10,7 @@ import {
   getCalendarEntries,
   getTodayJst,
 } from '@/lib/data';
+import { LiveCount } from '@/components/LiveCounts';
 import { LiveShowGrid } from '@/components/LiveShowGrid';
 import { ShowCalendar } from '@/components/ShowCalendar';
 
@@ -45,8 +48,8 @@ function SectionBar({
   href: string;
   titleZh: string;
   titleJa: string;
-  subtitleZh: string;
-  subtitleJa: string;
+  subtitleZh: ReactNode;
+  subtitleJa: ReactNode;
   ctaZh: string;
   ctaJa: string;
 }) {
@@ -85,6 +88,7 @@ export default function HomePage() {
   const now = getNowShows();
   const upcoming = getUpcomingShows();
   const meta = getMeta();
+  const spans = allShowSpans();
   const series = getAllSeries();
 
   return (
@@ -116,8 +120,16 @@ export default function HomePage() {
           href="/now"
           titleZh="上演中"
           titleJa="上演中"
-          subtitleZh={`共 ${now.length} 部公演正在上演，按規模排列。`}
-          subtitleJa={`${now.length} 公演が上演中。規模順。`}
+          subtitleZh={
+            <>
+              共 <LiveCount spans={spans} status="now" fallback={now.length} /> 部公演正在上演，按規模排列。
+            </>
+          }
+          subtitleJa={
+            <>
+              <LiveCount spans={spans} status="now" fallback={now.length} /> 公演が上演中。規模順。
+            </>
+          }
           ctaZh="查看全部"
           ctaJa="すべて見る"
         />
@@ -145,8 +157,25 @@ export default function HomePage() {
           href="/upcoming"
           titleZh="即將開演"
           titleJa="開幕予定"
-          subtitleZh={`共 ${upcoming.length} 部公演等待開幕，按開演日排列。`}
-          subtitleJa={`開幕を控えた公演が ${upcoming.length} 件。開幕日順。`}
+          subtitleZh={
+            <>
+              共 <LiveCount
+                spans={spans}
+                status="upcoming"
+                fallback={upcoming.length}
+              />{' '}
+              部公演等待開幕，按開演日排列。
+            </>
+          }
+          subtitleJa={
+            <>
+              開幕を控えた公演が <LiveCount
+                spans={spans}
+                status="upcoming"
+                fallback={upcoming.length}
+              /> 件。開幕日順。
+            </>
+          }
           ctaZh="查看全部"
           ctaJa="すべて見る"
         />
@@ -242,7 +271,11 @@ export default function HomePage() {
         <dl className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           {[
             { zh: '公演', ja: '公演', v: meta.counts.shows },
-            { zh: '上演中', ja: '上演中', v: meta.counts.now },
+            {
+              zh: '上演中',
+              ja: '上演中',
+              v: <LiveCount spans={spans} status="now" fallback={meta.counts.now} />,
+            },
             { zh: '會場', ja: '会場', v: meta.counts.venues },
             { zh: '系列', ja: 'シリーズ', v: meta.counts.series },
           ].map((it) => (
