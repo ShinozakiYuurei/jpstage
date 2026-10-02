@@ -1909,7 +1909,7 @@ async function main() {
       officialUrl: w.officialUrl || null,
       ticketUrl: null,
       ticketChannels: w.ticketChannels ?? [],
-      cast: splitNames(w.castRaw),
+      cast: mergeCastByBareName(splitNames(w.castRaw)),
       staff: parseStaff(w.staffRaw),
       summary: {
         zh: zhSummary ?? w.description,
@@ -2128,6 +2128,46 @@ function splitNames(s) {
     .split(/[、,，／\/]/)
     .map((x) => x.trim())
     .filter((x) => x && x.length < 40);
+}
+
+/**
+ * 出演者名 → { 裸名, ※注释 }。
+ *
+ * ★ 只剥挂在名字末尾的「（※...）」注释；（Wキャスト）这类不以 ※ 开头的
+ *   括注是姓名本体（如「小関裕太（Wキャスト※声のみの出演）」的括注整体
+ *   都算名字的一部分），不能剥 —— 剥了会把同一组 Wキャスト 里的不同
+ *   演员错并成一个人。不在末尾的「（※...）」也不当注释处理。
+ */
+function castBareName(name) {
+  const m = name.match(/^(.*?)（(※[^）]*)）$/);
+  if (!m) return { bare: name, note: null };
+  return { bare: m[1], note: m[2].replace(/^※/, '') };
+}
+
+/**
+ * 出演者按裸名合并。
+ *
+ * ★ 为什么要合并：源站（CoRich）会出现同一人两条 ——「飯作雄太郎」与
+ *   「飯作雄太郎（※大阪・福岡公演のみ）」并存，页面上一个人列两次。
+ *   裸名（剥掉 ※ 注释后的名字）相同即视为同一人，合并为一条：
+ *   无注释+有注释的组合保留注释版本（注释才是增量信息），
+ *   多条注释按出现顺序用「・」连接回填成「名字（※注释1・注释2）」。
+ *   合并后保持首次出现的顺序，不重排。
+ */
+function mergeCastByBareName(names) {
+  const merged = [];
+  const byBare = new Map();
+  for (const name of names) {
+    const { bare, note } = castBareName(name);
+    let entry = byBare.get(bare);
+    if (!entry) {
+      entry = { bare, notes: [] };
+      byBare.set(bare, entry);
+      merged.push(entry);
+    }
+    if (note && !entry.notes.includes(note)) entry.notes.push(note);
+  }
+  return merged.map((e) => (e.notes.length ? `${e.bare}（※${e.notes.join('・')}）` : e.bare));
 }
 
 /**

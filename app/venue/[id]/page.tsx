@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { getVenue, allVenueIds, getShowsByVenue, getRunsByVenue, toCardData } from '@/lib/data';
 import { prefLabel, pick } from '@/lib/i18n';
 import { formatPeriod } from '@/lib/format';
-import { ShowCard } from '@/components/ShowCard';
+import { LiveShowGrid } from '@/components/LiveShowGrid';
 import { T } from '@/components/T';
 
 /**
@@ -166,13 +166,8 @@ export default async function VenuePage({ params }: { params: Promise<{ id: stri
             <span className="i18n-zh">在此會場上演的公演</span>
             <span className="i18n-ja">この会場の公演</span>
           </h2>
-          <div className="jp-stagger grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {shows.map((s, i) => (
-              <div key={s.slug} style={{ '--i': i } as React.CSSProperties} className="h-full">
-                <ShowCard show={toCardData(s)} />
-              </div>
-            ))}
-          </div>
+          {/* 卡片状态交给 LiveShowGrid 客户端实时重算（mode='all'：不过滤，只让状态徽章跟上现实） */}
+          <LiveShowGrid shows={shows.map(toCardData)} mode="all" />
         </section>
       )}
 

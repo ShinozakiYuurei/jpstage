@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { getSeries, allSeriesIds, getShowsBySeries, toCardData } from '@/lib/data';
 import { SOURCE_LABEL } from '@/lib/i18n';
 import { formatPeriod } from '@/lib/format';
-import { ShowCard } from '@/components/ShowCard';
+import { LiveShowGrid } from '@/components/LiveShowGrid';
 import { T } from '@/components/T';
 
 /**
@@ -42,19 +42,19 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
   const shows = getShowsBySeries(series.id);
   const groups = [
     {
-      key: 'now',
+      key: 'now' as const,
       zh: '上演中',
       ja: '上演中',
       items: shows.filter((s) => s.status === 'now'),
     },
     {
-      key: 'upcoming',
+      key: 'upcoming' as const,
       zh: '即將開演',
       ja: '開幕予定',
       items: shows.filter((s) => s.status === 'upcoming'),
     },
     {
-      key: 'ended',
+      key: 'ended' as const,
       zh: '已結束',
       ja: '終了',
       items: shows.filter((s) => s.status === 'ended'),
@@ -114,13 +114,10 @@ export default async function SeriesPage({ params }: { params: Promise<{ id: str
             </span>
           </div>
 
-          <div className="jp-stagger grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {g.items.map((s, i) => (
-              <div key={s.slug} style={{ '--i': i } as React.CSSProperties} className="h-full">
-                <ShowCard show={toCardData(s)} />
-              </div>
-            ))}
-          </div>
+          {/* 卡片状态交给 LiveShowGrid 客户端实时重算：开演/落幕的公演挂载后
+              按实时 JST 从「上演中 / 即將開演」分组剔除；已結束是终态不会变，
+              该分组用 'all' 只重算徽章。 */}
+          <LiveShowGrid shows={g.items.map(toCardData)} mode={g.key === 'ended' ? 'all' : g.key} />
 
           {/* 已结束的分组附上期间一览：用户常需要确认「上一部演到什么时候」 */}
           {g.key === 'ended' && (

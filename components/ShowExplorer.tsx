@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ShowBrief, ShowKind, ShowStatus, TicketVendor } from '@/lib/types';
 import { KIND_LABEL, SOURCE_LABEL, VENDOR_LABEL, cityLabel } from '@/lib/i18n';
 import { PAYMENT_LABEL, type PaymentMethod } from '@/lib/ticket-payments';
@@ -71,6 +71,25 @@ export function ShowExplorer({
   const [filters, setFilters] = useState<Filters>({ ...EMPTY, status: initialStatus });
   const [sort, setSort] = useState<Sort>(initialSort);
 
+  // 静态导出时 status 是构建日算的；挂载后按浏览器当前 JST 日期重算，
+  // 避免部署几天后「已结束仍显示上演中」。首屏仍用 SSR 值，避免 hydration 抖动。
+  const [todayJst, setTodayJst] = useState<string | null>(null);
+  useEffect(() => {
+    setTodayJst(new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10));
+  }, []);
+  const liveBriefs = useMemo(() => {
+    if (!todayJst) return briefs;
+    return briefs.map((b) => ({
+      ...b,
+      status:
+        (b.endDate < todayJst
+          ? 'ended'
+          : b.startDate > todayJst
+            ? 'upcoming'
+            : 'now') as ShowStatus,
+    }));
+  }, [briefs, todayJst]);
+
   /**
    * 筛选选项 + 各选项的命中数
    *
@@ -123,7 +142,7 @@ export function ShowExplorer({
     };
 
     const q = query.trim().toLowerCase();
-    for (const b of briefs) {
+    for (const b of liveBriefs) {
       if (pass(b, 'kind', q)) byKind.set(b.kind, (byKind.get(b.kind) ?? 0) + 1);
       if (pass(b, 'city', q)) {
         for (const c of b.cities) byCity.set(c, (byCity.get(c) ?? 0) + 1);
@@ -141,12 +160,12 @@ export function ShowExplorer({
       }
     }
     return { byKind, byCity, bySource, byStatus, byVendor, byPayment };
-  }, [briefs, query, filters]);
+  }, [liveBriefs, query, filters]);
 
   /** 最终结果 */
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const out = briefs.filter((b) => {
+    const out = liveBriefs.filter((b) => {
       if (filters.kind.length && !filters.kind.includes(b.kind)) return false;
       if (filters.city.length && !b.cities.some((c) => filters.city.includes(c))) return false;
       if (filters.source.length && !filters.source.includes(sourceOf(b.seriesId))) return false;
@@ -170,13 +189,13 @@ export function ShowExplorer({
       return a.startDate.localeCompare(b.startDate);
     });
     return out;
-  }, [briefs, query, filters, sort]);
+  }, [liveBriefs, query, filters, sort]);
 
   const kindOptions: FilterOption[] = (Object.keys(KIND_LABEL) as ShowKind[]).map((k) => ({
     value: k,
     label: `${KIND_LABEL[k].zh} / ${KIND_LABEL[k].ja}`,
     count: facets.byKind.get(k) ?? 0,
-  }));
+  })).filter((o) => o.count > 0);
 
   const cityOptions: FilterOption[] = [...facets.byCity.entries()]
     .sort((a, b) => b[1] - a[1])
@@ -192,7 +211,7 @@ export function ShowExplorer({
     value: s,
     label: `${SOURCE_LABEL[s].zh} / ${SOURCE_LABEL[s].ja}`,
     count: facets.bySource.get(s) ?? 0,
-  }));
+  })).filter((o) => o.count > 0);
 
   const statusOptions: FilterOption[] = (
     [

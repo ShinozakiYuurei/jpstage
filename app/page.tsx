@@ -8,8 +8,7 @@ import {
   getCalendarEntries,
   getTodayJst,
 } from '@/lib/data';
-import type { Show } from '@/lib/types';
-import { ShowCard } from '@/components/ShowCard';
+import { LiveShowGrid } from '@/components/LiveShowGrid';
 import { ShowCalendar } from '@/components/ShowCalendar';
 
 /**
@@ -82,27 +81,6 @@ function SectionBar({
   );
 }
 
-/** 海报网格 */
-function PosterGrid({ shows }: { shows: Show[] }) {
-  return (
-    <div className="jp-stagger mt-4 grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4">
-      {shows.map((s, i) => (
-        <div key={s.slug} style={{ '--i': i } as React.CSSProperties} className="h-full">
-          {/*
-           * 首屏优先级：只给**第一行**海报（前 4 张）开 priority。
-           *
-           * 为什么是 4：网格是 md:grid-cols-4，第一行 4 张即首屏可见区域。
-           * 为什么不全开：priority 会让图片立即请求并 fetchpriority=high，
-           *   16 张同时抢带宽反而拖慢真正的 LCP 元素（浏览器并发连接有限，
-           *   高优先级请求之间仍会互相排队）。只标首屏第一行收益最大。
-           */}
-          <ShowCard show={toCardData(s)} priority={i < 4} />
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export default function HomePage() {
   const now = getNowShows();
   const upcoming = getUpcomingShows();
@@ -143,13 +121,22 @@ export default function HomePage() {
           ctaZh="查看全部"
           ctaJa="すべて見る"
         />
-        <PosterGrid shows={now.slice(0, PER_SECTION)} />
-        {now.length === 0 && (
-          <p className="py-16 text-center text-fg-dim">
-            <span className="i18n-zh">目前沒有上演中的公演</span>
-            <span className="i18n-ja">現在上演中の公演はありません</span>
-          </p>
-        )}
+        {/*
+         * 卡片状态交给 LiveShowGrid 客户端实时重算：SSR 首屏仍渲染构建日
+         * 算好的列表，挂载后按实时 JST 剔除已落幕/已开演的卡片。
+         */}
+        <LiveShowGrid
+          shows={now.slice(0, PER_SECTION).map(toCardData)}
+          mode="now"
+          gridClassName="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4"
+          priorityCount={4}
+          empty={
+            <p className="py-16 text-center text-fg-dim">
+              <span className="i18n-zh">目前沒有上演中的公演</span>
+              <span className="i18n-ja">現在上演中の公演はありません</span>
+            </p>
+          }
+        />
       </section>
 
       {/* ── 即將開演 ── */}
@@ -163,13 +150,17 @@ export default function HomePage() {
           ctaZh="查看全部"
           ctaJa="すべて見る"
         />
-        <PosterGrid shows={upcoming.slice(0, PER_SECTION)} />
-        {upcoming.length === 0 && (
-          <p className="py-16 text-center text-fg-dim">
-            <span className="i18n-zh">目前沒有即將開演的公演</span>
-            <span className="i18n-ja">開幕予定の公演はありません</span>
-          </p>
-        )}
+        <LiveShowGrid
+          shows={upcoming.slice(0, PER_SECTION).map(toCardData)}
+          mode="upcoming"
+          gridClassName="grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4"
+          empty={
+            <p className="py-16 text-center text-fg-dim">
+              <span className="i18n-zh">目前沒有即將開演的公演</span>
+              <span className="i18n-ja">開幕予定の公演はありません</span>
+            </p>
+          }
+        />
       </section>
 
       {/* ── 日历入口 ── */}

@@ -8,7 +8,7 @@ import { PAYMENT_LABEL, paymentMethodsOf, type PaymentMethod } from '@/lib/ticke
 import { formatDateWithWeekday, formatPeriod, formatPerformances, relativeDayLabel } from '@/lib/format';
 import { PosterImage } from '@/components/PosterImage';
 import { PosterArt } from '@/components/PosterArt';
-import { ShowCard } from '@/components/ShowCard';
+import { LiveShowGrid } from '@/components/LiveShowGrid';
 import { T } from '@/components/T';
 
 /**
@@ -162,7 +162,7 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
                 <span className="i18n-zh">{KIND_LABEL[show.kind].zh}</span>
                 <span className="i18n-ja">{KIND_LABEL[show.kind].ja}</span>
               </span>
-              {series && (
+              {series && (series.original.zh || series.original.ja) && (
                 <span className="jp-chip">
                   <span className="i18n-zh">{SOURCE_LABEL[series.sourceKind].zh}原作</span>
                   <span className="i18n-ja">{SOURCE_LABEL[series.sourceKind].ja}原作</span>
@@ -441,7 +441,7 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
             <span className="i18n-ja">出演</span>
           </h2>
           <ul className="flex flex-wrap gap-2">
-            {show.cast.map((name) => (
+            {[...new Set(show.cast)].map((name) => (
               <li key={name} className="jp-chip">
                 {name}
               </li>
@@ -541,14 +541,9 @@ export default async function ShowPage({ params }: { params: Promise<{ slug: str
               </Link>
             )}
           </h2>
-          <div className="jp-stagger grid grid-cols-2 gap-3.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {siblings.map((s, i) => (
-              <div key={s.slug} style={{ '--i': i } as React.CSSProperties} className="h-full">
-                {/* 这里是页面下方，不需要 priority —— 首屏的 LCP 已经由页头海报承担 */}
-                <ShowCard show={toCardData(s)} />
-              </div>
-            ))}
-          </div>
+          {/* 卡片状态交给 LiveShowGrid 客户端实时重算（mode='all'：不过滤，只让状态徽章跟上现实） */}
+          {/* 这里是页面下方，不需要 priority —— 首屏的 LCP 已经由页头海报承担 */}
+          <LiveShowGrid shows={siblings.map(toCardData)} mode="all" />
         </section>
       )}
     </article>
