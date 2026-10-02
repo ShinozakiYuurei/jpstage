@@ -53,7 +53,9 @@ export default function CalendarPage() {
             {cities.map((city) => (
               <a
                 key={city}
-                href={'/calendar/' + encodeURIComponent(city) + '/'}
+                /* 路由 handler 產物是「檔案」而非目錄 —— 帶尾斜杠會被
+                   nginx 當目錄找而 404（/calendar.ics 同理），不能帶斜杠。 */
+                href={'/calendar/' + encodeURIComponent(city)}
                 className="jp-chip text-xs transition hover:border-accent/50 hover:text-fg"
               >
                 <span className="i18n-zh">{cityLabel(city, 'zh')}</span>
